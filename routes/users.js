@@ -57,5 +57,8 @@ router.get('/warga', function(req, res, next) {
 router.get('/warga/sell', function(req, res, next) {
     res.render('users/sell');
 });
+router.get('/warga/sell/create', function(req, res, next) {
+  res.render('users/create');
+});
 
 module.exports = router;
