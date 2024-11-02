@@ -28,7 +28,7 @@ router.post('/saveusers', async(req, res, next) => {
       role_users
     }
     
-    const savedUser = await Model_Users(Data);
+    const savedUser = await Model_Users.Store(Data);
 
     req.session.userID = savedUser.id_users;
     req.session.roleUser = role_users;
