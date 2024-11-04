@@ -22,7 +22,7 @@ router.post('/saveusers', async(req, res, next) => {
     let {nama_users, email, password, role_users} = req.body;
     let enkripsi = await bcrypt.hash(password, 10);
     let Data = { 
-      nama: nama_users,
+      nama_users,
       email,
       password: enkripsi,
       role_users

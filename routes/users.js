@@ -114,4 +114,59 @@ router.get('/warga/sell/create', function(req, res, next) {
   res.render('users/create');
 });
 
+router.post('/warga/sell/sampah_komersil/submit', async function(req, res, next) {
+ let id_warga = req.session.id_warga
+ let {deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi} = req.body
+
+ let Data = {id_warga, deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi}
+
+ await Model_Sampah_Komersil.store(Data)
+});
+
+router.get('/warga/sell/sampah_komersil/edit', function(req, res, next) {
+  res.render('users/create');
+});
+
+router.post('/warga/sell/sampah_komersil/update', async function(req, res, next) {
+  let id_warga = req.session.id_warga
+  let {deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi} = req.body
+ 
+  let Data = {id_warga, deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi}
+ 
+  await Model_Sampah_Komersil.store(Data)
+ });
+
+router.get('/warga/sell/sampah_ilegal', function(req, res, next) {
+  res.render('users/create')
+});
+
+router.post('/warga/sell/sampah_ilegal/submit', async function(req, res, next) {
+
+  let mac_address
+  let {deskripsi_laporan, lokasi, file_foto, file_video, status_device} = req.body
+
+  let Data = {deskripsi_laporan, lokasi, file_foto, file_video, status_device}
+ 
+  await Model_Sampah_Komersil.store(Data)
+});
+
+router.get('/warga/sell/sampah_ilegal/edit', function(req, res, next) {
+  res.render('users/create')
+});
+
+router.post('/warga/sell/sampah_ilegal/update', async function(req, res, next) {
+
+  let mac_address
+  let {deskripsi_laporan, lokasi, file_foto, file_video, status_device} = req.body
+
+  let Data = {deskripsi_laporan, lokasi, file_foto, file_video, status_device}
+ 
+  await Model_Sampah_Komersil.store(Data)
+});
+
+router.get('/warga/sell/sampah_ilegal/delete', function(req, res, next) {
+  res.render('users/create')
+});
+
+
 module.exports = router;
