@@ -53,53 +53,53 @@ const checkDeviceStatus = async (req, res, next) => {
 };
 
 router.get('/warga/complete-profile', ensureWarga, async(req, res, next) => {
-    res.render('warga/complete-profile');
+  res.render('warga/complete-profile');
 })
 
 router.post('/warga/save-profile', async(req, res) => {
-  try {
-        const { jenis_kelamin, no_telp, alamat } = req.body;
-    
-        const dataWarga = {
-          id_users: req.session.userID,
-          jenis_kelamin,
-          no_telp,
-          alamat
-        }
-        
-        await Model_Warga.Store(dataWarga);
-        req.flash('success', 'Data akun berhasil disimpan');
-        res.redirect('/users/warga');
-        
-      } catch (error) {
-        req.flash('error', 'Terjadi kesalahan pada fungsi');
-        res.redirect('/create-data-warga');
+try {
+      const { jenis_kelamin, no_telp, alamat } = req.body;
+  
+      const dataWarga = {
+        id_users: req.session.userID,
+        jenis_kelamin,
+        no_telp,
+        alamat
       }
+      
+      await Model_Warga.Store(dataWarga);
+      req.flash('success', 'Data akun berhasil disimpan');
+      res.redirect('/users/warga');
+      
+    } catch (error) {
+      req.flash('error', 'Terjadi kesalahan pada fungsi');
+      res.redirect('/create-data-warga');
+    }
 })
 
 router.get('/mitra/complete-profile', ensureMitra, async(req, res, next) => {
-    res.render('mitra/complete-profile');
+  res.render('mitra/complete-profile');
 })
 
 router.post('/mitra/save-profile', async(req, res) => {
-  try {
-        const { jenis_mitra, no_telp, alamat } = req.body;
-        
-        const Data = {
-          id_users: req.session.userID,
-          jenis_mitra,
-          no_telp,
-          alamat
-        }
-        
-        await Model_Mitra.Store(Data);
-        req.flash('success', 'Data akun berhasil disimpan');
-        res.redirect('/users/mitra');
-        
-      } catch (error) {
-        req.flash('error', 'Terjadi kesalahan pada fungsi');
-        res.redirect('/create-data-warga');
+try {
+      const { jenis_mitra, no_telp, alamat } = req.body;
+      
+      const Data = {
+        id_users: req.session.userID,
+        jenis_mitra,
+        no_telp,
+        alamat
       }
+      
+      await Model_Mitra.Store(Data);
+      req.flash('success', 'Data akun berhasil disimpan');
+      res.redirect('/users/mitra');
+      
+    } catch (error) {
+      req.flash('error', 'Terjadi kesalahan pada fungsi');
+      res.redirect('/create-data-warga');
+    }
 });
 
 router.get('/warga', function(req, res, next) {
