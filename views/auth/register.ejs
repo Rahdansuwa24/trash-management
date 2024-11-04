@@ -41,7 +41,7 @@
 			</div>
 			<div class="login-menu">
 				<ul>
-					<li><a href="login.html">Login</a></li>
+					<li><a href="/login">Login</a></li>
 				</ul>
 			</div>
 		</div>
@@ -55,75 +55,62 @@
 				<div class="col-md-6 col-lg-5">
 					<div class="register-box bg-white box-shadow border-radius-10">
 						<div class="wizard-content">
-							<form class="tab-wizard2 wizard-circle wizard">
+							<form class="tab-wizard2 wizard-circle wizard" action="/saveusers" method="post">
 								<h5>Basic Account Credentials</h5>
 								<section>
+									<div class="select-role">
+										<div class="btn-group btn-group-toggle" data-toggle="buttons">
+											<label class="btn active">
+												<input type="radio" name="role_users" id="admin" value="warga" required>
+												<div class="icon"><img src="/deskapp2/vendors/images/briefcase.svg" class="svg" alt=""></div>
+												<span>I'm</span>
+												Warga
+											</label>
+											<label class="btn">
+												<input type="radio" name="role_users" id="user" value="mitra" required>
+												<div class="icon"><img src="/deskapp2/vendors/images/person.svg" class="svg" alt=""></div>
+												<span>I'm</span>
+												Mitra
+											</label>
+										</div>
+									</div>
 									<div class="form-wrap max-width-600 mx-auto">
 										<div class="form-group row">
 											<label class="col-sm-4 col-form-label">Email Address*</label>
 											<div class="col-sm-8">
-												<input type="email" class="form-control">
+												<input type="email" class="form-control" name="email" required>
 											</div>
 										</div>
 										<div class="form-group row">
 											<label class="col-sm-4 col-form-label">Username*</label>
 											<div class="col-sm-8">
-												<input type="text" class="form-control">
+												<input type="text" class="form-control" name="nama_users" required>
 											</div>
 										</div>
 										<div class="form-group row">
 											<label class="col-sm-4 col-form-label">Password*</label>
 											<div class="col-sm-8">
-												<input type="password" class="form-control">
+												<input type="password" class="form-control" name="password" required>
 											</div>
 										</div>
-										<div class="form-group row">
+										<!-- <div class="form-group row">
 											<label class="col-sm-4 col-form-label">Confirm Password*</label>
 											<div class="col-sm-8">
 												<input type="password" class="form-control">
 											</div>
-										</div>
+										</div> -->
 									</div>
 								</section>
+								<div class="form-group row mt-4">
+									<div class="col-sm-12 text-center">
+										<button type="submit" class="btn btn-primary">Register</button>
+										<button type="reset" class="btn btn-secondary">Reset</button>
+									</div>
+								</div>
+							</form>
 								<!-- Step 2 -->
-								<h5>Personal Information</h5>
-								<section>
-									<div class="form-wrap max-width-600 mx-auto">
-										<div class="form-group row">
-											<label class="col-sm-4 col-form-label">Full Name*</label>
-											<div class="col-sm-8">
-												<input type="text" class="form-control">
-											</div>
-										</div>
-										<div class="form-group row align-items-center">
-											<label class="col-sm-4 col-form-label">Gender*</label>
-											<div class="col-sm-8">
-												<div class="custom-control custom-radio custom-control-inline pb-0">
-													<input type="radio" id="male" name="gender" class="custom-control-input">
-													<label class="custom-control-label" for="male">Male</label>
-												</div>
-												<div class="custom-control custom-radio custom-control-inline pb-0">
-													<input type="radio" id="female" name="gender" class="custom-control-input">
-													<label class="custom-control-label" for="female">Female</label>
-												</div>
-											</div>
-										</div>
-										<div class="form-group row">
-											<label class="col-sm-4 col-form-label">City</label>
-											<div class="col-sm-8">
-												<input type="text" class="form-control">
-											</div>
-										</div>
-										<div class="form-group row">
-											<label class="col-sm-4 col-form-label">State</label>
-											<div class="col-sm-8">
-												<input type="text" class="form-control">
-											</div>
-										</div>
-									</div>
-								</section>
 								<!-- Step 3 -->
-								<h5>Payment Method & Info</h5>
+								<!-- <h5>Payment Method & Info</h5>
 								<section>
 									<div class="form-wrap max-width-600 mx-auto">
 										<div class="form-group row">
@@ -188,9 +175,9 @@
 											</div>
 										</div>
 									</div>
-								</section>
+								</section> -->
 								<!-- Step 4 -->
-								<h5>Overview Information</h5>
+								<!-- <h5>Overview Information</h5>
 								<section>
 									<div class="form-wrap max-width-600 mx-auto">
 										<ul class="register-info">
@@ -228,10 +215,9 @@
 										<div class="custom-control custom-checkbox mt-4">
 											<input type="checkbox" class="custom-control-input" id="customCheck1">
 											<label class="custom-control-label" for="customCheck1">I have read and agreed to the terms of services and privacy policy</label>
-										</div>
-									</div>
-								</section>
-							</form>
+										</div> -->
+									<!-- </div>
+								</section> -->
 						</div>
 					</div>
 				</div>
@@ -239,7 +225,7 @@
 		</div>
 	</div>
 	<!-- success Popup html Start -->
-	<button type="button" id="success-modal-btn" hidden data-toggle="modal" data-target="#success-modal" data-backdrop="static">Launch modal</button>
+	<!-- <button type="button" id="success-modal-btn" hidden data-toggle="modal" data-target="#success-modal" data-backdrop="static">Launch modal</button>
 	<div class="modal fade" id="success-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered max-width-400" role="document">
 			<div class="modal-content">
@@ -249,11 +235,11 @@
 					Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod
 				</div>
 				<div class="modal-footer justify-content-center">
-					<a href="login.html" class="btn btn-primary">Done</a>
+					<a class="btn btn-primary">Done</a>
 				</div>
 			</div>
 		</div>
-	</div>
+	</div> -->
 	<!-- success Popup html End -->
 	<!-- js -->
 	<script src="/deskapp2/vendors/scripts/core.js"></script>
