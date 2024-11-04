@@ -40,6 +40,19 @@ class Model_Warga{
         })
     }
 
+    static async getByIdUsers(id){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM warga WHERE id_users = ?', [id], (err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result[0]);
+                }
+            })
+        })
+    }
+
     static async Update(id){
         return new Promise((resolve, reject) => {
             connection.query('UPDATE warga SET ? WHERE id_warga = ?', [Data, id], (err, result)=>{

@@ -27,21 +27,10 @@ router.post('/saveusers', async(req, res, next) => {
       password: enkripsi,
       role_users
     }
-    
-    const savedUser = await Model_Users.Store(Data);
-
-    req.session.userID = savedUser.id_users;
-    req.session.roleUser = role_users;
+    await Model_Users.Store(Data);
 
     req.flash('success', 'Berhasil Register akun');
-
-    if (role_users.toLowerCase() === 'warga') {
-      res.redirect('/create-data-warga');
-    } else if (role_users.toLowerCase() === 'mitra') {
-      res.redirect('/create-data-mitra');
-    } else {
-      res.redirect('/admin/dashboard');
-    }
+    res.redirect('/login');
 
   } catch (error) {
     req.flash('error', 'Gagal membuat akun');
@@ -63,15 +52,38 @@ router.post('/log', async(req, res) =>{
       if(cek){
         req.session.userID = Data[0].id_users;
         res.redirect('/dashboard');
-        if(Data[0].role_users == 'admin'){
-          req.flash('success','Berhasil Login');
-          res.redirect('/users/admin');
-        }else if(Data[0].role_users == 'mitra'){
-          req.flash('success','Berhasil Login');
-          res.redirect('/users/mitra');
-        }else if(Data[0].role_users == 'warga'){
-          req.flash('success','Berhasil Login');
-          res.redirect('/users/warga');
+        
+        switch(Data[0].role_users){
+          case 'warga':
+            const dataWarga = await Model_Warga.getByIdUsers(Data[0].id_users);
+            if(!dataWarga || dataWarga.length === 0){
+              req.flash('success','Silahkan lengkapi data diri terlebih dahulu');
+              res.redirect('/users/warga/complete-profile')
+            } else{
+              req.flash('success','Berhasil Login');
+              res.redirect('/users/warga')
+            }
+            break;
+
+            case 'mitra':
+              const dataMitra = await Model_Mitra.getByIdUsers(Data[0].id_users);
+              if(!dataMitra || dataMitra.length === 0){
+                req.flash('success','Silahkan lengkapi data profil anda');
+                res.redirect('/users/mitra/complete-profile');
+              } else {
+                req.flash('success','Berhasil Login');
+                res.redirect('/users/mitra');
+              }
+              break;
+
+            case 'admin':
+              req.flash('success','Berhasil Login');
+              res.redirect('/admin/dashboard');
+              break;
+
+            default:
+              req.flash('error','akun tidak valid');
+              res.redirect('/login')
         }
 
       }else{
@@ -95,71 +107,71 @@ router.get('/logout', function(req, res) {
   });
 });
 
-router.get('/create-data-warga', (req, res) => {
-  if (!req.session.userId || req.session.roleUsers !== 'warga') {
-    req.flash('error', 'Akses tidak diizinkan');
-    return res.redirect('/');
-  }
-  res.render('warga/create-data-warga');
-});
+// router.get('/create-data-warga', (req, res) => {
+//   if (!req.session.userId || req.session.roleUsers !== 'warga') {
+//     req.flash('error', 'Akses tidak diizinkan');
+//     return res.redirect('/');
+//   }
+//   res.render('warga/create-data-warga');
+// });
 
-router.post('/save-data-warga', async(req, res) => {
-  try {
-    const { jenis_kelamin, no_telp, alamat } = req.body;
+// router.post('/save-data-warga', async(req, res) => {
+//   try {
+//     const { jenis_kelamin, no_telp, alamat } = req.body;
     
-    const dataWarga = {
-      id_users: req.session.userId,
-      jenis_kelamin,
-      no_telp,
-      alamat
-    }
+//     const dataWarga = {
+//       id_users: req.session.userId,
+//       jenis_kelamin,
+//       no_telp,
+//       alamat
+//     }
     
-    await Model_Warga.Store(dataWarga);
+//     await Model_Warga.Store(dataWarga);
     
-    delete req.session.userId;
-    delete req.session.roleUsers;
+//     delete req.session.userId;
+//     delete req.session.roleUsers;
     
-    req.flash('success', 'Data akun berhasil disimpan');
-    res.redirect('/login');
+//     req.flash('success', 'Data akun berhasil disimpan');
+//     res.redirect('/login');
     
-  } catch (error) {
-    req.flash('error', 'Terjadi kesalahan pada fungsi');
-    res.redirect('/create-data-warga');
-  }
-});
+//   } catch (error) {
+//     req.flash('error', 'Terjadi kesalahan pada fungsi');
+//     res.redirect('/create-data-warga');
+//   }
+// });
 
-router.get('/create-data-mitra', (req, res) => {
-  if (!req.session.userId || req.session.roleUsers !== 'warga') {
-    req.flash('error', 'Akses tidak diizinkan');
-    return res.redirect('/');
-  }
-  res.render('mitra/create-data-mitra');
-});
+// router.get('/create-data-mitra', (req, res) => {
+//   if (!req.session.userId || req.session.roleUsers !== 'warga') {
+//     req.flash('error', 'Akses tidak diizinkan');
+//     return res.redirect('/');
+//   }
+//   res.render('mitra/create-data-mitra');
+// });
 
-router.post('/save-data-mitra', async(req, res) => {
-  try {
-    const { jenis_mitra, no_telp, alamat } = req.body;
+// router.post('/save-data-mitra', async(req, res) => {
+//   try {
+//     const { jenis_mitra, no_telp, alamat } = req.body;
     
-    const dataWarga = {
-      id_users: req.session.userId,
-      jenis_mitra,
-      no_telp,
-      alamat
-    }
+//     const dataWarga = {
+//       id_users: req.session.userId,
+//       jenis_mitra,
+//       no_telp,
+//       alamat
+//     }
     
-    await Model_Mitra.Store(dataWarga);
+//     await Model_Mitra.Store(dataWarga);
     
-    delete req.session.userId;
-    delete req.session.roleUsers;
+//     delete req.session.userId;
+//     delete req.session.roleUsers;
     
-    req.flash('success', 'Data akun berhasil disimpan');
-    res.redirect('/login');
+//     req.flash('success', 'Data akun berhasil disimpan');
+//     res.redirect('/login');
     
-  } catch (error) {
-    req.flash('error', 'Terjadi kesalahan pada fungsi');
-    res.redirect('/create-data-warga');
-  }
-});
+//   } catch (error) {
+//     req.flash('error', 'Terjadi kesalahan pada fungsi');
+//     res.redirect('/create-data-warga');
+//   }
+// });
 
 
 module.exports = router;
