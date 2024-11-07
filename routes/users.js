@@ -52,33 +52,30 @@ const checkDeviceStatus = async (req, res, next) => {
   next();
 };
 
-router.get('/warga/complete-profile', ensureWarga, async(req, res, next) => {
-  res.render('warga/complete-profile');
+router.get('/warga/complete-profile-warga', ensureWarga, async(req, res, next) => {
+  res.render('auth/complete-profile-warga');
 })
 
 router.post('/warga/save-profile', async(req, res) => {
-try {
-      const { jenis_kelamin, no_telp, alamat } = req.body;
-  
-      const dataWarga = {
-        id_users: req.session.userID,
-        jenis_kelamin,
-        no_telp,
-        alamat
-      }
-      
-      await Model_Warga.Store(dataWarga);
-      req.flash('success', 'Data akun berhasil disimpan');
-      res.redirect('/users/warga');
-      
-    } catch (error) {
-      req.flash('error', 'Terjadi kesalahan pada fungsi');
-      res.redirect('/create-data-warga');
-    }
+  try {
+    const { jenis_kelamin, no_telp, alamat } = req.body;
+    const dataWarga = {
+      id_users: req.session.userID,
+      jenis_kelamin,
+      no_telp,
+      alamat
+    }  
+    await Model_Warga.Store(dataWarga);
+    req.flash('success', 'Data akun berhasil disimpan');
+    res.redirect('/users/warga');      
+  } catch (error) {
+    req.flash('error', 'Terjadi kesalahan pada fungsi');
+    res.redirect('/create-data-warga');
+  }
 })
 
-router.get('/mitra/complete-profile', ensureMitra, async(req, res, next) => {
-  res.render('mitra/complete-profile');
+router.get('/mitra/complete-profile-mitra', ensureMitra, async(req, res, next) => {
+  res.render('auth/complete-profile-mitra');
 })
 
 router.post('/mitra/save-profile', async(req, res) => {
