@@ -9,7 +9,7 @@ body{
 	background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
 }
 .main{
-	width: 350px;
+	width: 450px;
 	height: 500px;
 	background: red;
 	overflow: hidden;

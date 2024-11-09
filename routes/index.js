@@ -35,7 +35,7 @@ router.post('/saveusers', async(req, res, next) => {
   } catch (error) {
     req.flash('error', 'Gagal membuat akun');
     console.error('Error:', error);
-    res.redirect('/register'); 
+    res.redirect('/login'); 
     next(error);
   }
 });
@@ -51,13 +51,12 @@ router.post('/log', async(req, res) =>{
 
       if(cek){
         req.session.userID = Data[0].id_users;
-        res.redirect('/dashboard');
-        
+
         switch(Data[0].role_users){
           case 'warga':
             const dataWarga = await Model_Warga.getByIdUsers(Data[0].id_users);
             if(!dataWarga || dataWarga.length === 0){
-              req.flash('success','Silahkan lengkapi data diri terlebih dahulu');
+              req.flash('success','Silahkan lengkapi data profil terlebih dahulu');
               res.redirect('/users/warga/complete-profile')
             } else{
               req.flash('success','Berhasil Login');
@@ -83,7 +82,7 @@ router.post('/log', async(req, res) =>{
 
             default:
               req.flash('error','akun tidak valid');
-              res.redirect('/login')
+              res.redirect('/')
         }
 
       }else{

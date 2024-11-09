@@ -9,16 +9,16 @@
 <body>
 	<div class="complete-profile-warga">  	
 		<div class="form-complete-profile-warga">
-			<form autocomplete="off" action="" method="post">
-				<label for="chk" aria-hidden="true">DATA PUBLIC</label>
-				<select class="dropdown_signup btn-primary">
+			<form autocomplete="off" action="/users/warga/save-profile" method="post">
+				<label for="chk" aria-hidden="true">DATA WARGA</label>
+				<select class="dropdown_signup btn-primary" name="jenis_kelamin">
 					<option selected disabled hidden>Jenis Kelamin:</option>
-					<option value="public">L</option>
-					<option value="government">P</option>
+					<option value="L">Laki-laki</option>
+					<option value="P">Perempuan</option>
 				</select>					
-				<input type="text" name="txt" placeholder="No Telepon" required="">
-				<input type="email" name="email" placeholder="Alamat" required="">
-				<button>Sign up</button>
+				<input type="text" name="no_telp" placeholder="No Telepon" required="">
+				<input type="text" name="alamat" placeholder="Alamat" required="">
+				<button type="submit">Sign up</button>
 			</form>
 		</div>
 	</div>

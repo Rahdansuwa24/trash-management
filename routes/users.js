@@ -52,7 +52,7 @@ const checkDeviceStatus = async (req, res, next) => {
   next();
 };
 
-router.get('/warga/complete-profile-warga', ensureWarga, async(req, res, next) => {
+router.get('/warga/complete-profile', async(req, res, next) => {
   res.render('auth/complete-profile-warga');
 })
 
@@ -70,11 +70,11 @@ router.post('/warga/save-profile', async(req, res) => {
     res.redirect('/users/warga');      
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan pada fungsi');
-    res.redirect('/create-data-warga');
+    res.redirect('/users/warga');
   }
 })
 
-router.get('/mitra/complete-profile-mitra', ensureMitra, async(req, res, next) => {
+router.get('/mitra/complete-profile', async(req, res, next) => {
   res.render('auth/complete-profile-mitra');
 })
 
