@@ -9,16 +9,15 @@
 <body>
 	<div class="complete-profile-mitra">  	
 		<div class="form-complete-profile-mitra">
-			<form autocomplete="on" action="" method="post">
+			<form autocomplete="on" action="/users/mitra/save-profile" method="post">
 				<label for="chk" aria-hidden="true">DATA MITRA</label>
-				<select class="dropdown_signup btn-primary">
+				<select class="dropdown_signup btn-primary" name="jenis_mitra">
 					<option selected disabled hidden>Jenis Mitra:</option>
-					<option value="public">Public</option>
-					<option value="government">Government</option>
-					<option value="non_government">Non-Government</option>
+					<option value="pemerintah">Government</option>
+					<option value="non-pemerintah">Non-Government</option>
 				</select>					
-				<input type="text" name="txt" placeholder="Telepon Kantor" required="">
-				<input type="email" name="email" placeholder="Alamat Kantor" required="">
+				<input type="text" name="no_telp" placeholder="Telepon Kantor" required="">
+				<input type="email" name="alamat" placeholder="Alamat Kantor" required="">
 				<button>Sign up</button>
 			</form>
 		</div>

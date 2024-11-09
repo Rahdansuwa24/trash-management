@@ -48,7 +48,7 @@ const checkDeviceStatus = async (req, res, next) => {
     req.flash('error', 'Akses diblokir untuk perangkat ini. Silakan hubungi administrator.');
     return res.redirect('/login');
   }
-
+  
   next();
 };
 
@@ -70,7 +70,7 @@ router.post('/warga/save-profile', async(req, res) => {
     res.redirect('/users/warga');      
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan pada fungsi');
-    res.redirect('/create-data-warga');
+    res.redirect('/users/warga');
   }
 })
 

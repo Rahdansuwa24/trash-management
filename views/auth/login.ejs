@@ -10,26 +10,26 @@
 	<div class="main">  	
 		<input type="checkbox" id="chk" aria-hidden="true">
 		<div class="signup">
-			<form>
+			<form action="/saveusers" method="post">
 				<label for="chk" aria-hidden="true">Sign up</label>
-				<input type="text" name="txt" placeholder="User name" required="">
+				<input type="text" name="nama_users" placeholder="User name" required="">
 				<input type="email" name="email" placeholder="Email" required="">
-				<input type="password" name="pswd" placeholder="Password" required="">
-				<select class="dropdown_signup btn-primary" placeholder="llll">
+				<input type="password" name="password" placeholder="Password" required="">
+				<select class="dropdown_signup btn-primary" name="role_users" required>
 					<option selected disabled hidden>Account type:</option>
-					<option value="public">Public</option>
-					<option value="government">Government</option>
-					<option value="non_government">Non-Government</option>
+					<option value="warga">Public</option>
+					<option value="mitra">Partner</option>
+					<option value="admin">Admin</option>
 				</select>					
 				<button>Sign up</button>
 			</form>
 		</div>
 
 		<div class="login">
-			<form autocomplete="off">
+			<form autocomplete="off" action="/log" method="post">
 				<label for="chk" aria-hidden="true">Login</label>
 				<input type="email" name="email" placeholder="Email" required="">
-				<input type="password" name="pswd" placeholder="Password" required="">
+				<input type="password" name="password" placeholder="Password" required="">
 				<button>Login</button>
 			</form>
 		</div>
