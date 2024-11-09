@@ -51,23 +51,25 @@ router.post('/log', async (req, res) => {
 
       if (cek) {
         req.session.userID = Data[0].id_users;
+        // req.session.role_users = Data[0].role_users;
+        // res.redirect('/dashboard');
 
-        switch(Data[0].role_users){
+        switch (Data[0].role_users) {
           case 'warga':
             const dataWarga = await Model_Warga.getByIdUsers(Data[0].id_users);
-            if(!dataWarga || dataWarga.length === 0){
-              req.flash('success','Silahkan lengkapi data profil terlebih dahulu');
-              res.redirect('/users/warga/complete-profile')
-            } else{
-              req.flash('success','Berhasil Login');
-              res.redirect('/users/warga')
+            if (!dataWarga || dataWarga.length === 0) {
+              req.flash('success', 'Silahkan lengkapi data diri terlebih dahulu');
+              return res.redirect('/users/warga/complete-profile-warga');
+            } else {
+              req.flash('success', 'Berhasil Login');
+              return res.redirect('/users/warga');
             }
 
           case 'mitra':
             const dataMitra = await Model_Mitra.getByIdUsers(Data[0].id_users);
             if (!dataMitra || dataMitra.length === 0) {
               req.flash('success', 'Silahkan lengkapi data profil anda');
-              return res.redirect('/users/mitra/complete-profile');
+              return res.redirect('/users/mitra/complete-profile-mitra');
             } else {
               req.flash('success', 'Berhasil Login');
               return res.redirect('/users/mitra');
@@ -77,9 +79,9 @@ router.post('/log', async (req, res) => {
             req.flash('success', 'Berhasil Login');
             return res.redirect('/admin/dashboard');
 
-            default:
-              req.flash('error','akun tidak valid');
-              res.redirect('/')
+          default:
+            req.flash('error', 'Akun tidak valid');
+            return res.redirect('/login');
         }
 
       } else {
@@ -93,7 +95,7 @@ router.post('/log', async (req, res) => {
 
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan pada server');
-    console.error('Error:', error);
+    console.error('Error:', error); // Debug error pada console
     return res.redirect('/login');
   }
 });

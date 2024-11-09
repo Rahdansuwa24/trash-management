@@ -48,11 +48,11 @@ const checkDeviceStatus = async (req, res, next) => {
     req.flash('error', 'Akses diblokir untuk perangkat ini. Silakan hubungi administrator.');
     return res.redirect('/login');
   }
-  
+
   next();
 };
 
-router.get('/warga/complete-profile', async(req, res, next) => {
+router.get('/warga/complete-profile-warga', async(req, res, next) => {
   res.render('auth/complete-profile-warga');
 })
 
@@ -74,7 +74,7 @@ router.post('/warga/save-profile', async(req, res) => {
   }
 })
 
-router.get('/mitra/complete-profile', async(req, res, next) => {
+router.get('/mitra/complete-profile-mitra', async(req, res, next) => {
   res.render('auth/complete-profile-mitra');
 })
 
@@ -97,6 +97,10 @@ try {
       req.flash('error', 'Terjadi kesalahan pada fungsi');
       res.redirect('/create-data-warga');
     }
+});
+
+router.get('/mitra', function(req, res, next) {
+  res.render('mitra/index');
 });
 
 router.get('/warga', function(req, res, next) {
