@@ -67,7 +67,7 @@ router.post('/log', async (req, res) => {
             const dataMitra = await Model_Mitra.getByIdUsers(Data[0].id_users);
             if (!dataMitra || dataMitra.length === 0) {
               req.flash('success', 'Silahkan lengkapi data profil anda');
-              return res.redirect('/users/mitra/complete-profile-mitra');
+              return res.redirect('/users/mitra/complete-profile');
             } else {
               req.flash('success', 'Berhasil Login');
               return res.redirect('/users/mitra');
@@ -93,7 +93,7 @@ router.post('/log', async (req, res) => {
 
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan pada server');
-    console.error('Error:', error); // Debug error pada console
+    console.error('Error:', error);
     return res.redirect('/login');
   }
 });
