@@ -51,7 +51,7 @@ router.post('/log', async (req, res) => {
 
       if (cek) {
         req.session.userID = Data[0].id_users;
-        // req.session.role_users = Data[0].role_users;
+        req.session.role_users = Data[0].role_users;
         // res.redirect('/dashboard');
 
         switch (Data[0].role_users) {
@@ -64,6 +64,7 @@ router.post('/log', async (req, res) => {
               req.flash('success', 'Berhasil Login');
               return res.redirect('/users/warga');
             }
+            break;
 
           case 'mitra':
             const dataMitra = await Model_Mitra.getByIdUsers(Data[0].id_users);
@@ -71,13 +72,25 @@ router.post('/log', async (req, res) => {
               req.flash('success', 'Silahkan lengkapi data profil anda');
               return res.redirect('/users/mitra/complete-profile-mitra');
             } else {
-              req.flash('success', 'Berhasil Login');
-              return res.redirect('/users/mitra');
+              const jenisMitra = dataMitra.jenis_mitra;
+              console.log('jenis mitra:', jenisMitra)
+              if(jenisMitra === 'pemerintah'){
+                req.flash('success', 'Berhasil Login');
+                return res.redirect('/users/mitra');
+              }else if(jenisMitra === 'non-pemerintah'){
+                req.flash('success', 'Berhasil Login');
+                return res.redirect('/users/mitra/non-pemerintah');
+              }else{
+                req.flash('error','Mitra tidak valid');
+                res.redirect('/login');
+              }
             }
+            break;
 
           case 'admin':
             req.flash('success', 'Berhasil Login');
             return res.redirect('/admin/dashboard');
+            break;
 
           default:
             req.flash('error', 'Akun tidak valid');

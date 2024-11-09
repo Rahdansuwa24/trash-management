@@ -53,6 +53,20 @@ class Model_Mitra{
         })
     }
 
+    static async getByTipe(jenisMitra){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM mitra WHERE jenis_mitra = ?',[jenisMitra], (err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result[0]);
+                }
+            })
+        })
+    }
+
+
     static async Update(id){
         return new Promise((resolve, reject) => {
             connection.query('UPDATE mitra SET ? WHERE id_mitra = ?', [Data, id], (err, result)=>{

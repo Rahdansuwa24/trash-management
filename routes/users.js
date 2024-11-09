@@ -52,7 +52,7 @@ const checkDeviceStatus = async (req, res, next) => {
   next();
 };
 
-router.get('/warga/complete-profile-warga', async(req, res, next) => {
+router.get('/warga/complete-profile-warga', ensureWarga, async(req, res, next) => {
   res.render('auth/complete-profile-warga');
 })
 
@@ -74,7 +74,7 @@ router.post('/warga/save-profile', async(req, res) => {
   }
 })
 
-router.get('/mitra/complete-profile-mitra', async(req, res, next) => {
+router.get('/mitra/complete-profile-mitra', ensureMitra, async(req, res, next) => {
   res.render('auth/complete-profile-mitra');
 })
 
@@ -91,7 +91,14 @@ try {
       
       await Model_Mitra.Store(Data);
       req.flash('success', 'Data akun berhasil disimpan');
-      res.redirect('/users/mitra');
+
+      if(jenis_mitra == 'pemerintah'){
+        res.redirect('/users/mitra');
+      }else if(jenis_mitra == 'non-pemerintah'){
+        res.redirect('/users/mitra/non-pemerintah');
+      }else{
+        res.status(500).json('Data akun tidak ada !!');
+      }
       
     } catch (error) {
       req.flash('error', 'Terjadi kesalahan pada fungsi');
@@ -99,8 +106,32 @@ try {
     }
 });
 
-router.get('/mitra', function(req, res, next) {
-  res.render('mitra/index');
+router.get('/mitra', ensureMitra, async function(req, res, next) {
+
+  let id = req.session.userID
+  let Mitra = await Model_Mitra.getByIdUsers(id);
+  let tipe = Mitra.jenis_mitra
+
+  if(tipe == 'pemerintah'){
+    res.render('mitra/index');
+  }else{
+    res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
+  }
+});
+
+router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) {
+  console.log('role: ', req.session.role_users);
+  console.log('ID: ', req.session.userID);
+
+  let id = req.session.userID
+  let Mitra = await Model_Mitra.getByIdUsers(id);
+  let tipe = Mitra.jenis_mitra
+  if(tipe == 'non-pemerintah'){
+    res.render('mitra/index-swasta');
+
+  }else{
+    res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
+  }
 });
 
 router.get('/warga', function(req, res, next) {
