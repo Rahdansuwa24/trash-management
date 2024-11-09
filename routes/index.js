@@ -40,16 +40,16 @@ router.post('/saveusers', async(req, res, next) => {
   }
 });
 
-router.post('/log', async(req, res) =>{
-  let {email, password} = req.body;
+router.post('/log', async (req, res) => {
+  let { email, password } = req.body;
   try {
     let Data = await Model_Users.Login(email);
 
-    if(Data.length > 0){
+    if (Data.length > 0) {
       let enkripsi = Data[0].password;
       let cek = await bcrypt.compare(password, enkripsi);
 
-      if(cek){
+      if (cek) {
         req.session.userID = Data[0].id_users;
 
         switch(Data[0].role_users){
@@ -62,39 +62,42 @@ router.post('/log', async(req, res) =>{
               req.flash('success','Berhasil Login');
               res.redirect('/users/warga')
             }
-            break;
 
-            case 'mitra':
-              const dataMitra = await Model_Mitra.getByIdUsers(Data[0].id_users);
-              if(!dataMitra || dataMitra.length === 0){
-                req.flash('success','Silahkan lengkapi data profil anda');
-                res.redirect('/users/mitra/complete-profile');
-              } else {
-                req.flash('success','Berhasil Login');
-                res.redirect('/users/mitra');
-              }
-              break;
+          case 'mitra':
+            const dataMitra = await Model_Mitra.getByIdUsers(Data[0].id_users);
+            if (!dataMitra || dataMitra.length === 0) {
+              req.flash('success', 'Silahkan lengkapi data profil anda');
+              return res.redirect('/users/mitra/complete-profile-mitra');
+            } else {
+              req.flash('success', 'Berhasil Login');
+              return res.redirect('/users/mitra');
+            }
 
-            case 'admin':
-              req.flash('success','Berhasil Login');
-              res.redirect('/admin/dashboard');
-              break;
+          case 'admin':
+            req.flash('success', 'Berhasil Login');
+            return res.redirect('/admin/dashboard');
 
             default:
               req.flash('error','akun tidak valid');
               res.redirect('/')
         }
 
-      }else{
-        req.flash('error','email atau password salah');
-        res.redirect('/login');
+      } else {
+        req.flash('error', 'Email atau password salah');
+        return res.redirect('/login');
       }
+    } else {
+      req.flash('error', 'Akun tidak ditemukan');
+      return res.redirect('/login');
     }
+
   } catch (error) {
-    req.flash('error','Akun tidak ditemukan');
-    res.redirect('/login');
+    req.flash('error', 'Terjadi kesalahan pada server');
+    console.error('Error:', error); // Debug error pada console
+    return res.redirect('/login');
   }
-})
+});
+
 
 router.get('/logout', function(req, res) {
   req.session.destroy(function(err) {

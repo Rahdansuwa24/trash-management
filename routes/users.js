@@ -48,7 +48,7 @@ const checkDeviceStatus = async (req, res, next) => {
     req.flash('error', 'Akses diblokir untuk perangkat ini. Silakan hubungi administrator.');
     return res.redirect('/login');
   }
-
+  
   next();
 };
 
