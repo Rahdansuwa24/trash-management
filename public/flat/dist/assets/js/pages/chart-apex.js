@@ -210,9 +210,9 @@ $(document).ready(function() {
                     height: 320,
                     type: 'pie',
                 },
-                labels: ['Team A', 'Team B', 'Team C', 'Team D', 'Team E'],
-                series: [44, 55, 13, 43, 22],
-                colors: ["#1abc9c", "#0e9e4a", "#00acc1", "#f1c40f", "#e74c3c"],
+                labels: ['Plastik', 'Logam', 'Kertas', 'Lainnya'],
+                series: [44, 55, 13, 43],
+                colors: ["#1abc9c", "#0e9e4a", "#00acc1", "#f1c40f"],
                 legend: {
                     show: true,
                     position: 'bottom',

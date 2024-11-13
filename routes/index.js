@@ -76,7 +76,7 @@ router.post('/log', async (req, res) => {
               console.log('jenis mitra:', jenisMitra)
               if(jenisMitra === 'pemerintah'){
                 req.flash('success', 'Berhasil Login');
-                return res.redirect('/users/mitra');
+                return res.redirect('/users/mitra/pemerintah');
               }else if(jenisMitra === 'non-pemerintah'){
                 req.flash('success', 'Berhasil Login');
                 return res.redirect('/users/mitra/non-pemerintah');

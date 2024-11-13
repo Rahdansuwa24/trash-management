@@ -9,18 +9,89 @@
 <body>
 	<div class="complete-profile-mitra">  	
 		<div class="form-complete-profile-mitra">
-			<form autocomplete="on" action="/users/mitra/save-profile" method="post">
+			<form autocomplete="off" action="/users/mitra/save-profile" method="post">
 				<label for="chk" aria-hidden="true">DATA MITRA</label>
-				<select class="dropdown_signup btn-primary" name="jenis_mitra">
+				<select class="dropdown_signup btn-primary" name="jenis_kelamin">
 					<option selected disabled hidden>Jenis Mitra:</option>
-					<option value="pemerintah">pemerintah</option>
-					<option value="non-pemerintah">non pemerintah</option>
+					<option value="pemerintah">Pemerintah</option>
+					<option value="non-pemerintah">Non_Pemerintah</option>
 				</select>					
-				<input type="number" name="no_telp" placeholder="Telepon Kantor" required="">
-				<input type="text" name="alamat" placeholder="Alamat Kantor" required="">
+				<input type="text" name="no_telp" placeholder="No Telepon" required="">
+				<select class="dropdown_signup btn-primary" name="provinsi" id="provinsi">
+					<option selected disabled hidden>provinsi:</option>
+				</select>	
+				<select class="dropdown_signup btn-primary" name="kota" id="kota">
+					<option selected disabled hidden>kota:</option>
+				</select>	
+				<select class="dropdown_signup btn-primary" name="kecamatan" id="kecamatan">
+					<option selected disabled hidden>kecamatan:</option>
+				</select>	
+				<select class="dropdown_signup btn-primary" name="kelurahan" id="kelurahan">
+					<option selected disabled hidden>kelurahan:</option>
+				</select>	
 				<button type="submit">Sign up</button>
 			</form>
 		</div>
 	</div>
+
+	<script>
+		fetch("https://kanglerian.github.io/api-wilayah-indonesia/api/provinces.json")
+			.then(response => response.json())
+			.then(provinces => {
+				var data = provinces;
+				var tampung = '<option>Provinsi</option>';
+				data.forEach(element => {
+					tampung += `<option data-reg="${element.id}" value="${element.name}">${element.name}</option>`;
+				});
+				document.getElementById('provinsi').innerHTML = tampung;
+			});
+	
+		const pilihProvinsi = document.getElementById('provinsi');
+		pilihProvinsi.addEventListener('change', (e) => {
+			var provinsi = e.target.options[e.target.selectedIndex].dataset.reg;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/regencies/${provinsi}.json`)
+				.then(response => response.json())
+				.then(regencies => {
+					var data = regencies;
+					var tampung = '<option>Kota</option>';
+					data.forEach(element => {
+						tampung += `<option data-dist="${element.id}" value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kota').innerHTML = tampung;
+				});
+		});
+	
+		const pilihKota = document.getElementById('kota');
+		pilihKota.addEventListener('change', (e) => {
+			var kota = e.target.options[e.target.selectedIndex].dataset.dist;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/districts/${kota}.json`)
+				.then(response => response.json())
+				.then(districts => {
+					var data = districts;
+					var tampung = '<option>Kecamatan</option>';
+					data.forEach(element => {
+						tampung += `<option data-vill="${element.id}" value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kecamatan').innerHTML = tampung;
+				});
+		});
+	
+		const pilihKecamatan = document.getElementById('kecamatan');
+		pilihKecamatan.addEventListener('change', (e) => {
+			var kecamatan = e.target.options[e.target.selectedIndex].dataset.vill;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/villages/${kecamatan}.json`)
+				.then(response => response.json())
+				.then(villages => {
+					var data = villages;
+					var tampung = '<option>Kelurahan</option>';
+					data.forEach(element => {
+						tampung += `<option value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kelurahan').innerHTML = tampung;
+				});
+		});
+	</script>
+	
+
 </body>
 </html>

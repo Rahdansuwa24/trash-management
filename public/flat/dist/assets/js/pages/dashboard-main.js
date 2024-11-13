@@ -11,7 +11,7 @@ function floatchart() {
         var options1 = {
             chart: {
                 type: 'area',
-                height: 65,
+                height: 180,
                 sparkline: {
                     enabled: true
                 }
@@ -22,7 +22,7 @@ function floatchart() {
                 width: 2,
             },
             series: [{
-                data: [0, 20, 10, 45, 30, 55, 20, 30, 0]
+                data: [0, 75, 10, 45, 30, 55, 20, 30, 0]
             }],
             tooltip: {
                 fixed: {
