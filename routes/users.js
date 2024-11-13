@@ -33,8 +33,20 @@ const storageVideo = multer.diskStorage({
   }
 })
 
-  const uploadImage = multer({ storage: storageImage })
-  const uploadVideo = multer({ storage: storageVideo })
+const upload = multer({
+  storage: function (req, file, cb) {
+    if (file.fieldname === 'file_foto') {
+      cb(null, storageImage);
+    } else if (file.fieldname === 'file_video') {
+      cb(null, storageVideo);
+    }
+  }
+});
+
+const uploadFields = upload.fields([
+  { name: 'file_foto', maxCount: 1 },
+  { name: 'file_video', maxCount: 1 }
+]);
 
 const ensureWarga = (req, res, next) => {
     if (req.session.userID && req.session.role_users == 'warga') {
@@ -148,8 +160,32 @@ try {
     }
 });
 
-router.get('/mitra', function(req, res, next) {
-  res.render('mitra/index');
+router.get('/mitra/pemerintah', ensureMitra, async function(req, res, next) {
+
+  let id = req.session.userID
+  let Mitra = await Model_Mitra.getByIdUsers(id);
+  let tipe = Mitra.jenis_mitra
+
+  if(tipe == 'pemerintah'){
+    res.render('mitra/pemerintah/index');//kuubah
+  }else{
+    res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
+  }
+});
+
+router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) {
+  console.log('role: ', req.session.role_users);
+  console.log('ID: ', req.session.userID);
+
+  let id = req.session.userID
+  let Mitra = await Model_Mitra.getByIdUsers(id);
+  let tipe = Mitra.jenis_mitra
+  if(tipe == 'non-pemerintah'){
+    res.render('mitra/non-pemerintah/index');
+
+  }else{
+    res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
+  }
 });
 
 router.get('/warga', function(req, res, next) {
@@ -169,10 +205,10 @@ router.get('/warga/sell/create', function(req, res, next) {
   res.render('users/create');
 });
 
-router.post('/warga/sell/sampah/submit', uploadImage.single('file_foto'),  uploadVideo.single('file_video'),async function(req, res, next) {
+router.post('/warga/sell/sampah/submit', uploadFields, async function(req, res, next) {
  let id_warga = req.session.userID
- let file_foto = req.file.filename
- let file_video = req.file.filename
+ let file_foto = req.files['file_foto']
+ let file_video = req.files['file_video']
  let {deskripsi_laporan, jenis_sampah, provinsi, kota, kelurahan, kecamatan} = req.body
 
  let Data = {id_warga, deskripsi_laporan, jenis_sampah, lokasi, file_foto, file_video, provinsi, kota, kelurahan, kecamatan}
