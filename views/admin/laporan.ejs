@@ -61,7 +61,10 @@
 						<label>Navigation</label>
 					</li>
 					<li class="nav-item">
-					    <a href="/users/mitra/non-pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
+					    <a href="/admin" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Account</span></a>
+					</li>
+                    <li class="nav-item">
+					    <a href="/admin/laporan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan</span></a>
 					</li>
 
 					<li class="nav-item pcoded-menu-caption">
@@ -196,6 +199,43 @@
 	
 
     <!-- [ Main Content ] start -->
+    <!-- ini modal foto agar tombol pada field bisa berfungsi -->
+    <div class="modal fade" id="mediaModal1" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabel1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mediaModalLabel1">Gambar</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Gambar di dalam modal -->
+                    <img src="/deskapp2/vendors/images/img2.jpg" alt="Gambar" style="width: 100%; height: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+     <!-- ini modal video agar tombol pada field bisa berfungsi -->
+    <div class="modal fade" id="mediaModal2" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabel2" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="mediaModalLabel2">Video</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <!-- Video di dalam modal -->
+                    <video controls style="width: 100%; height: auto;">
+                        <source src="/deskapp2/vendors/images/video.mp4" type="video/mp4">
+                        Browser Anda tidak mendukung tag video.
+                    </video>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="pcoded-main-container">
         <div class="pcoded-content">
             <!-- [ breadcrumb ] start -->
@@ -204,11 +244,12 @@
                     <div class="row align-items-center">
                         <div class="col-md-12">
                             <div class="page-header-title">
-                                <h5 class="m-b-10">SELAMAT DATANG <- users -></h5>
+                                <h5 class="m-b-10">KOTAK LAPORAN</h5>
                             </div>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/admin"><i class="feather icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="/admin">Account</a></li>
+                                <li class="breadcrumb-item"><a href="/admin/laporan">Laporan</a></li>
                             </ul>
                         </div>
                     </div>
@@ -216,55 +257,46 @@
             </div>
             <!-- [ breadcrumb ] end -->
             <!-- [ Main Content ] start -->
-			<div class="card mb-3carousel">
-				<div id="carouselExampleCaptions" class="carousel slide" data-ride="carousel" style="padding: 3%;">
-					<h6>Nama: </h6>
-					<!-- <ol class="carousel-indicators">
-						<li data-target="#carouselExampleCaptions" data-slide-to="0" class="active"></li>
-						<li data-target="#carouselExampleCaptions" data-slide-to="1"></li>
-						<li data-target="#carouselExampleCaptions" data-slide-to="2"></li>
-					</ol> -->
-					<div class="carousel-inner mb-3">
-						<div class="carousel-item active">
-							<img class="d-carousel w-100" src="/deskapp2/vendors/images/img1.jpg" alt="First slide">
-							<div class="carousel-caption d-none d-md-block">
-								<h5 class="color-white">First slide label</h5>
-								<p>Nulla vitae elit libero, a pharetra augue mollis interdum.</p>
-							</div>
-						</div>
-						<div class="carousel-item">
-							<img class="d-carousel w-100" src="/deskapp2/vendors/images/img2.jpg" alt="First slide">
-							<div class="carousel-caption d-none d-md-block">
-								<h5 class="color-white">First slide label</h5>
-								<p>Nulla vitae elit libero, a pharetra augue mollis interdum.</p>
-							</div>
-						</div>
-						<div class="carousel-item">
-							<video class="d-carousel w-100" controls>
-								<source src="/deskapp2/vendors/images/video2.mp4" type="video/mp4">
-								Your browser does not support the video tag.
-							</video>
-							<div class="carousel-caption d-none d-md-block">
-								<h5 class="color-white">Third slide label</h5>
-								<p>Praesent commodo cursus magna, vel scelerisque nisl consectetur.</p>
-							</div>
-						</div>
-					</div>
-					<a class="carousel-control-prev" href="#carouselExampleCaptions" role="button" data-slide="prev">
-						<span class="carousel-control-prev-icon" aria-hidden="true"></span>
-						<span class="sr-only">Previous</span>
-					</a>
-					<a class="carousel-control-next" href="#carouselExampleCaptions" role="button" data-slide="next">
-						<span class="carousel-control-next-icon" aria-hidden="true"></span>
-						<span class="sr-only">Next</span>
-					</a>
-				</div>
-				<div class="block" style="padding: 3%;">
-					<h6>Lokasi: </h6>
-					<h6>No HP: </h6>
-					<a href="/" class="btn btn-danger">Laporkan</a>
-				</div>
-			</div>
+			<div class="col-lg-auto col-md-12">
+                <div class="card table-card review-card">
+                    <div class="card-header borderless ">
+                        <h5>Laporan</h5>
+                        <div class="card-header-right">
+                            <div class="btn-group card-option">
+                                <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <i class="feather icon-more-horizontal"></i>
+                                </button>
+                                <ul class="list-unstyled card-option dropdown-menu dropdown-menu-right">
+                                    <li class="dropdown-item full-card"><a href="#!"><span><i class="feather icon-maximize"></i> maximize</span><span style="display:none"><i class="feather icon-minimize"></i> Restore</span></a></li>
+                                    <li class="dropdown-item minimize-card"><a href="#!"><span><i class="feather icon-minus"></i> collapse</span><span style="display:none"><i class="feather icon-plus"></i> expand</span></a></li>
+                                    <li class="dropdown-item reload-card"><a href="#!"><i class="feather icon-refresh-cw"></i> reload</a></li>
+                                    <li class="dropdown-item close-card"><a href="#!"><i class="feather icon-trash"></i> remove</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body pb-0">
+                        <div class="review-block">
+                            <div class="row">
+                                <div class="col">
+                                    <h6 class="m-b-15">John Deo <span class="float-right f-13 text-muted"> a week ago</span></h6>
+                                    <div class="komen">
+                                        <span>Users dilaporkan: Danang</span>
+                                        <span>Alasan: <p class="m-t-15 m-b-15 text-muted">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptate mollitia natus eveniet, eum aliquid maiores. Maiores beatae aperiam alias. Excepturi beatae voluptatibus id esse expedita aut ipsum maiores eligendi temporibus. </p></span>
+                                        <button type="button" class="btn btn-primary mb-3" style="width: 15%;" data-toggle="modal" data-target="#mediaModal1">
+                                            Lihat Gambar
+                                        </button>
+                                        <button type="button" class="btn btn-primary mb-3" style="width: 15%;" data-toggle="modal" data-target="#mediaModal2">
+                                            Lihat Video
+                                        </button>
+                                    </div>
+                                    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- [ Main Content ] end -->
         </div>
     </div>
@@ -400,6 +432,8 @@
       });
     </script>
 	<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 

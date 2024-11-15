@@ -61,9 +61,11 @@
 						<label>Navigation</label>
 					</li>
 					<li class="nav-item">
-					    <a href="/users/mitra/non-pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
+					    <a href="/users/mitra/pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
 					</li>
-
+                    <li class="nav-item">
+					    <a href="/users/mitra/pemerintah/laporan_masuk" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan Masuk</span></a>
+					</li>
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>
 					</li>
@@ -204,11 +206,13 @@
                     <div class="row align-items-center">
                         <div class="col-md-12">
                             <div class="page-header-title">
-                                <h5 class="m-b-10">SELAMAT DATANG <- users -></h5>
+                                <h5 class="m-b-10">BUAT BALASAN LAPORAN WARGA</h5>
                             </div>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/users/warga"><i class="feather icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="/users/warga">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk">Laporan Masuk</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas Laporan</a></li>
                             </ul>
                         </div>
                     </div>
@@ -216,55 +220,38 @@
             </div>
             <!-- [ breadcrumb ] end -->
             <!-- [ Main Content ] start -->
-			<div class="card mb-3carousel">
-				<div id="carouselExampleCaptions" class="carousel slide" data-ride="carousel" style="padding: 3%;">
-					<h6>Nama: </h6>
-					<!-- <ol class="carousel-indicators">
-						<li data-target="#carouselExampleCaptions" data-slide-to="0" class="active"></li>
-						<li data-target="#carouselExampleCaptions" data-slide-to="1"></li>
-						<li data-target="#carouselExampleCaptions" data-slide-to="2"></li>
-					</ol> -->
-					<div class="carousel-inner mb-3">
-						<div class="carousel-item active">
-							<img class="d-carousel w-100" src="/deskapp2/vendors/images/img1.jpg" alt="First slide">
-							<div class="carousel-caption d-none d-md-block">
-								<h5 class="color-white">First slide label</h5>
-								<p>Nulla vitae elit libero, a pharetra augue mollis interdum.</p>
-							</div>
-						</div>
-						<div class="carousel-item">
-							<img class="d-carousel w-100" src="/deskapp2/vendors/images/img2.jpg" alt="First slide">
-							<div class="carousel-caption d-none d-md-block">
-								<h5 class="color-white">First slide label</h5>
-								<p>Nulla vitae elit libero, a pharetra augue mollis interdum.</p>
-							</div>
-						</div>
-						<div class="carousel-item">
-							<video class="d-carousel w-100" controls>
-								<source src="/deskapp2/vendors/images/video2.mp4" type="video/mp4">
-								Your browser does not support the video tag.
-							</video>
-							<div class="carousel-caption d-none d-md-block">
-								<h5 class="color-white">Third slide label</h5>
-								<p>Praesent commodo cursus magna, vel scelerisque nisl consectetur.</p>
-							</div>
-						</div>
-					</div>
-					<a class="carousel-control-prev" href="#carouselExampleCaptions" role="button" data-slide="prev">
-						<span class="carousel-control-prev-icon" aria-hidden="true"></span>
-						<span class="sr-only">Previous</span>
-					</a>
-					<a class="carousel-control-next" href="#carouselExampleCaptions" role="button" data-slide="next">
-						<span class="carousel-control-next-icon" aria-hidden="true"></span>
-						<span class="sr-only">Next</span>
-					</a>
-				</div>
-				<div class="block" style="padding: 3%;">
-					<h6>Lokasi: </h6>
-					<h6>No HP: </h6>
-					<a href="/" class="btn btn-danger">Laporkan</a>
-				</div>
-			</div>
+			<div class="pcoded-wrapper container">
+                <div class="col-sm-12">
+                     <form class="card" action="" method="post">
+                        <div class="card-header">
+                            <h5>Balas Laporan Warga</h5>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="mt-3">Pesan</h5>
+                            <textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
+                        
+                            <h5 class="mt-3">File Foto</h5>
+                            <div class="input-group mb-3">
+                                <div class="form-select">
+                                    <input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+                                    <label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-3">File Video</h5>
+                            <div class="input-group mb-3">
+                                <div class="form-select">
+                                    <input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+                                    <label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
+                            <a href="/users/mitra/pemerintah/laporan_masuk" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
+                        </div>
+                    </form> 
+                </div>
+            </div>
             <!-- [ Main Content ] end -->
         </div>
     </div>
@@ -343,64 +330,68 @@
     <!-- Kaiadmin DEMO methods, don't include it in your project! -->
     <!-- <script src="/kaiadmin/assets/js/setting-demo2.js"></script> -->
     <script>
-      $(document).ready(function () {
-        $("#basic-datatables").DataTable({});
+		function updateFileName(input) {
+			const fileName = input.files[0]?.name || "Pilih file";
+			input.nextElementSibling.innerHTML = fileName;
+		}
+	</script>
+    <script>
+		fetch("https://kanglerian.github.io/api-wilayah-indonesia/api/provinces.json")
+			.then(response => response.json())
+			.then(provinces => {
+				var data = provinces;
+				var tampung = '<option>Provinsi</option>';
+				data.forEach(element => {
+					tampung += `<option data-reg="${element.id}" value="${element.name}">${element.name}</option>`;
+				});
+				document.getElementById('provinsi').innerHTML = tampung;
+			});
 
-        $("#multi-filter-select").DataTable({
-          pageLength: 5,
-          initComplete: function () {
-            this.api()
-              .columns()
-              .every(function () {
-                var column = this;
-                var select = $(
-                  '<select class="form-select"><option value=""></option></select>'
-                )
-                  .appendTo($(column.footer()).empty())
-                  .on("change", function () {
-                    var val = $.fn.dataTable.util.escapeRegex($(this).val());
+		const pilihProvinsi = document.getElementById('provinsi');
+		pilihProvinsi.addEventListener('change', (e) => {
+			var provinsi = e.target.options[e.target.selectedIndex].dataset.reg;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/regencies/${provinsi}.json`)
+				.then(response => response.json())
+				.then(regencies => {
+					var data = regencies;
+					var tampung = '<option>Kota</option>';
+					data.forEach(element => {
+						tampung += `<option data-dist="${element.id}" value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kota').innerHTML = tampung;
+				});
+		});
 
-                    column
-                      .search(val ? "^" + val + "$" : "", true, false)
-                      .draw();
-                  });
+		const pilihKota = document.getElementById('kota');
+		pilihKota.addEventListener('change', (e) => {
+			var kota = e.target.options[e.target.selectedIndex].dataset.dist;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/districts/${kota}.json`)
+				.then(response => response.json())
+				.then(districts => {
+					var data = districts;
+					var tampung = '<option>Kecamatan</option>';
+					data.forEach(element => {
+						tampung += `<option data-vill="${element.id}" value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kecamatan').innerHTML = tampung;
+				});
+		});
 
-                column
-                  .data()
-                  .unique()
-                  .sort()
-                  .each(function (d, j) {
-                    select.append(
-                      '<option value="' + d + '">' + d + "</option>"
-                    );
-                  });
-              });
-          },
-        });
-
-        // Add Row
-        $("#add-row").DataTable({
-          pageLength: 5,
-        });
-
-        var action =
-          '<td> <div class="form-button-action"> <button type="button" data-bs-toggle="tooltip" title="" class="btn btn-link btn-primary btn-lg" data-original-title="Edit Task"> <i class="fa fa-edit"></i> </button> <button type="button" data-bs-toggle="tooltip" title="" class="btn btn-link btn-danger" data-original-title="Remove"> <i class="fa fa-times"></i> </button> </div> </td>';
-
-        $("#addRowButton").click(function () {
-          $("#add-row")
-            .dataTable()
-            .fnAddData([
-              $("#addName").val(),
-              $("#addPosition").val(),
-              $("#addOffice").val(),
-              action,
-            ]);
-          $("#addRowModal").modal("hide");
-        });
-      });
-    </script>
-	<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+		const pilihKecamatan = document.getElementById('kecamatan');
+		pilihKecamatan.addEventListener('change', (e) => {
+			var kecamatan = e.target.options[e.target.selectedIndex].dataset.vill;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/villages/${kecamatan}.json`)
+				.then(response => response.json())
+				.then(villages => {
+					var data = villages;
+					var tampung = '<option>Kelurahan</option>';
+					data.forEach(element => {
+						tampung += `<option value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kelurahan').innerHTML = tampung;
+				});
+		});
+	</script>
 </body>
 
 </html>

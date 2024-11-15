@@ -61,12 +61,11 @@
 						<label>Navigation</label>
 					</li>
 					<li class="nav-item">
-					    <a href="/users/mitra/pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
+					    <a href="/admin" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Account</span></a>
 					</li>
-                    <li class="nav-item">
-					    <a href="/users/mitra/pemerintah/laporan_masuk" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-plus"></i></span><span class="pcoded-mtext">Laporan Masuk</span></a>
+					<li class="nav-item">
+					    <a href="/admin/laporan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan</span></a>
 					</li>
-					
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>
 					</li>
@@ -213,9 +212,8 @@
                                 <h5 class="m-b-10">KOTAK LAPORAN</h5>
                             </div>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk">Laporan Masuk</a></li>
+                                <li class="breadcrumb-item"><a href="/admin"><i class="feather icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="/admin">Account</a></li>
                             </ul>
                         </div>
                     </div>
@@ -271,262 +269,225 @@
 							<table id="basic-datatables" class="display table table-striped table-hover">
 							<thead>
 								<tr>
-								<th>Nama Pengirim</th>
-								<th>No HP</th>
-								<th>Lokasi</th>
-								<th>File Foto</th>
-								<th>File video</th>
+								<th>Nama</th>
                                 <th>Status</th>
+								<th>Role</th>
                                 <th>Tindakan</th>
 								</tr>
 							</thead>
 							<tbody>
                                 <tr>
                                     <td>Airi Satou</td>
+                                    <td><span class="badge badge-success">Active</span></td>
                                     <td>Accountant</td>
-                                    <td>Tokyo</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
                                     <td>
                                         <div class="dropdown">
                                             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                                 Tindakan
                                             </button>
                                             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
+                                                <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                                <a class="dropdown-item" href="#">Edit</a>
+                                                <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                                <a class="dropdown-item" href="#">Banned</a>
                                             </div>
                                         </div>
                                     </td>
                                 </tr>
 								<tr>
 								<td>Garrett Winters</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Accountant</td>
-								<td>Tokyo</td>
-								<td>63</td>
-								<td>2011/07/25</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
                                             <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Ashton Cox</td>
+                                <td><span class="badge badge-dark">Banned</span></td>
 								<td>Junior Technical Author</td>
-								<td>San Francisco</td>
-								<td>66</td>
-								<td>2009/01/12</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
                                             <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Cedric Kelly</td>
+                                <td><span class="badge badge-dark">Banned</span></td>
 								<td>Senior Javascript Developer</td>
-								<td>Edinburgh</td>
-								<td>22</td>
-								<td>2012/03/29</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Brielle Williamson</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Integration Specialist</td>
-								<td>New York</td>
-								<td>61</td>
-								<td>2012/12/02</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Herrod Chandler</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Sales Assistant</td>
-								<td>San Francisco</td>
-								<td>59</td>
-								<td>2012/08/06</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Rhona Davidson</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Integration Specialist</td>
-								<td>Tokyo</td>
-								<td>55</td>
-								<td>2010/10/14</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Charde Marshall</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Regional Director</td>
-								<td>San Francisco</td>
-								<td>36</td>
-								<td>2008/10/16</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Haley Kennedy</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Senior Marketing Designer</td>
-								<td>London</td>
-								<td>43</td>
-								<td>2012/12/18</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Tatyana Fitzpatrick</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Regional Director</td>
-								<td>London</td>
-								<td>19</td>
-								<td>2010/03/17</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Michael Silva</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Marketing Designer</td>
-								<td>London</td>
-								<td>66</td>
-								<td>2012/11/27</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>
 								</tr>
 								<tr>
 								<td>Paul Byrd</td>
+                                <td><span class="badge badge-success">Active</span></td>
 								<td>Chief Financial Officer (CFO)</td>
-								<td>New York</td>
-								<td>64</td>
-								<td>2010/06/09</td>
-                                <td><span class="badge badge-success">Success</span></td>
                                 <td>
                                     <div class="dropdown">
                                         <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                             Tindakan
                                         </button>
                                         <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                            <a class="dropdown-item" href="#">View</a>
-                                            <a class="dropdown-item" href="#">Edit</a>
-                                            <a class="dropdown-item" href="#">Delete</a>
+                                            <a class="dropdown-item" href="#">Jadikan Admin</a>
+                                            <a class="dropdown-item" href="#">Jadikan Mitra</a>
+                                            <a class="dropdown-item" href="#">Jadikan Warga</a>
+                                            <a class="dropdown-item" href="#">Banned</a>
                                         </div>
                                     </div>
                                 </td>

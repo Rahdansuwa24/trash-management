@@ -264,8 +264,8 @@ router.post('/warga/sell/sampah_komersil/update', async function(req, res, next)
 });
 
 
-router.get('/warga/sell/sampah_ilegal', function(req, res, next) {
-  res.render('users/create')
+router.get('/warga/sampah_ilegal', function(req, res, next) {
+  res.render('users/ilegal')
 });
 
 router.post('/warga/sampah_ilegal/submit', async function(req, res, next) {

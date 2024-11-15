@@ -6448,7 +6448,10 @@ a.close.disabled {
     padding: 0.5rem 0.75rem;
     color: #373a3c;
 }
-
+.komen{
+    display: flex;
+    flex-direction: column;
+}
 .carousel {
     position: relative;
 }
@@ -6481,9 +6484,12 @@ a.close.disabled {
     transition: transform 0.6s ease-in-out;
 }
 
-.carousel-item img,
+.carousel-item img{
+    object-fit:fill;
+    background-color: #000;
+}
 .carousel-item video{
-    object-fit: contain;
+    object-fit:contain;
     background-color: #000;
 }
 
@@ -20123,6 +20129,7 @@ pre[class*=language-]:before {
 .b-brand {
     display: flex;
     align-items: center;
+    scale: 0.17;
 }
 
 .b-brand .b-bg {
