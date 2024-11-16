@@ -17,14 +17,6 @@ router.get('/login', async(req, res, next) =>{
   res.render('auth/login')
 })
 
-router.get('/admin', function(req, res, next) {
-  res.render('admin/index')
-});
-
-router.get('/admin/laporan', function(req, res, next) {
-  res.render('admin/laporan')
-});
-
 router.post('/saveusers', async(req, res, next) => {
   try {
     let {nama_users, email, password, role_users} = req.body;
