@@ -229,23 +229,20 @@
                                     <input type="text" class="form-control" name="alamat_laporan" placeholder="users" readonly>
                                 </div>
                             </div>
+                            <h5 class="mt-3">Jenis Pelanggaran</h5>
+								<div class="input-group mb-3">
+									<select class="form-control" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
+										<option selected disabled hidden>Choose...</option>
+										<option value="plastik">Penjualan Palsu</option>
+										<option value="logam">Content Tidak Pantas</option>
+										<option value="kertas">SARA</option>
+										<option value="lainnya">Lainnya</option>
+									</select>
+								</div>
 
                             <h5 class="mt-3">Deskripsi</h5>
                             <textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
                             
-                            <h5 class="mt-3">Pilih Alasan</h5>
-								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
-											<option selected disabled hidden>Choose...</option>
-											<option value="plastik">Penjualan Palsu</option>
-											<option value="logam">Content Tidak Pantas</option>
-											<option value="kertas">SARA</option>
-											<option value="lainnya">Lainnya</option>
-										</select>
-										<label class="custom-file-label" for="jenisSampah" id="labelJenisSampah">Alasan anda...</label>
-									</div>
-								</div>
                             <h5 class="mt-3">File Foto</h5>
                             <div class="input-group mb-3">
                                 <div class="form-select">
