@@ -160,6 +160,28 @@ try {
     }
 });
 
+router.get('/', async function(req, res, next) {
+  if(!req.session.userID){
+    req.flash('warning', 'anda harus login')
+    return res.redirect('/login')
+  }
+  let id = req.session.userID
+  console.log(id)
+  let Data = await Model_Users.getId(id)
+  let dataWarga = await Model_Warga.getByIdUsers(id)
+  let daraMitra = await Model_Mitra.getByIdUsers(id)
+
+  console.log(dataWarga)
+
+  if (Data[0].id_users === dataWarga.id_users) {
+    res.redirect(`/users/warga/${dataWarga.id_warga}`)
+  } else {
+    req.flash('error', 'Data warga tidak ditemukan');
+    return res.redirect('/error_page');  // Redirect ke halaman error jika data warga tidak ditemukan
+  }
+});
+
+
 router.get('/mitra/pemerintah', ensureMitra, async function(req, res, next) {
 
   let id = req.session.userID
@@ -199,13 +221,15 @@ router.get('/warga/sell', function(req, res, next) {
     res.render('users/sell');
 });
 
-router.get('/warga/sell/create', function(req, res, next) {
+router.get('/warga/sell', function(req, res, next) {
   let id_warga = req.session.userID
   console.log(id_warga)
   address((err, addrs) => {
     console.log(addrs.ip, addrs.ipv6, addrs.mac);
   });
-  res.render('users/create');
+  res.render('users/sell', {
+    id_warga
+  });
 });
 
 router.post('/warga/sell/sampah/submit', uploadFields, async function(req, res, next) {
@@ -217,11 +241,11 @@ router.post('/warga/sell/sampah/submit', uploadFields, async function(req, res, 
  let Data = {id_warga, deskripsi_laporan, jenis_sampah, lokasi, file_foto, file_video, provinsi, kota, kelurahan, kecamatan}
 
  await Model_Sampah_Komersil.Store(Data)
- res.redirect('/warga/sell/create')
+ res.redirect('/warga/sell')
 });
 
 router.get('/warga/sell/sampah_komersil/edit', function(req, res, next) {
-  res.render('users/create');
+  res.render('users/sell');
 });
 
 router.post('/warga/sell/sampah_komersil/update', async function(req, res, next) {
@@ -260,12 +284,12 @@ router.post('/warga/sell/sampah_komersil/update', async function(req, res, next)
         });
     }
     await Model_Sampah_Komersil.Delete(Data)
-    res.redirect('/warga/sell/create')
+    res.redirect('/warga/sell')
 });
 
 
-router.get('/warga/sell/sampah_ilegal', function(req, res, next) {
-  res.render('users/create')
+router.get('/warga/sampah_ilegal', function(req, res, next) {
+  res.render('users/ilegal')
 });
 
 router.post('/warga/sampah_ilegal/submit', async function(req, res, next) {
@@ -296,5 +320,10 @@ router.get('/warga/sampah_ilegal/delete', function(req, res, next) {
   res.render('users/ilegal')
 });
 
-
+router.get('/mitra/pemerintah/laporan_masuk/balas_akun', function(req, res, next) {
+  res.render('mitra/pemerintah/balas_akun')
+});
+router.get('/mitra/pemerintah/laporan_masuk/report_akun', function(req, res, next) {
+  res.render('mitra/pemerintah/report_akun')
+});
 module.exports = router;

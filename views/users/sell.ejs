@@ -288,13 +288,11 @@
             
             <div class="row">
                 <div class="col-sm-12">
-                     <form class="card" action="" method="post">
+                    <form action="/users/warga/sell/sampah//submit" method="post" enctype="multipart/form-data">
                         <div class="card-header">
                             <h5>Jual Sampah Anda</h5>
                         </div>
                         <div class="card-body">
-							<form action="/users/warga/sell/sampah/submit" method="post" enctype="multipart/form-data">
-
 								<h5 class="mt-3">Deskripsi Sampah</h5>
 								<textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
 								
@@ -360,7 +358,7 @@
 								<h5 class="mt-3">File Foto</h5>
 								<div class="input-group mb-3">
 									<div class="form-select">
-										<input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+										<input type="file" class="custom-file-input" name="file_foto" id="inputGroupFile01" onchange="updateFileName(this)">
 										<label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
 									</div>
 								</div>
@@ -368,14 +366,13 @@
 								<h5 class="mt-3">File Video</h5>
 								<div class="input-group mb-3">
 									<div class="form-select">
-										<input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+										<input type="file" class="custom-file-input" name="file_video" id="inputGroupFile02" onchange="updateFileName(this)">
 										<label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
 									</div>
 								</div>
 	
 								<button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
 								<a href="/users/warga" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
-							</form>
                         </div>
                     </form> 
                 </div>
