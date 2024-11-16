@@ -190,7 +190,9 @@ router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) 
     res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
   }
 });
-
+router.get('/mitra/non-pemerintah/lapor', function(req, res, next) {
+  res.render('mitra/non-pemerintah/lapor');
+});
 router.get('/warga', function(req, res, next) {
     res.render('users/index');
 });
