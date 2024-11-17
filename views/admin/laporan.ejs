@@ -61,12 +61,11 @@
 						<label>Navigation</label>
 					</li>
 					<li class="nav-item">
-					    <a href="/admin" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Account</span></a>
+					    <a href="/admin/data-user" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Account</span></a>
 					</li>
-                    <li class="nav-item">
-					    <a href="/admin/laporan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan</span></a>
+					<li class="nav-item">
+					    <a href="/admin/laporan-akun" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan</span></a>
 					</li>
-
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>
 					</li>
@@ -211,7 +210,7 @@
                 </div>
                 <div class="modal-body">
                     <!-- Gambar di dalam modal -->
-                    <img src="/deskapp2/vendors/images/img2.jpg" alt="Gambar" style="width: 100%; height: auto;">
+                    <img src="<%= rows[0].file_foto %>" alt="Gambar" style="width: 100%; height: auto;">
                 </div>
             </div>
         </div>
@@ -229,7 +228,7 @@
                 <div class="modal-body">
                     <!-- Video di dalam modal -->
                     <video controls style="width: 100%; height: auto;">
-                        <source src="/deskapp2/vendors/images/video.mp4" type="video/mp4">
+                        <source src="<%= rows[0].file_video %>" type="video/mp4">
                         Browser Anda tidak mendukung tag video.
                     </video>
                 </div>
@@ -268,10 +267,10 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <p><strong>Pelapor:</strong> Danang Bjir</p>
-                    <p><strong>Terlapor:</strong> Iqbal Personal</p>
-                    <p><strong>Jenis Laporan:</strong> Aduan</p>
-                    <p><strong>Deskripsi:</strong> Lorem ipsum, dolor sit amet consectetur adipisicing elit. Ipsum, necessitatibus impedit modi quam, iusto inventore nihil laudantium laboriosam quas officiis, tempore ratione incidunt dolores reprehenderit saepe assumenda sit sed doloremque.</p>
+                    <p><strong>Pelapor:</strong> <%= rows[0].pelapor %></p>
+                    <p><strong>Terlapor:</strong> <%= rows[0].yang_dilaporkan %></p>
+                    <p><strong>Jenis Laporan:</strong> <%= rows[0].jenis_laporan %></p>
+                    <p><strong>Deskripsi:</strong> <%= rows[0].deskripsi_lapor_akun %></p>
                 </div>
                 <div class="modal-footer">
                     <a href="/admin" class="btn btn-dark">Ambil Tindakan</a>
@@ -320,259 +319,89 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>Danang Bjir</td>
-                                    <td>Iqbal Personal</td>
+                                <% for (let i = 0; i < rows.length; i++) { %>
+                                  <tr>
+                                    <td><%= rows[i].pelapor %></td>
+                                    <td><%= rows[i].yang_dilaporkan %></td>
                                     <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
+                                      <!-- Tombol untuk memicu modal gambar -->
+                                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModalImage<%= i %>">
+                                        Lihat Gambar
+                                      </button>
+                                      <!-- Modal untuk gambar -->
+                                      <div class="modal fade" id="mediaModalImage<%= i %>" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabelImage<%= i %>" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered" role="document">
+                                          <div class="modal-content">
+                                            <div class="modal-header">
+                                              <h5 class="modal-title" id="mediaModalLabelImage<%= i %>">Gambar</h5>
+                                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                              </button>
+                                            </div>
+                                            <div class="modal-body">
+                                              <img src="<%= rows[i].file_foto %>" alt="Gambar" style="width: 100%; height: auto;">
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </td>
                                     <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
+                                      <!-- Tombol untuk memicu modal video -->
+                                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModalVideo<%= i %>">
+                                        Lihat Video
+                                      </button>
+                                      <!-- Modal untuk video -->
+                                      <div class="modal fade" id="mediaModalVideo<%= i %>" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabelVideo<%= i %>" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered" role="document">
+                                          <div class="modal-content">
+                                            <div class="modal-header">
+                                              <h5 class="modal-title" id="mediaModalLabelVideo<%= i %>">Video</h5>
+                                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                              </button>
+                                            </div>
+                                            <div class="modal-body">
+                                              <video controls style="width: 100%; height: auto;">
+                                                <source src="<%= rows[i].file_video %>" type="video/mp4">
+                                                Browser Anda tidak mendukung tag video.
+                                              </video>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahKomersil">
-                                            Lihat Detail
-                                        </button>
+                                      <!-- Tombol untuk memicu modal detail -->
+                                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalDetail<%= i %>">
+                                        Lihat Detail
+                                      </button>
+                                      <!-- Modal untuk detail -->
+                                      <div class="modal fade" id="modalDetail<%= i %>" tabindex="-1" role="dialog" aria-labelledby="modalDetailLabel<%= i %>" aria-hidden="true">
+                                        <div class="modal-dialog" role="document">
+                                          <div class="modal-content">
+                                            <div class="modal-header">
+                                              <h5 class="modal-title" id="modalDetailLabel<%= i %>">Detail Laporan</h5>
+                                              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                              </button>
+                                            </div>
+                                            <div class="modal-body">
+                                              <p><strong>Pelapor:</strong> <%= rows[i].pelapor %></p>
+                                              <p><strong>Terlapor:</strong> <%= rows[i].yang_dilaporkan %></p>
+                                              <p><strong>Jenis Laporan:</strong> <%= rows[i].jenis_laporan %></p>
+                                              <p><strong>Deskripsi:</strong> <%= rows[i].deskripsi_lapor_akun %></p>
+                                            </div>
+                                            <div class="modal-footer">
+                                              <a href="/admin" class="btn btn-dark">Ambil Tindakan</a>
+                                              <button type="button" class="btn btn-secondary" data-dismiss="modal">Tutup</button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                      </div>
                                     </td>
-                                </tr>
-                                <tr>
-                                    <td>Garrett Winters</td>
-                                    <td>Accountant</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahIlegal">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Ashton Cox</td>
-                                    <td>Junior Technical Author</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahKomersil">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Fatih AwokAwok</td>
-                                    <td></td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahIlegal">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Brielle Williamson</td>
-                                    <td>Integration Specialist</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahKomersil">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Herrod Chandler</td>
-                                    <td>Sales Assistant</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahIlegal">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Rhona Davidson</td>
-                                    <td>Integration Specialist</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahKomersil">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Charde Marshall</td>
-                                    <td>Regional Director</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahIlegal">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Haley Kennedy</td>
-                                    <td>Senior Marketing Designer</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahKomersil">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Tatyana Fitzpatrick</td>
-                                    <td>Regional Director</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahIlegal">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Michael Silva</td>
-                                    <td>Marketing Designer</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahKomersil">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Paul Byrd</td>
-                                    <td>Chief Financial Officer (CFO)</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modalSampahIlegal">
-                                            Lihat Detail
-                                        </button>
-                                    </td>
-                                </tr>
-                            </tbody>
+                                  </tr>
+                                <% } %>
+                              </tbody>
                             </table>
                         </div>
                         </div>

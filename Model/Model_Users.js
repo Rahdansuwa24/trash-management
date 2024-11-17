@@ -80,9 +80,9 @@ class Model_Users{
         });
     }
 
-    static async unfreezeAcc(id) {
+    static async ActivateAcc(id) {
         return new Promise((resolve, reject) => {
-            connection.query('UPDATE users SET status = "active" WHERE id_users = ?', [id], function(err, result){
+            connection.query(`UPDATE users SET status = 'active' WHERE id_users = ?`, [id], function(err, result){
                 if(err){
                     console.error('Error updating account:', err);
                     reject(err);

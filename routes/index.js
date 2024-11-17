@@ -89,7 +89,7 @@ router.post('/log', async (req, res) => {
 
           case 'admin':
             req.flash('success', 'Berhasil Login');
-            return res.redirect('/admin/dashboard');
+            return res.redirect('/admin/data-user');
             break;
 
           default:
