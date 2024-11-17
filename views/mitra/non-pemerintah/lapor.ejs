@@ -61,10 +61,7 @@
 						<label>Navigation</label>
 					</li>
 					<li class="nav-item">
-					    <a href="/users/mitra/pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
-					</li>
-                    <li class="nav-item">
-					    <a href="/users/mitra/pemerintah/laporan_masuk" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan Masuk</span></a>
+					    <a href="/users/mitra/non-pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
 					</li>
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>
@@ -209,10 +206,9 @@
                                 <h5 class="m-b-10">BUAT LAPORAN AKUN</h5>
                             </div>
                             <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk">Laporan Masuk</a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan Akun</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah"><i class="feather icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah/lapor">Lapor Akun</a></li>
                             </ul>
                         </div>
                     </div>
@@ -227,17 +223,22 @@
                             <h5>Laporkan Akun</h5>
                         </div>
                         <div class="card-body">
+                            <h5 class="mt-3">Akun Dilaporkan</h5>
+                            <div class="input-group mb-3">
+                                <div class="custom-file" style="width: 100%;">
+                                    <input type="text" class="form-control" name="alamat_laporan" placeholder="users" readonly>
+                                </div>
+                            </div>
                             <h5 class="mt-3">Jenis Pelanggaran</h5>
-							<div class="input-group mb-3">
-								<select class="form-control" name="jenis_sampah" id="jenisSampah">
-									<option selected disabled hidden>Choose...</option>
-									<option value="plastik">Laporan Palsu</option>
-									<option value="logam">Tindakan Tidak Sopan</option>
-									<option value="kertas">SARA</option>
-									<option value="lainnya">Lainnya</option>
-								</select>
-							</div>
-							
+								<div class="input-group mb-3">
+									<select class="form-control" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
+										<option selected disabled hidden>Choose...</option>
+										<option value="plastik">Penjualan Palsu</option>
+										<option value="logam">Content Tidak Pantas</option>
+										<option value="kertas">SARA</option>
+										<option value="lainnya">Lainnya</option>
+									</select>
+								</div>
 
                             <h5 class="mt-3">Deskripsi</h5>
                             <textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
@@ -259,7 +260,7 @@
                             </div>
 
                             <button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
-                            <a href="/users/mitra/pemerintah/laporan_masuk" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
+                            <a href="/users/mitra/non-pemerintah" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
                         </div>
                     </form> 
                 </div>
@@ -347,7 +348,7 @@
 			document.getElementById(labelId).innerHTML = selectedOption;
 		}
 	</script>
-	<script>
+    <script>
 		function updateFileName(input) {
 			const fileName = input.files[0]?.name || "Pilih file";
 			input.nextElementSibling.innerHTML = fileName;

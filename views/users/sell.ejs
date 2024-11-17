@@ -233,16 +233,13 @@
 								
 								<h5 class="mt-3">Jenis Sampah</h5>
 								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
-											<option selected disabled hidden>Choose...</option>
-											<option value="plastik">Plastik</option>
-											<option value="logam">Logam</option>
-											<option value="kertas">Kertas</option>
-											<option value="lainnya">Lainnya</option>
-										</select>
-										<label class="custom-file-label" for="jenisSampah" id="labelJenisSampah">Pilih Jenis Sampah</label>
-									</div>
+									<select class="form-control" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
+										<option selected disabled hidden>Choose...</option>
+										<option value="plastik">Plastik</option>
+										<option value="logam">Logam</option>
+										<option value="kertas">Kertas</option>
+										<option value="lainnya">Lainnya</option>
+									</select>
 								</div>
 								<h5 class="mt-3">Lokasi Anda</h5>
 								<div class="input-group mb-3">
