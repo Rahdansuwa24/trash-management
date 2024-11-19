@@ -38,8 +38,8 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span>Bambang</span>
-							<div id="more-details">UX Designer</div>
+							<span><%= Users.nama_users %></span>
+							<div id="more-details"><%= Users.role_users %></div>
 						</div>
 					</div>
 				</div>
@@ -52,7 +52,10 @@
 					    <a href="/admin/data-user" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Account</span></a>
 					</li>
 					<li class="nav-item">
-					    <a href="/admin/laporan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan</span></a>
+					    <a href="/admin/laporan-akun-komersil" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan Komersil</span></a>
+					</li>
+					<li class="nav-item">
+					    <a href="/admin/laporan-akun-ilegal" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan Ilegal</span></a>
 					</li>
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>

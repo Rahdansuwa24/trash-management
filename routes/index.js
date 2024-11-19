@@ -6,7 +6,7 @@ const Model_Warga = require('../Model/Model_Warga');
 const Model_Mitra = require('../Model/Model_Mitra');
 
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.render('landing_page/index', { title: 'THIS' });
 });
 
 router.get('/register', async(req, res, next) =>{

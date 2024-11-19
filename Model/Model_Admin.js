@@ -23,7 +23,7 @@ class Model_Admin{
                 ON kl.id_mitra = m.id_mitra
             JOIN users pelapor
                 ON pelapor.id_users = m.id_users
-            WHERE m.jenis_mitra = 'pemerintah';`
+            WHERE m.jenis_mitra = 'non-pemerintah';`
                 , (err, rows) => {
                 if(err){
                     reject(err);
@@ -74,12 +74,13 @@ class Model_Admin{
         return new Promise((resolve, reject) => {
             connection.query(`
                 SELECT
-                    pelapor.nama_users AS pelapor,
-                    lsi.mac_address AS yang_dilaporkan,
-                    li.file_foto,
-                    li.file_video,
-                    li.jenis_laporan,
-                    li.deskripsi_lapor_akun
+                pelapor.nama_users AS pelapor,
+                lsi.mac_address AS yang_dilaporkan,
+                li.file_foto,
+                li.file_video,
+                li.jenis_laporan,
+                li.deskripsi_lapor_akun,
+                lsi.status_device
                 FROM lapor_akun_laporan_sampah_ilegal li
                 JOIN kotak_laporan_sampah_ilegal kl
                     ON li.id_kotak_laporan_sampah_ilegal = kl.id_kotak_laporan_sampah_ilegal
@@ -89,7 +90,7 @@ class Model_Admin{
                     ON kl.id_mitra = m.id_mitra
                 JOIN users pelapor
                     ON pelapor.id_users = m.id_users
-                WHERE m.jenis_mitra = 'non-pemerintah';
+                WHERE m.jenis_mitra = 'pemerintah';
             `, (err, rows) => {
                 if (err) {
                     reject(err);
@@ -98,6 +99,19 @@ class Model_Admin{
                 }
             });
         });
+    }
+
+    static async getAdminLogin(id){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM users WHERE id_users = ?', [id], (err, rows) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(rows[0]);
+                    console.log(rows);
+                }
+            })
+        })
     }
     
 }

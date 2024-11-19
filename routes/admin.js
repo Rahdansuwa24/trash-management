@@ -26,12 +26,13 @@ router.get('/', async(req, res, next) =>{
 
 router.get('/data-user', ensureAuthenticated, async(req, res, next) =>{
     let id = req.session.userID;
-    let User = await Model_Users.getId(id)
-    let Data = await Model_Users.getAll()
+    let User = await Model_Admin.getAdminLogin(id);
+    console.log('User login: ', User);
+    let Data = await Model_Users.getAll();
     res.render('admin/home', {
         title: 'Data Warga',
         rows: Data,
-        User
+        Users: User
     })
 });
 
@@ -49,10 +50,25 @@ router.get('/delete-users/:id', ensureAuthenticated, async (req, res, next) => {
     }
   });
   
-  router.get('/laporan', ensureAuthenticated, async (req, res, next)=> {
-    let data = await Model_Admin.getLaporanAkunKomersil()
-    res.render('admin/laporan',{
-      rows: data
+  router.get('/laporan-akun-komersil', ensureAuthenticated, async (req, res, next)=> {
+    let id = req.session.userID;
+    let User = await Model_Admin.getAdminLogin(id);
+    let data = await Model_Admin.getLaporanAkunKomersil();
+    res.render('admin/laporan-komersil',{
+      rows: data,
+      Users: User
+    }
+  )
+});
+
+  router.get('/laporan-akun-ilegal', ensureAuthenticated, async (req, res, next)=> {
+    let id = req.session.userID;
+    let User = await Model_Admin.getAdminLogin(id);
+    let data = await Model_Admin.getLaporanIlegal();
+    console.log('Data cihuy: ', data)
+    res.render('admin/laporan-ilegal',{
+      rows: data,
+      Users: User
     }
   )
 });
@@ -255,27 +271,28 @@ router.get('/activate-account/:id', async(req, res, next)=>{
   }
 });
 
-router.get('/admin/block-device/:macAddress', ensureAuthenticated, async (req, res) => {
+router.get('/block-device/:macAddress', async (req, res) => {
   try {
     const macAddress = req.params.macAddress;
+    console.log('Mac Adress: ', macAddress);
     await Model_Device.blockDevice(macAddress);
     req.flash('success', 'Perangkat berhasil diblokir');
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/laporan-akun-ilegal');
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan saat memblokir perangkat');
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/data-user');
   }
 });
 
-router.get('/admin/unblock-device/:macAddress', ensureAuthenticated, async (req, res) => {
+router.get('/unblock-device/:macAddress', async (req, res) => {
   try {
     const macAddress = req.params.macAddress;
     await Model_Device.unblockDevice(macAddress);
     req.flash('success', 'Perangkat berhasil diaktifkan kembali');
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/laporan-akun-ilegal');
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan saat membuka blokir perangkat');
-    res.redirect('/admin/dashboard');
+    res.redirect('/admin/data-user');
   }
 });
 
