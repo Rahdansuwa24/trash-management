@@ -6,7 +6,7 @@ const Model_Warga = require('../Model/Model_Warga');
 const Model_Mitra = require('../Model/Model_Mitra');
 
 router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.render('landing_page/index', { title: 'THIS' });
 });
 
 router.get('/register', async(req, res, next) =>{
@@ -89,7 +89,7 @@ router.post('/log', async (req, res) => {
 
           case 'admin':
             req.flash('success', 'Berhasil Login');
-            return res.redirect('/admin/dashboard');
+            return res.redirect('/admin/data-user');
             break;
 
           default:

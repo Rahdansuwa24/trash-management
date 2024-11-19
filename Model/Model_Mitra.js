@@ -14,6 +14,19 @@ class Model_Mitra{
         });
     }
 
+    static async getAllData(){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT m.*, u.nama_users, u.id_users, u.email FROM mitra m JOIN users u ON m.id_users = u.id_users ORDER BY m.id_mitra DESC', (err, rows) => {
+                if(err){
+                    reject(err);
+                } else {
+                    resolve(rows);
+                    console.log(rows);
+                }
+            });
+        });
+    }
+
     static async Store(Data){
         return new Promise((resolve, reject) => {
             connection.query('INSERT INTO mitra SET ?', Data, (err, result)=>{
@@ -79,6 +92,81 @@ class Model_Mitra{
             })
         })
     }
+
+    static async joinUsersMitra() {
+        return new Promise((resolve, reject) => {
+            const query = `
+                 SELECT u.*, m.*
+            FROM users u
+            LEFT JOIN mitra m ON u.id_users = m.id_users
+            WHERE m.jenis_mitra = 'non-pemerintah';
+        `;
+            connection.query(query,(err, result) => {
+                if (err) {
+                    reject(err);
+                    console.log(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    }
+    static async joinUsersMitraIlegal() {
+        return new Promise((resolve, reject) => {
+            const query = `
+                 SELECT u.*, m.*
+            FROM users u
+            LEFT JOIN mitra m ON u.id_users = m.id_users
+            WHERE m.jenis_mitra = 'pemerintah';
+        `;
+            connection.query(query,(err, result) => {
+                if (err) {
+                    reject(err);
+                    console.log(err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    }
+
+    static async joinUsersMitraKomersilTest(kota, kecamatan) {
+        return new Promise((resolve, reject) => {
+            const query = `
+                SELECT u.nama_users, m.kota, m.kecamatan
+                FROM users u
+                LEFT JOIN mitra m ON u.id_users = m.id_users
+                WHERE (m.kota = ? OR ? IS NULL)
+                  AND (m.kecamatan = ? OR ? IS NULL)
+                  AND m.jenis_mitra = 'non-pemerintah';
+            `;
+            const values = [kota, kota, kecamatan, kecamatan];
+    
+            connection.query(query, values, (err, result) => {
+                if (err) {
+                    reject(err);
+                    console.error("Error Query SQL:", err);
+                } else {
+                    resolve(result);
+                }
+            });
+        });
+    }
+    
+
+    static async KotaKelurahan(){
+        return new Promise((resolve, reject) => {
+            connection.query('select u.*, m.* from users u left join mitra m on u.id_users = m.id_users order by u.nama_users desc', (err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result[0]);
+                }
+            })
+        })
+    }
+
 
     static async Delete(id){
         return new Promise((resolve, reject) => {

@@ -2,13 +2,8 @@
 <html lang="en">
 
 <head>
-    <title>Flat Able - Premium Admin Template by Phoenixcoded</title>
-    <!-- HTML5 Shim and Respond.js IE11 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 11]>
-    	<script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-    	<script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    	<![endif]-->
+    <title>THIS - Trash Handling Information System</title>
+    
     <!-- Meta -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
@@ -17,7 +12,7 @@
     <meta name="keywords" content="">
     <meta name="author" content="Phoenixcoded" />
     <!-- Favicon icon -->
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/flat/dist/assets/images/kudaicon.ico" type="image/x-icon">
 
     <!-- prism css -->
     <link rel="stylesheet" href="/flat/dist/assets/css/plugins/prism-coy.css">
@@ -29,6 +24,21 @@
 </head>
 <body>
     <!-- [ Pre-loader ] start -->
+	<% if (messages.success) { %>
+		<div class="alert alert-info" role="alert">
+			<%- messages.success %>
+		</div>
+	<% } %>
+	<% if (messages.error) { %>
+		<div class="alert alert-danger" role="alert">
+			<%- messages.error %>
+		</div>
+	<% } %>
+	<div class="loader-bg">
+		<div class="loader-track">
+			<div class="loader-fill"></div>
+		</div>
+	</div>
     <div class="loader-bg">
         <div class="loader-track">
             <div class="loader-fill"></div>
@@ -44,7 +54,7 @@
             <div class="m-header">
                 <a href="#!" class="b-brand">
                     <!-- ========   change your logo hear   ============ -->
-                    <img src="/flat/dist/assets/images/logo.png" alt="" class="logo">
+                    <img src="/flat/dist/assets/images/kuda.png" alt="" class="logo">
                     <img src="/flat/dist/assets/images/logo-icon.png" alt="" class="logo-thumb">
                 </a>
                 <a href="#!" class="mob-toggler">
@@ -79,20 +89,17 @@
 						<!-- [ Main Content ] start -->
 						<div class="row">
 							<div class="col-sm-12">
-								 <form class="card" action="" method="post">
+								 <form class="card" action="/users/warga/sampah_ilegal/submit" method="post" enctype="multipart/form-data">
 									<div class="card-header">
 										<h5>Laporankan Sampah Ilegal</h5>
 									</div>
 									<div class="card-body">
-										<h5 class="mt-3">Deskripsi Sampah</h5>
-										<textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
-									
 										<h5 class="mt-3">Lokasi</h5>
 										<div class="input-group mb-3">
 											<div class="custom-file">
 												<select class="custom-file-input" name="provinsi" id="provinsi" onchange="updateDropdownLabel(this, 'labelProvinsi')">
 													<option selected disabled hidden>provinsi:</option>
-													<!-- Options akan diisi dengan JavaScript -->
+
 												</select>
 												<label class="custom-file-label" for="provinsi" id="labelProvinsi">Pilih Provinsi</label>
 											</div>
@@ -123,7 +130,7 @@
 										</div>
 										<div class="input-group mb-3">
 											<div class="custom-file" style="width: 100%;">
-												<input type="text" class="form-control" name="alamat_laporan" placeholder="Alamat">
+												<input type="text" class="form-control" name="lokasi" placeholder="Alamat">
 											</div>
 										</div>
 										<h5 class="mt-3">No HP</h5>
@@ -132,10 +139,23 @@
 												<input type="text" class="form-control" name="alamat_laporan" placeholder="No HP">
 											</div>
 										</div>
+										<h5 class="mt-3">Pilih Mitra</h5>
+										<div class="input-group mb-3">
+											<select class="form-control" name="mitra" id="mitra">
+												<% if (dataMitra && dataMitra.length > 0) { %>
+													<option selected disabled hidden>Pilih Mitra</option>
+													<% dataMitra.forEach(mitra => { %>
+														<option value="<%= mitra.nama_users%>"><%= mitra.nama_users %></option>
+													<% }) %>
+												<% } else { %>
+													<option value="" disabled>Tidak ada mitra tersedia</option>
+												<% } %>
+											</select>
+										</div>
 										<h5 class="mt-3">File Foto</h5>
 										<div class="input-group mb-3">
 											<div class="form-select">
-												<input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+												<input type="file" name="file_foto" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
 												<label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
 											</div>
 										</div>
@@ -143,7 +163,7 @@
 										<h5 class="mt-3">File Video</h5>
 										<div class="input-group mb-3">
 											<div class="form-select">
-												<input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+												<input type="file" name="file_video" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
 												<label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
 											</div>
 										</div>
@@ -165,66 +185,14 @@
 	</div>
     <!-- [ Main Content ] end -->
 
-        <!-- Warning Section start -->
-        <!-- Older IE warning message -->
-        <!--[if lt IE 11]>
-            <div class="ie-warning">
-                <h1>Warning!!</h1>
-                <p>You are using an outdated version of Internet Explorer, please upgrade
-                   <br/>to any of the following web browsers to access this website.
-                </p>
-                <div class="iew-container">
-                    <ul class="iew-download">
-                        <li>
-                            <a href="http://www.google.com/chrome/">
-                                <img src="assets/images/browser/chrome.png" alt="Chrome">
-                                <div>Chrome</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://www.mozilla.org/en-US/firefox/new/">
-                                <img src="assets/images/browser/firefox.png" alt="Firefox">
-                                <div>Firefox</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="http://www.opera.com">
-                                <img src="assets/images/browser/opera.png" alt="Opera">
-                                <div>Opera</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="https://www.apple.com/safari/">
-                                <img src="assets/images/browser/safari.png" alt="Safari">
-                                <div>Safari</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="http://windows.microsoft.com/en-us/internet-explorer/download-ie">
-                                <img src="assets/images/browser/ie.png" alt="">
-                                <div>IE (11 & above)</div>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                <p>Sorry for the inconvenience!</p>
-            </div>
-        <![endif]-->
-        <!-- Warning Section Ends -->
-
-        <!-- Required Js -->
-        <script src="/flat/dist/assets/js/vendor-all.min.js"></script>
-        <script src="/flat/dist/assets/js/plugins/bootstrap.min.js"></script>
-        <script src="/flat/dist/assets/js/pcoded.min.js"></script>
+    <!-- Required Js -->
+    <script src="/flat/dist/assets/js/vendor-all.min.js"></script>
+    <script src="/flat/dist/assets/js/plugins/bootstrap.min.js"></script>
+    <script src="/flat/dist/assets/js/pcoded.min.js"></script>
 
 
     <!-- prism Js -->
     <script src="/flat/dist/assets/js/plugins/prism.js"></script>
-
-    
-
-
-
     <script src="/flat/dist/assets/js/horizontal-menu.js"></script>
     <script>
         (function() {

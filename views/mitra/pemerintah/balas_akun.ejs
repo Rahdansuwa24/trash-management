@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>THIS - Trash Handling Information System</title>
+
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="description" content="" />
+    <meta name="keywords" content="">
+    <meta name="author" content="Phoenixcoded" />
+    <!-- Favicon icon -->
+    <link rel="icon" href="/flat/dist/assets/images/kudaicon.ico" type="image/x-icon">
+
+    <!-- vendor css -->
+    <link rel="stylesheet" href="/flat/dist/assets/css/style.css">
+    <link rel="stylesheet" href="/flat/dist/assets/css/plugins/bootstrap.min.css" />
+    <link rel="stylesheet" href="/kaiadmin/assets/css/plugins.min.css" />
+    
+
+</head>
+<body class="">
+	<!-- [ Pre-loader ] start -->
+	<div class="loader-bg">
+		<div class="loader-track">
+			<div class="loader-fill"></div>
+		</div>
+	</div>
+	<!-- [ Pre-loader ] End -->
+	<!-- [ navigation menu ] start -->
+	<nav class="pcoded-navbar  ">
+		<div class="navbar-wrapper  ">
+			<div class="navbar-content scroll-div " >
+				
+				<div class="">
+					<div class="main-menu-header">
+						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
+						<div class="user-details">
+							<span>Bambang</span>
+							<div id="more-details">UX Designer</div>
+						</div>
+					</div>
+				</div>
+				
+				<ul class="nav pcoded-inner-navbar ">
+					<li class="nav-item pcoded-menu-caption">
+						<label>Navigation</label>
+					</li>
+					<li class="nav-item">
+					    <a href="/users/mitra/pemerintah" class="nav-link "><span class="pcoded-micon"><i class="feather icon-home"></i></span><span class="pcoded-mtext">Dashboard</span></a>
+					</li>
+                    <li class="nav-item">
+					    <a href="/users/mitra/pemerintah/laporan_masuk" class="nav-link "><span class="pcoded-micon"><i class="feather icon-inbox"></i></span><span class="pcoded-mtext">Laporan Masuk</span></a>
+					</li>
+					<li class="nav-item pcoded-menu-caption">
+						<label>EXIT</label>
+					</li>
+					<li class="nav-item">
+					    <a href="/logout" class="nav-link "><span class="pcoded-micon"><i class="feather icon-log-out"></i></span><span class="pcoded-mtext">Logout</span></a>
+					</li>
+				</ul>
+				
+			</div>
+		</div>
+	</nav>
+	<!-- [ navigation menu ] end -->
+	<!-- [ Header ] start -->
+	<!-- <img src="/flat/dist/assets/images/kuda.png" style="scale: 0.17;" alt="" class="logo"> -->
+	<header class="navbar pcoded-header navbar-expand-lg navbar-light header-dark">
+		<div class="m-header">
+			<a class="mobile-menu" id="mobile-collapse" href="#!"><span></span></a>
+			<a href="#!" class="b-brand" >
+				<!-- ========   change your logo hear   ============ -->
+				<img src="/flat/dist/assets/images/kuda.png" alt="" class="logo">
+				<img src="/flat/dist/assets/images/logo-icon.png" alt="" class="logo-thumb">
+			</a>
+			<a href="#!" class="mob-toggler">
+				<i class="feather icon-more-vertical"></i>
+			</a>
+		</div>
+	</header>
+	<!-- [ Header ] end -->
+	
+	
+
+    <!-- [ Main Content ] start -->
+    <div class="pcoded-main-container">
+        <div class="pcoded-content">
+            <!-- [ breadcrumb ] start -->
+            <div class="page-header">
+                <div class="page-block">
+                    <div class="row align-items-center">
+                        <div class="col-md-12">
+                            <div class="page-header-title">
+                                <h5 class="m-b-10">BUAT BALASAN LAPORAN WARGA</h5>
+                            </div>
+                            <ul class="breadcrumb">
+                                <li class="breadcrumb-item"><a href="/users/warga"><i class="feather icon-home"></i></a></li>
+                                <li class="breadcrumb-item"><a href="/users/warga">Dashboard</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk">Laporan Masuk</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas Laporan</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- [ breadcrumb ] end -->
+            <!-- [ Main Content ] start -->
+			<div class="pcoded-wrapper container">
+                <div class="col-sm-12">
+                     <form class="card" action="" method="post">
+                        <div class="card-header">
+                            <h5>Balas Laporan Warga</h5>
+                        </div>
+                        <div class="card-body">
+                            <h5 class="mt-3">Pesan</h5>
+                            <textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
+                        
+                            <h5 class="mt-3">File Foto</h5>
+                            <div class="input-group mb-3">
+                                <div class="form-select">
+                                    <input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+                                    <label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-3">File Video</h5>
+                            <div class="input-group mb-3">
+                                <div class="form-select">
+                                    <input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+                                    <label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
+                            <a href="/users/mitra/pemerintah/laporan_masuk" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
+                        </div>
+                    </form> 
+                </div>
+            </div>
+            <!-- [ Main Content ] end -->
+        </div>
+    </div>
+    <!-- [ Main Content ] end -->
+
+    <!-- Required Js -->
+    <script src="/flat/dist/assets/js/vendor-all.min.js"></script>
+    <script src="/flat/dist/assets/js/plugins/bootstrap.min.js"></script>
+    <script src="/flat/dist/assets/js/pcoded.min.js"></script>
+
+    <!-- Apex Chart -->
+    <script src="/flat/dist/assets/js/plugins/apexcharts.min.js"></script>
+	<script src="/flat/dist/assets/js/pages/chart-apex.js"></script>
+
+
+    <!-- custom-chart js -->
+    <script src="/flat/dist/assets/js/pages/dashboard-main.js"></script>
+
+	<!--   Core JS Files   -->
+    <!-- <script src="/kaiadmin/assets/js/core/jquery-3.7.1.min.js"></script> -->
+    <script src="/kaiadmin/assets/js/core/popper.min.js"></script>
+    <script src="/kaiadmin/assets/js/core/bootstrap.min.js"></script>
+
+    <!-- jQuery Scrollbar -->
+    <script src="/kaiadmin/assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+    <!-- Datatables -->
+    <script src="/kaiadmin/assets/js/plugin/datatables/datatables.min.js"></script>
+    <!-- Kaiadmin JS -->
+    <script src="/kaiadmin/assets/js/kaiadmin.min.js"></script>
+    <!-- Kaiadmin DEMO methods, don't include it in your project! -->
+    <!-- <script src="/kaiadmin/assets/js/setting-demo2.js"></script> -->
+    <script>
+		function updateFileName(input) {
+			const fileName = input.files[0]?.name || "Pilih file";
+			input.nextElementSibling.innerHTML = fileName;
+		}
+	</script>
+    <script>
+		fetch("https://kanglerian.github.io/api-wilayah-indonesia/api/provinces.json")
+			.then(response => response.json())
+			.then(provinces => {
+				var data = provinces;
+				var tampung = '<option>Provinsi</option>';
+				data.forEach(element => {
+					tampung += `<option data-reg="${element.id}" value="${element.name}">${element.name}</option>`;
+				});
+				document.getElementById('provinsi').innerHTML = tampung;
+			});
+
+		const pilihProvinsi = document.getElementById('provinsi');
+		pilihProvinsi.addEventListener('change', (e) => {
+			var provinsi = e.target.options[e.target.selectedIndex].dataset.reg;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/regencies/${provinsi}.json`)
+				.then(response => response.json())
+				.then(regencies => {
+					var data = regencies;
+					var tampung = '<option>Kota</option>';
+					data.forEach(element => {
+						tampung += `<option data-dist="${element.id}" value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kota').innerHTML = tampung;
+				});
+		});
+
+		const pilihKota = document.getElementById('kota');
+		pilihKota.addEventListener('change', (e) => {
+			var kota = e.target.options[e.target.selectedIndex].dataset.dist;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/districts/${kota}.json`)
+				.then(response => response.json())
+				.then(districts => {
+					var data = districts;
+					var tampung = '<option>Kecamatan</option>';
+					data.forEach(element => {
+						tampung += `<option data-vill="${element.id}" value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kecamatan').innerHTML = tampung;
+				});
+		});
+
+		const pilihKecamatan = document.getElementById('kecamatan');
+		pilihKecamatan.addEventListener('change', (e) => {
+			var kecamatan = e.target.options[e.target.selectedIndex].dataset.vill;
+			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/villages/${kecamatan}.json`)
+				.then(response => response.json())
+				.then(villages => {
+					var data = villages;
+					var tampung = '<option>Kelurahan</option>';
+					data.forEach(element => {
+						tampung += `<option value="${element.name}">${element.name}</option>`;
+					});
+					document.getElementById('kelurahan').innerHTML = tampung;
+				});
+		});
+	</script>
+</body>
+
+</html>
