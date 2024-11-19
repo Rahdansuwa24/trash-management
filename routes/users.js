@@ -172,6 +172,15 @@ router.get('/mitra/pemerintah', ensureMitra, async function(req, res, next) {
     res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
   }
 });
+
+router.get('/mitra/pemerintah/laporan_masuk/balas_akun', function(req, res, next) {
+  res.render('mitra/pemerintah/balas_akun')
+});
+
+router.get('/mitra/pemerintah/laporan_masuk/report_akun', function(req, res, next) {
+  res.render('mitra/pemerintah/report_akun')
+});
+
 router.get('/mitra/pemerintah/laporan_masuk', function(req, res, next) {
   res.render('mitra/pemerintah/laporan');
 });

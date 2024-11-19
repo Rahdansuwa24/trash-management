@@ -14,6 +14,19 @@ class Model_Mitra{
         });
     }
 
+    static async getAllData(){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT m.*, u.nama_users, u.id_users, u.email FROM mitra m JOIN users u ON m.id_users = u.id_users ORDER BY m.id_mitra DESC', (err, rows) => {
+                if(err){
+                    reject(err);
+                } else {
+                    resolve(rows);
+                    console.log(rows);
+                }
+            });
+        });
+    }
+
     static async Store(Data){
         return new Promise((resolve, reject) => {
             connection.query('INSERT INTO mitra SET ?', Data, (err, result)=>{

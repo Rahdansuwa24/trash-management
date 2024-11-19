@@ -14,6 +14,19 @@ class Model_Warga{
         });
     }
 
+    static async getAllData(){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT w.*, u.id_users, u.nama_users, u.email, u.status FROM warga w JOIN users u ON w.id_users = u.id_users ORDER BY id_warga DESC', (err, rows) => {
+                if(err){
+                    reject(err);
+                } else {
+                    resolve(rows);
+                    console.log(rows);
+                }
+            });
+        });
+    }
+
     static async Store(Data){
         return new Promise((resolve, reject) => {
             connection.query('INSERT INTO warga SET ?', Data, (err, result)=>{
