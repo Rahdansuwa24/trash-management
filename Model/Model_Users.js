@@ -52,6 +52,19 @@ class Model_Users{
         })
     }
 
+    static async getById(id){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM users WHERE id_users = ?', [id], (err, rows) => {
+                if(err) {
+                    reject(err);
+                } else {
+                    resolve(rows[0]);
+                    console.log(rows);
+                }
+            })
+        })
+    }
+
     static async Update(id, Data) {
         return new Promise((resolve, reject) => {
             connection.query('UPDATE users SET ? WHERE id_users = ?', [Data, id], function(err, result){

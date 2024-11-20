@@ -24,6 +24,21 @@
 </head>
 <body>
     <!-- [ Pre-loader ] start -->
+	<% if (messages.success) { %>
+		<div class="alert alert-info" role="alert">
+			<%- messages.success %>
+		</div>
+	<% } %>
+	<% if (messages.error) { %>
+		<div class="alert alert-danger" role="alert">
+			<%- messages.error %>
+		</div>
+	<% } %>
+	<div class="loader-bg">
+		<div class="loader-track">
+			<div class="loader-fill"></div>
+		</div>
+	</div>
     <div class="loader-bg">
         <div class="loader-track">
             <div class="loader-fill"></div>
@@ -37,7 +52,7 @@
     <header class="navbar pcoded-header navbar-expand-lg navbar-light header-dark">
         <div class="container">
             <div class="m-header">
-                <a href="#!" class="b-brand">
+                <a href="/" class="b-brand">
                     <!-- ========   change your logo hear   ============ -->
                     <img src="/flat/dist/assets/images/kuda.png" alt="" class="logo">
                     <img src="/flat/dist/assets/images/logo-icon.png" alt="" class="logo-thumb">
@@ -70,10 +85,11 @@
 								</div>
 							</div>
 						</div>
+						
 						<!-- [ Main Content ] start -->
 						<div class="row">
 							<div class="col-sm-12">
-								 <form class="card" action="" method="post">
+								 <form class="card" action="/users/warga/sampah_ilegal/submit" method="post" enctype="multipart/form-data">
 									<div class="card-header">
 										<h5>Laporankan Sampah Ilegal</h5>
 									</div>
@@ -83,7 +99,7 @@
 											<div class="custom-file">
 												<select class="custom-file-input" name="provinsi" id="provinsi" onchange="updateDropdownLabel(this, 'labelProvinsi')">
 													<option selected disabled hidden>provinsi:</option>
-													<!-- Options akan diisi dengan JavaScript -->
+
 												</select>
 												<label class="custom-file-label" for="provinsi" id="labelProvinsi">Pilih Provinsi</label>
 											</div>
@@ -114,19 +130,32 @@
 										</div>
 										<div class="input-group mb-3">
 											<div class="custom-file" style="width: 100%;">
-												<input type="text" class="form-control" name="alamat_laporan" placeholder="Alamat">
+												<input type="text" class="form-control" name="lokasi" placeholder="Alamat">
 											</div>
 										</div>
 										<h5 class="mt-3">No HP</h5>
 										<div class="input-group mb-3">
 											<div class="custom-file" style="width: 100%;">
-												<input type="text" class="form-control" name="alamat_laporan" placeholder="No HP">
+												<input type="text" class="form-control" name="nomor_hp" placeholder="No HP">
 											</div>
+										</div>
+										<h5 class="mt-3">Pilih Mitra</h5>
+										<div class="input-group mb-3">
+											<select class="form-control" name="mitra" id="mitra">
+												<% if (dataMitra && dataMitra.length > 0) { %>
+													<option selected disabled hidden>Pilih Mitra</option>
+													<% dataMitra.forEach(mitra => { %>
+														<option value="<%= mitra.nama_users%>"><%= mitra.nama_users %></option>
+													<% }) %>
+												<% } else { %>
+													<option value="" disabled>Tidak ada mitra tersedia</option>
+												<% } %>
+											</select>
 										</div>
 										<h5 class="mt-3">File Foto</h5>
 										<div class="input-group mb-3">
 											<div class="form-select">
-												<input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+												<input type="file" name="file_foto" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
 												<label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
 											</div>
 										</div>
@@ -134,7 +163,7 @@
 										<h5 class="mt-3">File Video</h5>
 										<div class="input-group mb-3">
 											<div class="form-select">
-												<input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+												<input type="file" name="file_video" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
 												<label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
 											</div>
 										</div>

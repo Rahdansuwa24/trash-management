@@ -6,46 +6,57 @@ const Model_Device = require('../Model/Model_Device');
 const Model_Warga = require('../Model/Model_Warga');
 const Model_Mitra = require('../Model/Model_Mitra')
 const Model_Sampah_Komersil = require('../Model/Model_Sampah_Komersil')
+const Model_Sampah_Ilegal = require('../Model/Model_Sampah_Ilegal')
 const multer  = require('multer')
 const path = require('path');
 const fs = require('fs')
 
-const storageImage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/images')
-  },
-  filename: function (req, file, cb) {
-      const ext = path.extname(file.originalname);
-      const baseName = path.basename(file.originalname, ext);
-      const uniqueSuffix = Date.now() + '-' + baseName;
-      cb(null, uniqueSuffix + ext);
+const fileFilter = (req, file, cb) => {
+  if (file.fieldname === 'file_foto') {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/jpg') {
+      cb(null, true); 
+    } else {
+      req.flash('error', 'Hanya file gambar (jpg, jpeg, png) yang diperbolehkan untuk file foto!');
+      cb(null, false); 
+    }
+  } else if (file.fieldname === 'file_video') {
+    if (file.mimetype === 'video/mp4' || file.mimetype === 'video/x-msvideo') {
+      cb(null, true); 
+    } else {
+      req.flash('error', 'Hanya file video (mp4, avi) yang diperbolehkan untuk file video!');
+      cb(null, false);  
+    }
+  } else {
+    req.flash('error', 'Fieldname tidak dikenali!');
+    cb(null, false);
   }
-})
-const storageVideo = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'public/video')
-  },
-  filename: function (req, file, cb) {
-      const ext = path.extname(file.originalname);
-      const baseName = path.basename(file.originalname, ext);
-      const uniqueSuffix = Date.now() + '-' + baseName;
-      cb(null, uniqueSuffix + ext);
-  }
-})
+};
+
 
 const upload = multer({
-  storage: function (req, file, cb) {
-    if (file.fieldname === 'file_foto') {
-      cb(null, storageImage);
-    } else if (file.fieldname === 'file_video') {
-      cb(null, storageVideo);
-    }
-  }
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      if (file.fieldname === 'file_foto') {
+        cb(null, 'public/images');
+      } else if (file.fieldname === 'file_video') {
+        cb(null, 'public/video');
+      } else {
+        cb(new Error('Fieldname not recognized'), false); // Error jika field tidak sesuai
+      }
+    },
+    filename: function (req, file, cb) {
+      const ext = path.extname(file.originalname);
+      const baseName = path.basename(file.originalname, ext);
+      const uniqueSuffix = Date.now() + '-' + baseName;
+      cb(null, uniqueSuffix + ext); 
+    },
+  }),
+  fileFilter: fileFilter
 });
 
 const uploadFields = upload.fields([
-  { name: 'file_foto', maxCount: 1 },
-  { name: 'file_video', maxCount: 1 }
+  { name: 'file_foto', maxCount: 2 },
+  { name: 'file_video', maxCount: 2 }
 ]);
 
 const ensureWarga = (req, res, next) => {
@@ -147,7 +158,7 @@ try {
       req.flash('success', 'Data akun berhasil disimpan');
 
       if(jenis_mitra == 'pemerintah'){
-        res.redirect('/users/mitra');
+        res.redirect('/users/mitra/pemerintah');
       }else if(jenis_mitra == 'non-pemerintah'){
         res.redirect('/users/mitra/non-pemerintah');
       }else{
@@ -160,29 +171,70 @@ try {
     }
 });
 
+router.get('/', async function(req, res, next) {
+  if(!req.session.userID){
+    req.flash('warning', 'anda harus login')
+    return res.redirect('/login')
+  }
+  let id = req.session.userID
+  console.log(id)
+  let Data = await Model_Users.getId(id)
+  let dataWarga = await Model_Warga.getByIdUsers(id)
+
+  console.log(dataWarga)
+
+  if (Data[0].id_users === dataWarga.id_users) {
+    req.session.wargaId = dataWarga.id_warga
+    console.log(req.session.wargaId)
+    res.redirect(`/users/warga`)
+  } else {
+    req.flash('error', 'Data warga tidak ditemukan');
+    return res.redirect('/login');  
+  }
+});
+
+
 router.get('/mitra/pemerintah', ensureMitra, async function(req, res, next) {
 
   let id = req.session.userID
+  let user = await Model_Users.getById(id)
   let Mitra = await Model_Mitra.getByIdUsers(id);
   let tipe = Mitra.jenis_mitra
-
+  req.session.mitraId = Mitra.id_mitra
+  let data = await Model_Users.getId(req.session.userID)
+  console.log('id_mitra: ', req.session.mitraId)
   if(tipe == 'pemerintah'){
-    res.render('mitra/pemerintah/index');//kuubah
+    res.render('mitra/pemerintah/index', {
+      user
+    });
   }else{
     res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
   }
 });
 
-router.get('/mitra/pemerintah/laporan_masuk/balas_akun', function(req, res, next) {
-  res.render('mitra/pemerintah/balas_akun')
-});
+// router.get('/mitra/pemerintah/laporan_masuk/balas_akun', async function(req, res, next) {
+//   let data = await Model_Users.getById(req.session.userID)
+//   res.render('mitra/pemerintah/balas_akun', {
+//     nama_users
+//   })
+// });
 
-router.get('/mitra/pemerintah/laporan_masuk/report_akun', function(req, res, next) {
-  res.render('mitra/pemerintah/report_akun')
-});
+// router.get('/mitra/pemerintah/laporan_masuk/report_akun/:id_laporan_sampah_ilegal', async function(req, res, next) {
+//   let data = await Model_Users.getById(req.session.userID)
+//   res.render('mitra/pemerintah/report_akun', {
+    
+//   })
+// });
 
-router.get('/mitra/pemerintah/laporan_masuk', function(req, res, next) {
-  res.render('mitra/pemerintah/laporan');
+router.get('/mitra/pemerintah/laporan_masuk', async function(req, res, next) {
+  let data = await Model_Users.getById(req.session.userID);
+  let row = await Model_Sampah_Ilegal.getAllData();
+  console.log('data: ', row);
+  console.log('User: ', data);
+  res.render('mitra/pemerintah/laporan', {
+    users: data,
+    rows: row
+  });
 });
 
 router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) {
@@ -191,56 +243,141 @@ router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) 
 
   let id = req.session.userID
   let Mitra = await Model_Mitra.getByIdUsers(id);
+  let data = await Model_Users.getId(req.session.userID)
+  let nama_users = data[0].nama_users
   let tipe = Mitra.jenis_mitra
-  if(tipe == 'non-pemerintah'){
-    res.render('mitra/non-pemerintah/index');
+  req.session.mitraId = Mitra.id_mitra
+  console.log('id_mitra: ', req.session.mitraId)
+  let dataLaporan = await Model_Mitra.mitraKomersil()
+  console.log('data laporan: ',dataLaporan)
+  console.log(Array.isArray(dataLaporan));
+  if(tipe === 'non-pemerintah'){
+    res.render('mitra/non-pemerintah/index', {
+      nama_users,
+      dataLaporan
+    });
 
   }else{
     res.status(500).json('Anda tidak mempunyai akses ke halaman ini !!')
   }
 });
 
-router.get('/warga', function(req, res, next) {
-    res.render('users/index');
-});
-
-router.get('/warga/sell', function(req, res, next) {
-    res.render('users/sell');
-});
-
-router.get('/warga/sell/create', function(req, res, next) {
-  let id_warga = req.session.userID
-  console.log(id_warga)
-  address((err, addrs) => {
-    console.log(addrs.ip, addrs.ipv6, addrs.mac);
+router.get('/mitra/non-pemerintah/lapor/:id_laporan_sampah_komersil', async function(req, res, next) {
+  let id = req.params.id_laporan_sampah_komersil
+  let data = await Model_Sampah_Komersil.getDataByIdLpSampahKomersil(id);
+  res.render('mitra/non-pemerintah/lapor',{
+    data
   });
-  res.render('users/create');
 });
 
-router.post('/warga/sell/sampah/submit', uploadFields, async function(req, res, next) {
- let id_warga = req.session.userID
- let file_foto = req.files['file_foto']
- let file_video = req.files['file_video']
- let {deskripsi_laporan, jenis_sampah, provinsi, kota, kelurahan, kecamatan} = req.body
-
- let Data = {id_warga, deskripsi_laporan, jenis_sampah, lokasi, file_foto, file_video, provinsi, kota, kelurahan, kecamatan}
-
- await Model_Sampah_Komersil.Store(Data)
- res.redirect('/warga/sell/create')
+router.get('/warga', async function(req, res, next) {
+    let data = await Model_Users.getId(req.session.userID)
+    let nama_users = data[0].nama_users
+    res.render('users/index', {
+      nama_users
+    });
 });
 
-router.get('/warga/sell/sampah_komersil/edit', function(req, res, next) {
-  res.render('users/create');
+// router.get('/warga/sell', async function(req, res) {
+//   res.render('users/sell', { id_warga: req.session.userID });
+// });
+
+router.get('/warga/sell', async function (req, res, next) {
+  const id_warga = req.session.wargaId; // ID warga dari sesi
+  const id_users = req.session.userID; // ID user dari sesi
+  const { kota, kecamatan } = req.query; // Ambil filter dari query string
+  let data = await Model_Users.getId(req.session.userID)
+  let nama_users = data[0].nama_users
+
+  console.log("ID Warga:", id_warga, "ID Users:", id_users);
+  console.log("Filter diterima:", { kota, kecamatan });
+
+  try {
+      const dataMitra = await Model_Mitra.joinUsersMitra(kota, kecamatan);
+      console.log("Data Mitra:", dataMitra);
+      res.render('users/sell', {
+          id_warga,
+          dataMitra,
+          kota,
+          kecamatan,
+          nama_users
+      });
+  } catch (err) {
+      console.error("Error saat mengambil data mitra:", err);
+      res.status(500).send("Terjadi kesalahan saat memuat data mitra.");
+  }
 });
 
-router.post('/warga/sell/sampah_komersil/update', async function(req, res, next) {
-  let id_warga = req.session.id_warga
-  let {deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi} = req.body
+
+
+router.post('/warga/sell/sampah/submit', function(req, res, next) {
+  uploadFields(req, res, async function (err) {
+    if (err) {
+      console.error("Error saat upload:", err.message);
+      req.flash('error', err.message);  
+      return res.redirect('/users/warga/sell');
+    }
+
+    let id_warga = req.session.wargaId;
+    let file_foto = req.files['file_foto'];
+    let file_video = req.files['file_video'];
+    let { jenis_sampah, provinsi, kota, kelurahan, kecamatan, latitude, longitude, mitra } = req.body;
+
+    if (!file_foto && !file_video) {
+      req.flash('error', "File foto atau video wajib diunggah.");
+      return res.redirect('/users/warga/sell');
+    }
+
+    let Data = {
+      id_warga,
+      jenis_sampah,
+      file_foto: file_foto ? file_foto[0].filename: null,
+      file_video: file_video ? file_video[0].filename: null,
+      provinsi,
+      kota,
+      kelurahan,
+      kecamatan,
+      latitude,
+      longitude,
+      mitra
+    };
+
+    try {
+      await Model_Sampah_Komersil.Store(Data);
+      req.flash('success', 'Data sampah berhasil disimpan!');
+      res.redirect('/users/warga/sell'); 
+    } catch (storeError) {
+      console.error("Gagal menyimpan data sampah:", storeError);
+      req.flash('error', 'Gagal menyimpan data sampah.');
+      res.redirect('/users/warga/sell'); 
+    }
+  });
+});
+
+// router.post('/warga/sell/sampah/submit', uploadFields, async function(req, res, next) {
+//  let id_warga = req.session.userID
+//  let file_foto = req.files['file_foto']
+//  let file_video = req.files['file_video']
+//  let {deskripsi_laporan, jenis_sampah, provinsi, kota, kelurahan, kecamatan} = req.body
+
+//  let Data = {id_warga, deskripsi_laporan, jenis_sampah, lokasi, file_foto, file_video, provinsi, kota, kelurahan, kecamatan}
+
+//  await Model_Sampah_Komersil.Store(Data)
+//  res.redirect('/warga/sell')
+// });
+
+// router.get('/warga/sell/sampah_komersil/edit', function(req, res, next) {
+//   res.render('users/sell');
+// });
+
+// router.post('/warga/sell/sampah_komersil/update', async function(req, res, next) {
+//   let id_warga = req.session.id_warga
+//   let {deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi} = req.body
  
-  let Data = {id_warga, deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi}
+//   let Data = {id_warga, deskripsi_laporan, jenis_sampah, file_foto, file_video, lokasi}
  
-  await Model_Sampah_Komersil.store(Data)
- });
+//   await Model_Sampah_Komersil.store(Data)
+//  });
 
  router.get('/warga/sell/sampah_komersil/delete', async function(req, res, next) {
   let id_warga = req.session.userID
@@ -269,23 +406,83 @@ router.post('/warga/sell/sampah_komersil/update', async function(req, res, next)
         });
     }
     await Model_Sampah_Komersil.Delete(Data)
-    res.redirect('/warga/sell/create')
+    res.redirect('/warga/sell')
 });
 
-
-router.get('/warga/sampah_ilegal', function(req, res, next) {
-  res.render('users/ilegal')
+router.get('/warga/kotak_balasan', async function(req,res,next){
+  let data = await Model_Users.getById(req.session.userID);
+  let balasan = await Model_Warga.getAllDataBalasan()
+  res.render('users/kotak_balasan', {
+    users: data,
+    rows: balasan
+  })
 });
 
-router.post('/warga/sampah_ilegal/submit', async function(req, res, next) {
-
-  let mac_address
-  let {deskripsi_laporan, lokasi, file_foto, file_video, status_device} = req.body
-
-  let Data = {deskripsi_laporan, lokasi, file_foto, file_video, status_device}
- 
-  await Model_Sampah_Komersil.store(Data)
+router.get('/warga/sampah_ilegal', async function(req, res, next) {
+  let dataMitra = await Model_Mitra.joinUsersMitraIlegal()
+  // address((err, addrs) => {
+  //   if (err) {
+  //     console.error("Error mendapatkan address:", err);
+  //   } else {
+  //     let mac_address = addrs.mac;
+  //   }
+  // });
+  res.render('users/ilegal', {
+    dataMitra
+  })
 });
+
+router.post('/warga/sampah_ilegal/submit', function(req, res, next) {
+  uploadFields(req, res, async function (err) {
+    if (err) {
+      console.error("Error saat upload:", err.message);
+      req.flash('error', err.message);  
+      return res.redirect('/users/warga/sampah_ilegal');  
+    }
+
+    address(async (err, addrs) => {
+      if (err) {
+        console.error("Error mendapatkan address:", err);
+        req.flash('error', "Gagal mendapatkan alamat MAC");
+        return res.redirect('/users/warga/sampah_ilegal');
+      }
+
+      let mac_address = addrs.mac;
+      let file_foto = req.files['file_foto'];
+      let file_video = req.files['file_video'];
+      let { provinsi, kota, kelurahan, kecamatan, lokasi, mitra, nomor_hp } = req.body;
+
+      if (!file_foto && !file_video) {
+        req.flash('error', "File foto atau video wajib diunggah.");
+        return res.redirect('/users/warga/sampah_ilegal');
+      }
+
+      let Data = {
+        mac_address,
+        file_foto: file_foto ? file_foto[0].filename : null,
+        file_video: file_video ? file_video[0].filename : null,
+        provinsi,
+        kota,
+        kelurahan,
+        kecamatan,
+        lokasi,
+        mitra,
+        nomor_hp
+      };
+
+      try {
+        await Model_Sampah_Ilegal.Store(Data);
+        req.flash('success', 'Data sampah ilegal berhasil disimpan!');
+        res.redirect('/users/warga/sampah_ilegal');
+      } catch (storeError) {
+        console.error("Gagal menyimpan data:", storeError);
+        req.flash('error', 'Gagal menyimpan data sampah ilegal.');
+        res.redirect('/users/warga/sampah_ilegal');
+      }
+    });
+  });
+});
+
 
 router.get('/warga/sampah_ilegal/edit', function(req, res, next) {
   res.render('users/ilegal')
@@ -302,8 +499,135 @@ router.post('/warga/sampah_ilegal/update', async function(req, res, next) {
 });
 
 router.get('/warga/sampah_ilegal/delete', function(req, res, next) {
+
   res.render('users/ilegal')
 });
 
+router.get('/mitra/pemerintah/laporan_masuk/balas_akun/:id_laporan_sampah_ilegal', async function(req, res, next) {
+  let id_lp = req.params.id_laporan_sampah_ilegal;
+  let id = req.session.userID;
+  let user = await Model_Users.getById(id);
+  let mitra = await Model_Mitra.getByIdUsers(id);
+  let data = await Model_Sampah_Ilegal.getIdLpIlegal(id_lp);
+  res.render('mitra/pemerintah/balas_akun', {
+    data,
+    users: user,
+    mitra
+  })
+});
 
+router.get('/mitra/pemerintah/laporan_masuk/report_akun/:id_laporan_sampah_ilegal', async function(req, res, next) {
+  let id_lp = req.params.id_laporan_sampah_ilegal;
+  let id = req.session.userID;
+  let user = await Model_Users.getById(id);
+  console.log('user: ', user);
+  let data = await Model_Sampah_Ilegal.getIdLpIlegal(id_lp); 
+  res.render('mitra/pemerintah/report_akun',{
+    data,
+    users: user
+  })
+});
+
+router.post('/mitra/pemerintah/laporan_masuk/report_akun/submit', async function(req, res, next) {
+  uploadFields(req, res, async function (err) {
+    if (err) {
+      console.error("Error saat upload:", err.message);
+      req.flash('error', err.message);  
+      return res.redirect('/pemerintah/laporan_masuk/report_akun/');
+    }
+    let file_foto = req.files['file_foto'];
+    let file_video = req.files['file_video'];
+    let { judul_lapor_akun, deskripsi_lapor_akun, id_laporan_sampah_ilegal, } = req.body
+    let data = {
+      judul_lapor_akun,
+      deskripsi_lapor_akun,
+      file_foto: file_foto ? file_foto[0].filename: null,
+      file_video: file_video ? file_video[0].filename: null,
+      id_laporan_sampah_ilegal
+    }
+    try {
+
+      await Model_Mitra.laporAkunIlegal(data);
+      req.flash('success','Berhasil melaporkan akun');
+      res.redirect('/users/mitra/pemerintah/laporan_masuk');
+
+    } catch (error) {
+      req.flash('error','Terjadi kesalahan pada fungsi');
+      res.redirect('/users/mitra/pemerintah/laporan_masuk')
+    }
+  })
+});
+
+router.post('/mitra/pemerintah/laporan_masuk/balas_akun/submit', async function(req, res, next) {
+  uploadFields(req, res, async function (err) {
+    if (err) {
+      console.error("Error saat upload:", err.message);
+      req.flash('error', err.message);  
+      return res.redirect('/pemerintah/laporan_masuk/');
+    }
+    let file_foto = req.files['file_foto'];
+    let file_video = req.files['file_video'];
+    let { deskripsi_balasan, id_laporan_sampah_ilegal, id_mitra } = req.body
+    let data = {
+      deskripsi_balasan,
+      file_foto: file_foto ? file_foto[0].filename: null,
+      file_video: file_video ? file_video[0].filename: null,
+      id_laporan_sampah_ilegal, 
+      id_mitra
+    }
+    try {
+
+      await Model_Mitra.BalasLaporanIlegal(data);
+      req.flash('success','Berhasil melaporkan akun');
+      res.redirect('/users/mitra/pemerintah/laporan_masuk');
+
+    } catch (error) {
+      req.flash('error','Terjadi kesalahan pada fungsi');
+      res.redirect('/users/mitra/pemerintah/laporan_masuk')
+    }
+  })
+});
+
+router.get('/mitra/pemerintah/laporan_masuk/tolak/:id_laporan_sampah_ilegal', async function(req, res, next) {
+  try {
+    let id = req.params.id_laporan_sampah_ilegal;
+    await Model_Sampah_Ilegal.Delete(id);
+    req.flash('success','Laporan berhasil ditolak');
+    res.redirect('/users/mitra/pemerintah/laporan_masuk');
+    
+  } catch (error) {
+    req.flash('error','Terjadi kesalahan pada fungsi');
+    res.redirect('/users/mitra/pemerintah/laporan_masuk');
+  }
+});
+
+router.post('/mitra/non-pemerintah/laporan_akun', async(req, res, next) => {
+  uploadFields(req, res, async function (err) {
+    if (err) {
+      console.error("Error saat upload:", err.message);
+      req.flash('error', err.message);  
+      return res.redirect('/users/mitra/non-pemerintah');
+    }
+    let file_foto = req.files['file_foto'];
+    let file_video = req.files['file_video'];
+    let { judul_lapor_akun, deskripsi_lapor_akun, id_laporan_sampah_komersil } = req.body
+    let data = {
+      judul_lapor_akun,
+      deskripsi_lapor_akun,
+      file_foto: file_foto ? file_foto[0].filename: null,
+      file_video: file_video ? file_video[0].filename: null,
+      id_laporan_sampah_komersil
+    }
+    try {
+
+      await Model_Mitra.laporAkunKomersil(data);
+      req.flash('success','Berhasil melaporkan akun');
+      res.redirect('/users/mitra/non-pemerintah');
+
+    } catch (error) {
+      req.flash('error','Terjadi kesalahan pada fungsi');
+      res.redirect('/users/mitra/non-pemerintah')
+    }
+  })
+})
 module.exports = router;
