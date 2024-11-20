@@ -14,6 +14,20 @@ class Model_Warga{
         });
     }
 
+
+    static async getAllData(){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT * FROM laporan_sampah_ilegal ORDER BY id_laporan_sampah_ilegal DESC', (err, rows) => {
+                if(err){
+                    reject(err);
+                } else {
+                    resolve(rows);
+                    console.log(rows);
+                }
+            });
+        });
+    }
+
     static async Store(Data){
         return new Promise((resolve, reject) => {
             connection.query('INSERT INTO laporan_sampah_ilegal SET ?', [Data], (err, result)=>{
@@ -40,9 +54,11 @@ class Model_Warga{
         })
     }
 
-    static async getByIdUsers(id){
+
+    static async getIdLpIlegal(id){
         return new Promise((resolve, reject) => {
-            connection.query('SELECT * FROM warga WHERE id_users = ?', [id], (err, result)=>{
+            connection.query('SELECT * FROM laporan_sampah_ilegal WHERE id_laporan_sampah_ilegal = ?', [id], (err, result)=>{
+
                 if(err){
                     reject(err);
                     console.log(err)
@@ -68,12 +84,15 @@ class Model_Warga{
 
     static async Delete(id){
         return new Promise((resolve, reject) => {
-            connection.query('DELETE FROM laporan_sampah_komersil WHERE id_sampah_komersil = ?', [id], (err, result)=>{
+
+            connection.query('DELETE FROM laporan_sampah_ilegal WHERE id_laporan_sampah_ilegal = ?', [id], (err, result)=>{
+
                 if(err){
                     reject(err);
                     console.log(err)
                 }else{
-                    resolve(result[0]);
+                    resolve(result);
+
                 }
             })
         })

@@ -26,6 +26,19 @@ class Model_Warga{
             });
         });
     }
+    
+    static async getAllDataBalasan(){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT b.deskripsi_balasan, b.file_foto, b.file_video, u.nama_users FROM balasan_laporan_sampah_ilegal b JOIN mitra m ON b.id_mitra = m.id_mitra JOIN users u ON u.id_users = m.id_users ORDER BY b.id_balasan_laporan_sampah_ilegal', (err, rows) => {
+                if(err){
+                    reject(err);
+                } else {
+                    resolve(rows);
+                    console.log(rows);
+                }
+            });
+        });
+    }
 
     static async Store(Data){
         return new Promise((resolve, reject) => {

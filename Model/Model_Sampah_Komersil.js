@@ -29,7 +29,7 @@ class Model_Warga{
 
     static async getId(id){
         return new Promise((resolve, reject) => {
-            connection.query('SELECT * FROM warga WHERE id_warga = ?', [id], (err, result)=>{
+            connection.query('SELECT * FROM laporan_sampah_komersil WHERE id_laporan_sampah_komersil = ?', [id], (err, result)=>{
                 if(err){
                     reject(err);
                     console.log(err)
@@ -40,9 +40,12 @@ class Model_Warga{
         })
     }
 
-    static async getByIdUsers(id){
+    static async getDataByIdLpSampahKomersil(id){
         return new Promise((resolve, reject) => {
-            connection.query('SELECT * FROM warga WHERE id_users = ?', [id], (err, result)=>{
+            connection.query(`SELECT ls.*, u.id_users, u.nama_users FROM laporan_sampah_komersil ls 
+                JOIN warga w ON ls.id_warga = w.id_warga
+                JOIN users u ON w.id_users = u.id_users 
+                WHERE ls.id_laporan_sampah_komersil = ?`, [id], (err, result)=>{
                 if(err){
                     reject(err);
                     console.log(err)

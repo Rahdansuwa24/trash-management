@@ -38,8 +38,8 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span><%= nama_users %></span>
-							<div id="more-details">Warga</div>
+							<span><%= users.nama_users %></span>
+							<div id="more-details"><%= users.role_users %></div>
 						</div>
 					</div>
 				</div>
@@ -149,43 +149,85 @@
             <!-- [ breadcrumb ] end -->
             <!-- [ Main Content ] start -->
             <div class="col-lg-auto col-md-12">
-                <div class="card table-card review-card">
-                    <div class="card-header borderless ">
-                        <h5>Laporan</h5>
-                        <div class="card-header-right">
-                            <div class="btn-group card-option">
-                                <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                    <i class="feather icon-more-horizontal"></i>
-                                </button>
-                                <ul class="list-unstyled card-option dropdown-menu dropdown-menu-right">
-                                    <li class="dropdown-item full-card"><a href="#!"><span><i class="feather icon-maximize"></i> maximize</span><span style="display:none"><i class="feather icon-minimize"></i> Restore</span></a></li>
-                                    <li class="dropdown-item minimize-card"><a href="#!"><span><i class="feather icon-minus"></i> collapse</span><span style="display:none"><i class="feather icon-plus"></i> expand</span></a></li>
-                                    <li class="dropdown-item reload-card"><a href="#!"><i class="feather icon-refresh-cw"></i> reload</a></li>
-                                    <li class="dropdown-item close-card"><a href="#!"><i class="feather icon-trash"></i> remove</a></li>
-                                </ul>
+                <% for( let i = 0; i < rows.length; i++ ) { %>
+                
+                    <div class="card table-card review-card">
+                        <div class="card-header borderless ">
+                            <h5>Laporan</h5>
+                            <div class="card-header-right">
+                                <div class="btn-group card-option">
+                                    <button type="button" class="btn dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                        <i class="feather icon-more-horizontal"></i>
+                                    </button>
+                                    <ul class="list-unstyled card-option dropdown-menu dropdown-menu-right">
+                                        <li class="dropdown-item full-card"><a href="#!"><span><i class="feather icon-maximize"></i> maximize</span><span style="display:none"><i class="feather icon-minimize"></i> Restore</span></a></li>
+                                        <li class="dropdown-item minimize-card"><a href="#!"><span><i class="feather icon-minus"></i> collapse</span><span style="display:none"><i class="feather icon-plus"></i> expand</span></a></li>
+                                        <li class="dropdown-item reload-card"><a href="#!"><i class="feather icon-refresh-cw"></i> reload</a></li>
+                                        <li class="dropdown-item close-card"><a href="#!"><i class="feather icon-trash"></i> remove</a></li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="card-body pb-0">
-                        <div class="review-block">
-                            <div class="row">
-                                <div class="col">
-                                    <h6 class="m-b-15">John Deo <span class="float-right f-13 text-muted"> a week ago</span></h6>
-                                    <div class="komen">
-                                        <span>Pesan: <p class="m-t-15 m-b-15 text-muted">Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptate mollitia natus eveniet, eum aliquid maiores. Maiores beatae aperiam alias. Excepturi beatae voluptatibus id esse expedita aut ipsum maiores eligendi temporibus. </p></span>
-                                        <button type="button" class="btn btn-primary mb-3" style="width: 15%;" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                        <button type="button" class="btn btn-primary mb-3" style="width: 15%;" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
+                        <div class="card-body pb-0">
+                            <div class="review-block">
+                                <div class="row">
+                                    <div class="col">
+                                        <h6 class="m-b-15"><%= rows[i].nama_users %> <span class="float-right f-13 text-muted"></span></h6>
+                                        <div class="komen">
+                                            <span>Pesan: <p class="m-t-15 m-b-15 text-muted"><%= rows[i].deskripsi_balasan %> </p></span>
+                                                <!-- Tombol untuk memicu modal gambar -->
+                                                <button type="button" class="btn btn-primary" data-toggle="modal" style="margin: 0 0 20px 0;" data-target="#mediaModalImage<%= i %>">
+                                                  Lihat Gambar
+                                                </button>
+                                                <!-- Modal untuk gambar -->
+                                                <div class="modal fade" id="mediaModalImage<%= i %>" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabelImage<%= i %>" aria-hidden="true">
+                                                  <div class="modal-dialog modal-dialog-centered" role="document">
+                                                    <div class="modal-content">
+                                                      <div class="modal-header">
+                                                        <h5 class="modal-title" id="mediaModalLabelImage<%= i %>">Gambar</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                          <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                      </div>
+                                                      <div class="modal-body">
+                                                        <img src="/images/<%= rows[i].file_foto %>" alt="Gambar" style="width: 100%; height: auto;">
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              
+                                                <!-- Tombol untuk memicu modal video -->
+                                                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModalVideo<%= i %>">
+                                                  Lihat Video
+                                                </button>
+                                                <!-- Modal untuk video -->
+                                                <div class="modal fade" id="mediaModalVideo<%= i %>" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabelVideo<%= i %>" aria-hidden="true">
+                                                  <div class="modal-dialog modal-dialog-centered" role="document">
+                                                    <div class="modal-content">
+                                                      <div class="modal-header">
+                                                        <h5 class="modal-title" id="mediaModalLabelVideo<%= i %>">Video</h5>
+                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                          <span aria-hidden="true">&times;</span>
+                                                        </button>
+                                                      </div>
+                                                      <div class="modal-body">
+                                                        <video controls style="width: 100%; height: auto;">
+                                                          <source src="/video/<%= rows[i].file_video %>" type="video/mp4">
+                                                          Browser Anda tidak mendukung tag video.
+                                                        </video>
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                              
+                                        </div>
+                                        
                                     </div>
-                                    
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                <% } %>
             </div>
             <!-- [ Main Content ] end -->
         </div>

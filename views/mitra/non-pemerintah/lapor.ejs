@@ -93,7 +93,7 @@
                             <ul class="breadcrumb">
                                 <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah"><i class="feather icon-home"></i></a></li>
                                 <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah/lapor">Lapor Akun</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/non-pemerintah/lapor/<%= data.id_laporan_sampah_komersil %>">Lapor Akun</a></li>
                             </ul>
                         </div>
                     </div>
@@ -103,51 +103,55 @@
             <!-- [ Main Content ] start -->
 			<div class="pcoded-wrapper container">
                 <div class="col-sm-12">
-                     <form class="card" action="" method="post">
-                        <div class="card-header">
-                            <h5>Laporkan Akun</h5>
-                        </div>
-                        <div class="card-body">
-                            <h5 class="mt-3">Akun Dilaporkan</h5>
-                            <div class="input-group mb-3">
-                                <div class="custom-file" style="width: 100%;">
-                                    <input type="text" class="form-control" name="alamat_laporan" placeholder="users" readonly>
-                                </div>
-                            </div>
-                            <h5 class="mt-3">Jenis Pelanggaran</h5>
-								<div class="input-group mb-3">
-									<select class="form-control" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
-										<option selected disabled hidden>Choose...</option>
-										<option value="plastik">Penjualan Palsu</option>
-										<option value="logam">Content Tidak Pantas</option>
-										<option value="kertas">SARA</option>
-										<option value="lainnya">Lainnya</option>
-									</select>
+					<form class="card" action="/users/mitra/non-pemerintah/laporan_akun" method="post" enctype="multipart/form-data">
+						<!-- Tambahkan input tersembunyi untuk id_laporan_sampah_komersil -->
+						<input type="hidden" name="id_laporan_sampah_komersil" value="<%= data.id_laporan_sampah_komersil %>">
+						
+						<div class="card-header">
+							<h5>Laporkan Akun</h5>
+						</div>
+						<div class="card-body">
+							<h5 class="mt-3">Akun Dilaporkan</h5>
+							<div class="input-group mb-3">
+								<div class="custom-file" style="width: 100%;">
+									<input type="text" class="form-control" placeholder="<%= data.nama_users %>" readonly>
 								</div>
-
-                            <h5 class="mt-3">Deskripsi</h5>
-                            <textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
-                            
-                            <h5 class="mt-3">File Foto</h5>
-                            <div class="input-group mb-3">
-                                <div class="form-select">
-                                    <input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
-                                    <label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
-                                </div>
-                            </div>
-
-                            <h5 class="mt-3">File Video</h5>
-                            <div class="input-group mb-3">
-                                <div class="form-select">
-                                    <input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
-                                    <label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
-                                </div>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
-                            <a href="/users/mitra/non-pemerintah" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
-                        </div>
-                    </form> 
+							</div>
+					
+							<h5 class="mt-3">Jenis Pelanggaran</h5>
+							<div class="input-group mb-3">
+								<select class="form-control" name="judul_lapor_akun" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
+									<option selected disabled hidden>Choose...</option>
+									<option value="Penjualan Palsu">Penjualan Palsu</option>
+									<option value="Konten tidak pantas">Content Tidak Pantas</option>
+									<option value="SARA">SARA</option>
+									<option value="lainnya">Lainnya</option>
+								</select>
+							</div>
+					
+							<h5 class="mt-3">Deskripsi</h5>
+							<textarea class="form-control mb-3" name="deskripsi_lapor_akun" placeholder="Deskripsi" aria-label="With textarea"></textarea>
+							
+							<h5 class="mt-3">File Foto</h5>
+							<div class="input-group mb-3">
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" name="file_foto" id="inputGroupFile01" onchange="updateFileName(this)">
+									<label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
+								</div>
+							</div>
+					
+							<h5 class="mt-3">File Video</h5>
+							<div class="input-group mb-3">
+								<div class="custom-file">
+									<input type="file" class="custom-file-input" name="file_video" id="inputGroupFile02" onchange="updateFileName(this)">
+									<label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
+								</div>
+							</div>
+					
+							<button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
+							<a href="/users/mitra/non-pemerintah" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
+						</div>
+					</form>
                 </div>
             </div>
             <!-- [ Main Content ] end -->

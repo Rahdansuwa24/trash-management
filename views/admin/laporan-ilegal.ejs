@@ -263,7 +263,7 @@
                                               </button>
                                             </div>
                                             <div class="modal-body">
-                                              <img src="<%= rows[i].file_foto %>" alt="Gambar" style="width: 100%; height: auto;">
+                                              <img src="/images/<%= rows[i].file_foto %>" alt="Gambar" style="width: 100%; height: auto;">
                                             </div>
                                           </div>
                                         </div>
@@ -286,7 +286,7 @@
                                             </div>
                                             <div class="modal-body">
                                               <video controls style="width: 100%; height: auto;">
-                                                <source src="<%= rows[i].file_video %>" type="video/mp4">
+                                                <source src="/video/<%= rows[i].file_video %>" type="video/mp4">
                                                 Browser Anda tidak mendukung tag video.
                                               </video>
                                             </div>
@@ -312,7 +312,7 @@
                                             <div class="modal-body">
                                               <p><strong>Pelapor:</strong> <%= rows[i].pelapor %></p>
                                               <p><strong>Terlapor:</strong> <%= rows[i].yang_dilaporkan %></p>
-                                              <p><strong>Jenis Laporan:</strong> <%= rows[i].jenis_laporan %></p>
+                                              <p><strong>Jenis Laporan:</strong> <%= rows[i].judul_lapor_akun %></p>
                                               <p><strong>Deskripsi:</strong> <%= rows[i].deskripsi_lapor_akun %></p>
                                             </div>
                                             <div class="modal-footer">

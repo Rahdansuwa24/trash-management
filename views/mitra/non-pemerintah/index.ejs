@@ -135,9 +135,11 @@
                   </div>
             
                   <div class="block" style="padding: 3%;">
+
+                    <h6>Jenis Sampah: <%= dataLaporan[i].jenis_sampah  %></h6>
                     <h6 id="latitude">Lokasi: <%= dataLaporan[i].latitude %></h6>, <h6 id="longitude"><%= dataLaporan[i].longitude %></h6>
                     <h6>No HP: <%= dataLaporan[i].no_telp %></h6>
-                    <a href="/users/mitra/non-pemerintah/lapor/<%= dataLaporan[i].id_sampah_komersil %>" class="btn btn-danger">Laporkan</a>
+                    <a href="/users/mitra/non-pemerintah/lapor/<%= dataLaporan[i].id_laporan_sampah_komersil %>" class="btn btn-danger">Laporkan</a>
                   </div>
                 </div>
               <% } %>

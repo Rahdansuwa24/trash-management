@@ -156,12 +156,53 @@ class Model_Mitra{
 
     static async mitraKomersil(){
         return new Promise((resolve, reject) => {
-            connection.query(`select w.no_telp, u.nama_users, l.longitude, l.latitude, l.file_foto, l.file_video, l.id_laporan_sampah_komersil from users u left join warga w on u.id_users = w.id_users left join laporan_sampah_komersil l on l.id_warga = w.id_warga where u.role_users = 'warga';`, (err, result)=>{
+            connection.query(`select w.no_telp, u.nama_users, l.longitude, l.latitude, l.file_foto, l.file_video, l.id_laporan_sampah_komersil, l.jenis_sampah from users u left join warga w on u.id_users = w.id_users left join laporan_sampah_komersil l on l.id_warga = w.id_warga where u.role_users = 'warga';`, (err, result)=>{
                 if(err){
                     reject(err);
                     console.log(err)
                 }else{
                     resolve(result);
+                }
+            })
+        })
+    }
+
+
+
+    static async laporAkunKomersil(data){
+        return new Promise((resolve, reject) => {
+            connection.query(`INSERT INTO lapor_akun_laporan_sampah_komersil SET ?`, data, (err, result)=> {
+                if(err){
+                    reject(err);
+                    console.log(err);
+                }else{
+                    resolve(result)
+                }
+            })
+        })
+    }
+
+    static async laporAkunIlegal(data){
+        return new Promise((resolve, reject) => {
+            connection.query(`INSERT INTO lapor_akun_laporan_sampah_ilegal SET ?`, data, (err, result)=> {
+                if(err){
+                    reject(err);
+                    console.log(err);
+                }else{
+                    resolve(result)
+                }
+            })
+        })
+    }
+
+    static async BalasLaporanIlegal(data){
+        return new Promise((resolve, reject) => {
+            connection.query(`INSERT INTO balasan_laporan_sampah_ilegal SET ?`, data, (err, result)=> {
+                if(err){
+                    reject(err);
+                    console.log(err);
+                }else{
+                    resolve(result)
                 }
             })
         })

@@ -22,6 +22,16 @@
 
 </head>
 <body class="">
+    <% if (messages.success) { %>
+		<div class="alert alert-info" role="alert">
+			<%- messages.success %>
+		</div>
+	<% } %>
+	<% if (messages.error) { %>
+		<div class="alert alert-danger" role="alert">
+			<%- messages.error %>
+		</div>
+	<% } %>
 	<!-- [ Pre-loader ] start -->
 	<div class="loader-bg">
 		<div class="loader-track">
@@ -38,8 +48,8 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span>BLH</span>
-							<div id="more-details">Mitra</div>
+							<span><%= users.nama_users %></span>
+							<div id="more-details"><%= users.role_users %></div>
 						</div>
 					</div>
 				</div>
@@ -153,7 +163,6 @@
 							<table id="basic-datatables" class="display table table-striped table-hover">
 							<thead>
 								<tr>
-								<th>Nama Pengirim</th>
 								<th>No HP</th>
 								<th>Lokasi</th>
 								<th>File Foto</th>
@@ -163,336 +172,72 @@
 								</tr>
 							</thead>
 							<tbody>
-                                <tr>
-                                    <td>Airi Satou</td>
-                                    <td>+62 897-123-658</td>
-                                    <td>Tuban</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
+                                <% for( let i = 0; i < rows.length; i++ ) { %>    
+                                    <tr>
+                                        <td><%= rows[i].nomor_hp %></td>
+                                        <td><%= rows[i].lokasi %></td>
+                                        <td>
+                                            <!-- Tombol untuk memicu modal gambar -->
+                                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModalImage<%= i %>">
+                                              Lihat Gambar
                                             </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
+                                            <!-- Modal untuk gambar -->
+                                            <div class="modal fade" id="mediaModalImage<%= i %>" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabelImage<%= i %>" aria-hidden="true">
+                                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                                <div class="modal-content">
+                                                  <div class="modal-header">
+                                                    <h5 class="modal-title" id="mediaModalLabelImage<%= i %>">Gambar</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                      <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                  </div>
+                                                  <div class="modal-body">
+                                                    <img src="/images/<%= rows[i].file_foto %>" alt="Gambar" style="width: 100%; height: auto;">
+                                                  </div>
+                                                </div>
+                                              </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-								<tr>
-                                    <td>Garrett Winters</td>
-                                    <td>+62 814-567-890</td>
-                                    <td>Tokyo</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
+                                          </td>
+                                          <td>
+                                            <!-- Tombol untuk memicu modal video -->
+                                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModalVideo<%= i %>">
+                                              Lihat Video
                                             </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
+                                            <!-- Modal untuk video -->
+                                            <div class="modal fade" id="mediaModalVideo<%= i %>" tabindex="-1" role="dialog" aria-labelledby="mediaModalLabelVideo<%= i %>" aria-hidden="true">
+                                              <div class="modal-dialog modal-dialog-centered" role="document">
+                                                <div class="modal-content">
+                                                  <div class="modal-header">
+                                                    <h5 class="modal-title" id="mediaModalLabelVideo<%= i %>">Video</h5>
+                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                      <span aria-hidden="true">&times;</span>
+                                                    </button>
+                                                  </div>
+                                                  <div class="modal-body">
+                                                    <video controls style="width: 100%; height: auto;">
+                                                      <source src="/video/<%= rows[i].file_video %>" type="video/mp4">
+                                                      Browser Anda tidak mendukung tag video.
+                                                    </video>
+                                                  </div>
+                                                </div>
+                                              </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Ashton Cox</td>
-                                    <td>+62 820-345-678</td>
-                                    <td>San Francisco</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
+                                          </td>
+                                        <td><span class="badge badge-success">Success</span></td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                                    Tindakan
+                                                </button>
+                                                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                                                    <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun/<%= rows[i].id_laporan_sampah_ilegal %>">Balas</a>
+                                                    <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun/<%= rows[i].id_laporan_sampah_ilegal %>">Laporkan</a>
+                                                    <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/tolak/<%= rows[i].id_laporan_sampah_ilegal %>">Tolak</a>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Cedric Kelly</td>
-                                    <td>+62 811-234-567</td>
-                                    <td>Edinburgh</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Brielle Williamson</td>
-                                    <td>+62 853-876-543</td>
-                                    <td>New York</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Herrod Chandler</td>
-                                    <td>+62 852-765-432</td>
-                                    <td>San Francisco</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Rhona Davidson</td>
-                                    <td>+62 821-234-567</td>
-                                    <td>Tokyo</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Charde Marshall</td>
-                                    <td>+62 813-987-654</td>
-                                    <td>San Francisco</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Haley Kennedy</td>
-                                    <td>+62 812-345-678</td>
-                                    <td>London</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Kevin Magnus</td>
-                                    <td>+62 815-678-901</td>
-                                    <td>Jombang</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Lewis Hamilton</td>
-                                    <td>+62 816-789-012</td>
-                                    <td>Pasuruan</td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal1">
-                                            Lihat Gambar
-                                        </button>
-                                    </td>
-                                    <td>
-                                        <!-- Tombol untuk memicu modal -->
-                                        <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#mediaModal2">
-                                            Lihat Video
-                                        </button>
-                                    </td>
-                                    <td><span class="badge badge-success">Success</span></td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                                                Tindakan
-                                            </button>
-                                            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas</a>
-                                                <a class="dropdown-item" href="/users/mitra/pemerintah/laporan_masuk/report_akun">Laporkan</a>
-                                                <a class="dropdown-item" href="#">Tolak</a>
-                                            </div>
-                                        </div>
-                                    </td>
-                                </tr>                                
+                                        </td>
+                                    </tr>                               
+                                <% } %>
 							</tbody>
 							</table>
 						</div>

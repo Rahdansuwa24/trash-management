@@ -38,8 +38,8 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span>Bambang</span>
-							<div id="more-details">UX Designer</div>
+							<span><%= users.nama_users %></span>
+							<div id="more-details"><%= users.role_users %></div>
 						</div>
 					</div>
 				</div>
@@ -100,7 +100,7 @@
                                 <li class="breadcrumb-item"><a href="/users/warga"><i class="feather icon-home"></i></a></li>
                                 <li class="breadcrumb-item"><a href="/users/warga">Dashboard</a></li>
                                 <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk">Laporan Masuk</a></li>
-                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk/balas_akun">Balas Laporan</a></li>
+                                <li class="breadcrumb-item"><a href="/users/mitra/pemerintah/laporan_masuk/balas_akun/<%= data.id_laporan_sampah_ilegal %>">Balas Laporan</a></li>
                             </ul>
                         </div>
                     </div>
@@ -110,18 +110,20 @@
             <!-- [ Main Content ] start -->
 			<div class="pcoded-wrapper container">
                 <div class="col-sm-12">
-                     <form class="card" action="" method="post">
+                     <form class="card" action="/users//mitra/pemerintah/laporan_masuk/balas_akun/submit" method="post" enctype="multipart/form-data">
                         <div class="card-header">
                             <h5>Balas Laporan Warga</h5>
                         </div>
+						<input type="hidden" name="id_laporan_sampah_ilegal" value="<%= data.id_laporan_sampah_ilegal %>">
+						<input type="hidden" name="id_mitra" value="<%= mitra.id_mitra %>">
                         <div class="card-body">
                             <h5 class="mt-3">Pesan</h5>
-                            <textarea class="form-control mb-3" name="deskripsi_laporan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
+                            <textarea class="form-control mb-3" name="deskripsi_balasan" placeholder="Deskripsi" aria-label="With textarea"></textarea>
                         
                             <h5 class="mt-3">File Foto</h5>
                             <div class="input-group mb-3">
                                 <div class="form-select">
-                                    <input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+                                    <input type="file" class="custom-file-input" name="file_foto" id="inputGroupFile01" onchange="updateFileName(this)">
                                     <label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
                                 </div>
                             </div>
@@ -129,7 +131,7 @@
                             <h5 class="mt-3">File Video</h5>
                             <div class="input-group mb-3">
                                 <div class="form-select">
-                                    <input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+                                    <input type="file" class="custom-file-input" name="file_video" id="inputGroupFile02" onchange="updateFileName(this)">
                                     <label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
                                 </div>
                             </div>
