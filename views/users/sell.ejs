@@ -184,6 +184,12 @@
 										Please choose a username.
 									</div>
 								</div>
+								<div class="input-group mb-3">
+									<input type="text" class="form-control" name="lokasi" id="lokasi" value=" " placeholder="Lokasi" aria-describedby="inputGroupPrepend" required readonly>
+									<div class="invalid-feedback">
+										Please choose a username.
+									</div>
+								</div>
 								<h5 class="mt-3">Pilih Mitra</h5>
 								<div class="input-group mb-3">
 									<select class="form-control" name="mitra" id="mitra">
@@ -305,15 +311,15 @@
 <script>
     function updateDropdownLabel(selectElement, labelId) {
         const selectedOption = selectElement.options[selectElement.selectedIndex];
-        console.log("Selected option:", selectedOption); // Debug pilihan
+        console.log("Selected option:", selectedOption); 
         if (selectedOption) {
             document.getElementById(labelId).innerHTML = selectedOption.text;
         }
     }
 
 	function updateFileName(input) {
-    const fileName = input.files[0]?.name || "Pilih file"; // Ambil nama file jika ada
-    input.nextElementSibling.innerHTML = fileName; // Perbarui teks pada label
+    const fileName = input.files[0]?.name || "Pilih file";
+    input.nextElementSibling.innerHTML = fileName; 
 }
 
 </script>
@@ -330,6 +336,77 @@
 		document.querySelector('input[name="latitude"]').value = position.coords.latitude;
 		document.querySelector('input[name="longitude"]').value = position.coords.longitude;
 	    }
+	</script>
+
+<script type="text/javascript">
+	window.onload = function () {
+		getLocation();
+	};
+
+	function getLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(showPosition, showError);
+		} else {
+			alert("Geolocation is not supported by this browser.");
+		}
+	}
+
+	function showPosition(position) {
+		const latitude = position.coords.latitude;
+		const longitude = position.coords.longitude;
+
+		document.querySelector('input[name="latitude"]').value = latitude;
+		document.querySelector('input[name="longitude"]').value = longitude;
+
+		getAddress(latitude, longitude);
+	}
+
+	function showError(error) {
+		switch (error.code) {
+			case error.PERMISSION_DENIED:
+				alert("User denied the request for Geolocation.");
+				break;
+			case error.POSITION_UNAVAILABLE:
+				alert("Location information is unavailable.");
+				break;
+			case error.TIMEOUT:
+				alert("The request to get user location timed out.");
+				break;
+			case error.UNKNOWN_ERROR:
+				alert("An unknown error occurred.");
+				break;
+		}
+	}
+
+	function getAddress(latitude, longitude) {
+		const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				console.table(data.address)
+				if (data && data.address) {
+					const address = data.address;q
+					const province = address.state || "";
+					const city = address.city || address.village || address.town || "";
+					const district = address.country || "";
+					const village = address.village
+					const subdistrict = address.suburb || address.neighbourhood || "";
+					const fullAddress = `${subdistrict}, ${district}, ${province}, ${city}, ${village}`.replace(/^, |, $/g, "");
+
+					document.querySelector('input[name="lokasi"]').value = fullAddress;
+				} else {
+					alert("Unable to fetch location details.");
+				}
+			})
+			.catch(error => {
+				console.error("Error fetching location data:", error);
+			});
+	}
+</script>
+
+	<script>
+		
 	</script>
 
 </body>

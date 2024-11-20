@@ -154,14 +154,14 @@ class Model_Mitra{
     }
     
 
-    static async KotaKelurahan(){
+    static async mitraKomersil(){
         return new Promise((resolve, reject) => {
-            connection.query('select u.*, m.* from users u left join mitra m on u.id_users = m.id_users order by u.nama_users desc', (err, result)=>{
+            connection.query(`select w.no_telp, u.nama_users, l.longitude, l.latitude, l.file_foto, l.file_video, l.id_laporan_sampah_komersil from users u left join warga w on u.id_users = w.id_users left join laporan_sampah_komersil l on l.id_warga = w.id_warga where u.role_users = 'warga';`, (err, result)=>{
                 if(err){
                     reject(err);
                     console.log(err)
                 }else{
-                    resolve(result[0]);
+                    resolve(result);
                 }
             })
         })

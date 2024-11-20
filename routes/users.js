@@ -37,9 +37,9 @@ const upload = multer({
   storage: multer.diskStorage({
     destination: function (req, file, cb) {
       if (file.fieldname === 'file_foto') {
-        cb(null, 'public/images'); // Folder untuk gambar
+        cb(null, 'public/images');
       } else if (file.fieldname === 'file_video') {
-        cb(null, 'public/video'); // Folder untuk video
+        cb(null, 'public/video');
       } else {
         cb(new Error('Fieldname not recognized'), false); // Error jika field tidak sesuai
       }
@@ -48,7 +48,7 @@ const upload = multer({
       const ext = path.extname(file.originalname);
       const baseName = path.basename(file.originalname, ext);
       const uniqueSuffix = Date.now() + '-' + baseName;
-      cb(null, uniqueSuffix + ext); // Nama file unik
+      cb(null, uniqueSuffix + ext); 
     },
   }),
   fileFilter: fileFilter
@@ -247,9 +247,13 @@ router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) 
   let tipe = Mitra.jenis_mitra
   req.session.mitraId = Mitra.id_mitra
   console.log('id_mitra: ', req.session.mitraId)
-  if(tipe == 'non-pemerintah'){
+  let dataLaporan = await Model_Mitra.mitraKomersil()
+  console.log(dataLaporan)
+  console.log(Array.isArray(dataLaporan));
+  if(tipe === 'non-pemerintah'){
     res.render('mitra/non-pemerintah/index', {
-      nama_users
+      nama_users,
+      dataLaporan
     });
 
   }else{
@@ -322,8 +326,8 @@ router.post('/warga/sell/sampah/submit', function(req, res, next) {
     let Data = {
       id_warga,
       jenis_sampah,
-      file_foto: file_foto ? file_foto[0].path : null,
-      file_video: file_video ? file_video[0].path : null,
+      file_foto: file_foto ? file_foto[0].filename: null,
+      file_video: file_video ? file_video[0].filename: null,
       provinsi,
       kota,
       kelurahan,
