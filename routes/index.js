@@ -62,7 +62,7 @@ router.post('/log', async (req, res) => {
               return res.redirect('/users/warga/complete-profile-warga');
             } else {
               req.flash('success', 'Berhasil Login');
-              return res.redirect('/users/warga');
+              return res.redirect('/users');
             }
             break;
 

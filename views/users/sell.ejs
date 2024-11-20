@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>THIS - Trash Handling Information System</title>
+    <title>Flat Able - Premium Admin Template by Phoenixcoded</title>
     
     <!-- Meta -->
     <meta charset="utf-8">
@@ -22,6 +22,17 @@
 </head>
 <body class="" onload="getLocation();">
 	<!-- [ Pre-loader ] start -->
+
+	<% if (messages.success) { %>
+		<div class="alert alert-info" role="alert">
+			<%- messages.success %>
+		</div>
+	<% } %>
+	<% if (messages.error) { %>
+		<div class="alert alert-danger" role="alert">
+			<%- messages.error %>
+		</div>
+	<% } %>
 	<div class="loader-bg">
 		<div class="loader-track">
 			<div class="loader-fill"></div>
@@ -37,7 +48,7 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span>Iqbal</span>
+							<span><%= nama_users %></span>
 							<div id="more-details">Warga</div>
 						</div>
 					</div>
@@ -54,7 +65,7 @@
 					    <a href="/users/warga/sell" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-plus"></i></span><span class="pcoded-mtext">Sell</span></a>
 					</li>
 					<li class="nav-item">
-					    <a href="/users/warga/kotak_laporan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-plus"></i></span><span class="pcoded-mtext">Kotak Laporan</span></a>
+					    <a href="/users/warga/kotak_balasan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-plus"></i></span><span class="pcoded-mtext">Kotak Balasan</span></a>
 					</li>
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>
@@ -84,8 +95,6 @@
 	</header>
 	<!-- [ Header ] end -->
 	
-	
-
     <!-- [ Main Content ] start -->
     <section class="pcoded-main-container">
         <div class="pcoded-content">
@@ -111,23 +120,23 @@
             
             <div class="row">
                 <div class="col-sm-12">
-                     <form class="card" action="" method="post">
                         <div class="card-header">
                             <h5>Jual Sampah Anda</h5>
                         </div>
                         <div class="card-body">
 							<form action="/users/warga/sell/sampah/submit" method="post" enctype="multipart/form-data">
-
-								
 								<h5 class="mt-3">Jenis Sampah</h5>
 								<div class="input-group mb-3">
-									<select class="form-control" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
-										<option selected disabled hidden>Choose...</option>
-										<option value="plastik">Plastik</option>
-										<option value="logam">Logam</option>
-										<option value="kertas">Kertas</option>
-										<option value="lainnya">Lainnya</option>
-									</select>
+									<div class="custom-file">
+										<select class="custom-file-input" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
+											<option selected disabled hidden>Choose...</option>
+											<option value="plastik">Plastik</option>
+											<option value="logam">Logam</option>
+											<option value="kertas">Kertas</option>
+											<option value="lainnya">Lainnya</option>
+										</select>
+										<label class="custom-file-label" for="jenisSampah" id="labelJenisSampah">Pilih Jenis Sampah</label>
+									</div>
 								</div>
 								<h5 class="mt-3">Lokasi Anda</h5>
 								<div class="input-group mb-3">
@@ -174,19 +183,37 @@
 									<div class="invalid-feedback">
 										Please choose a username.
 									</div>
-								</div>							
+								</div>
+								<div class="input-group mb-3">
+									<input type="text" class="form-control" name="lokasi" id="lokasi" value=" " placeholder="Lokasi" aria-describedby="inputGroupPrepend" required readonly>
+									<div class="invalid-feedback">
+										Please choose a username.
+									</div>
+								</div>
+								<h5 class="mt-3">Pilih Mitra</h5>
+								<div class="input-group mb-3">
+									<select class="form-control" name="mitra" id="mitra">
+										<% if (dataMitra && dataMitra.length > 0) { %>
+											<option selected disabled hidden>Pilih Mitra</option>
+											<% dataMitra.forEach(mitra => { %>
+												<option value="<%= mitra.nama_users%>"><%= mitra.nama_users %></option>
+											<% }) %>
+										<% } else { %>
+											<option value="" disabled>Tidak ada mitra tersedia</option>
+										<% } %>
+									</select>
+								</div>
 								<h5 class="mt-3">File Foto</h5>
 								<div class="input-group mb-3">
 									<div class="form-select">
-										<input type="file" class="custom-file-input" id="inputGroupFile01" onchange="updateFileName(this)">
+										<input type="file" class="custom-file-input" name="file_foto" id="inputGroupFile01" onchange="updateFileName(this)">
 										<label class="custom-file-label" for="inputGroupFile01">Pilih file foto</label>
 									</div>
 								</div>
-	
 								<h5 class="mt-3">File Video</h5>
 								<div class="input-group mb-3">
 									<div class="form-select">
-										<input type="file" class="custom-file-input" id="inputGroupFile02" onchange="updateFileName(this)">
+										<input type="file" class="custom-file-input" name="file_video" id="inputGroupFile02" onchange="updateFileName(this)">
 										<label class="custom-file-label" for="inputGroupFile02">Pilih file video</label>
 									</div>
 								</div>
@@ -195,7 +222,6 @@
 								<a href="/users/warga" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
 							</form>
                         </div>
-                    </form> 
                 </div>
             </div>
             <!-- [ form-element ] end -->
@@ -209,26 +235,6 @@
     <script src="/flat/dist/assets/js/plugins/bootstrap.min.js"></script>
     <script src="/flat/dist/assets/js/pcoded.min.js"></script>
 	
-	<script>
-		function updateDropdownLabel(selectElement, labelId) {
-			const selectedOption = selectElement.options[selectElement.selectedIndex].text;
-			document.getElementById(labelId).innerHTML = selectedOption;
-		}
-	</script>
-
-	<script type="text/javascript">
-		function getLocation(){
-			if(navigator.geolocation){
-				navigator.geolocation.getCurrentPosition(showPosition)
-			}
-		}
-
-		function showPosition(position) {
-		document.querySelector('input[name="latitude"]').value = position.coords.latitude;
-		document.querySelector('input[name="longitude"]').value = position.coords.longitude;
-	    }
-	</script>
-
 	<script>
 		function updateDropdownLabel(selectElement, labelId) {
 			const selectedOption = selectElement.options[selectElement.selectedIndex].text;
@@ -281,72 +287,126 @@
 					document.getElementById('kelurahan').innerHTML = options;
 				});
 		});
-	</script>
+		document.getElementById('mitra').addEventListener('change', (e) => {
+		const kecamatanName = document.getElementById('kecamatan').value;
+		const kotaName = document.getElementById('kota').value;
 
-	<script>
-		function updateFileName(input) {
-			const fileName = input.files[0]?.name || "Pilih file";
-			input.nextElementSibling.innerHTML = fileName;
-		}
-	</script>
-		
+		console.log("Mengirim data:", { kota: kotaName, kecamatan: kecamatanName });
 
-	<script>
-		fetch("https://kanglerian.github.io/api-wilayah-indonesia/api/provinces.json")
+		fetch(`/get-mitra?kota=${kotaName}&kecamatan=${kecamatanName}`)
 			.then(response => response.json())
-			.then(provinces => {
-				var data = provinces;
-				var tampung = '<option>Provinsi</option>';
-				data.forEach(element => {
-					tampung += `<option data-reg="${element.id}" value="${element.name}">${element.name}</option>`;
+			.then(mitra => {
+				let options = '<option selected disabled hidden>Pilih Mitra</option>';
+				mitra.forEach(m => {
+					options += `<option value="${m.id_users}">${m.nama_users}</option>`;
 				});
-				document.getElementById('provinsi').innerHTML = tampung;
+				document.getElementById('mitra').innerHTML = options;
+			})
+			.catch(err => console.error("Error fetching mitra:", err));
+	});
+
+	</script>
+
+	
+<script>
+    function updateDropdownLabel(selectElement, labelId) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        console.log("Selected option:", selectedOption); 
+        if (selectedOption) {
+            document.getElementById(labelId).innerHTML = selectedOption.text;
+        }
+    }
+
+	function updateFileName(input) {
+    const fileName = input.files[0]?.name || "Pilih file";
+    input.nextElementSibling.innerHTML = fileName; 
+}
+
+</script>
+
+
+	<script type="text/javascript">
+		function getLocation(){
+			if(navigator.geolocation){
+				navigator.geolocation.getCurrentPosition(showPosition)
+			}
+		}
+
+		function showPosition(position) {
+		document.querySelector('input[name="latitude"]').value = position.coords.latitude;
+		document.querySelector('input[name="longitude"]').value = position.coords.longitude;
+	    }
+	</script>
+
+<script type="text/javascript">
+	window.onload = function () {
+		getLocation();
+	};
+
+	function getLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(showPosition, showError);
+		} else {
+			alert("Geolocation is not supported by this browser.");
+		}
+	}
+
+	function showPosition(position) {
+		const latitude = position.coords.latitude;
+		const longitude = position.coords.longitude;
+
+		document.querySelector('input[name="latitude"]').value = latitude;
+		document.querySelector('input[name="longitude"]').value = longitude;
+
+		getAddress(latitude, longitude);
+	}
+
+	function showError(error) {
+		switch (error.code) {
+			case error.PERMISSION_DENIED:
+				alert("User denied the request for Geolocation.");
+				break;
+			case error.POSITION_UNAVAILABLE:
+				alert("Location information is unavailable.");
+				break;
+			case error.TIMEOUT:
+				alert("The request to get user location timed out.");
+				break;
+			case error.UNKNOWN_ERROR:
+				alert("An unknown error occurred.");
+				break;
+		}
+	}
+
+	function getAddress(latitude, longitude) {
+		const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				console.table(data.address)
+				if (data && data.address) {
+					const address = data.address;q
+					const province = address.state || "";
+					const city = address.city || address.village || address.town || "";
+					const district = address.country || "";
+					const village = address.village
+					const subdistrict = address.suburb || address.neighbourhood || "";
+					const fullAddress = `${subdistrict}, ${district}, ${province}, ${city}, ${village}`.replace(/^, |, $/g, "");
+
+					document.querySelector('input[name="lokasi"]').value = fullAddress;
+				} else {
+					alert("Unable to fetch location details.");
+				}
+			})
+			.catch(error => {
+				console.error("Error fetching location data:", error);
 			});
-	
-		const pilihProvinsi = document.getElementById('provinsi');
-		pilihProvinsi.addEventListener('change', (e) => {
-			var provinsi = e.target.options[e.target.selectedIndex].dataset.reg;
-			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/regencies/${provinsi}.json`)
-				.then(response => response.json())
-				.then(regencies => {
-					var data = regencies;
-					var tampung = '<option>Kota</option>';
-					data.forEach(element => {
-						tampung += `<option data-dist="${element.id}" value="${element.name}">${element.name}</option>`;
-					});
-					document.getElementById('kota').innerHTML = tampung;
-				});
-		});
-	
-		const pilihKota = document.getElementById('kota');
-		pilihKota.addEventListener('change', (e) => {
-			var kota = e.target.options[e.target.selectedIndex].dataset.dist;
-			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/districts/${kota}.json`)
-				.then(response => response.json())
-				.then(districts => {
-					var data = districts;
-					var tampung = '<option>Kecamatan</option>';
-					data.forEach(element => {
-						tampung += `<option data-vill="${element.id}" value="${element.name}">${element.name}</option>`;
-					});
-					document.getElementById('kecamatan').innerHTML = tampung;
-				});
-		});
-	
-		const pilihKecamatan = document.getElementById('kecamatan');
-		pilihKecamatan.addEventListener('change', (e) => {
-			var kecamatan = e.target.options[e.target.selectedIndex].dataset.vill;
-			fetch(`https://kanglerian.github.io/api-wilayah-indonesia/api/villages/${kecamatan}.json`)
-				.then(response => response.json())
-				.then(villages => {
-					var data = villages;
-					var tampung = '<option>Kelurahan</option>';
-					data.forEach(element => {
-						tampung += `<option value="${element.name}">${element.name}</option>`;
-					});
-					document.getElementById('kelurahan').innerHTML = tampung;
-				});
-		});
+	}
+</script>
+
+	<script>
+		
 	</script>
 
 </body>

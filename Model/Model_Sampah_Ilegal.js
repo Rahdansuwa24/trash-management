@@ -14,6 +14,7 @@ class Model_Warga{
         });
     }
 
+
     static async getAllData(){
         return new Promise((resolve, reject) => {
             connection.query('SELECT * FROM laporan_sampah_ilegal ORDER BY id_laporan_sampah_ilegal DESC', (err, rows) => {
@@ -53,9 +54,11 @@ class Model_Warga{
         })
     }
 
+
     static async getIdLpIlegal(id){
         return new Promise((resolve, reject) => {
             connection.query('SELECT * FROM laporan_sampah_ilegal WHERE id_laporan_sampah_ilegal = ?', [id], (err, result)=>{
+
                 if(err){
                     reject(err);
                     console.log(err)
@@ -81,12 +84,15 @@ class Model_Warga{
 
     static async Delete(id){
         return new Promise((resolve, reject) => {
+
             connection.query('DELETE FROM laporan_sampah_ilegal WHERE id_laporan_sampah_ilegal = ?', [id], (err, result)=>{
+
                 if(err){
                     reject(err);
                     console.log(err)
                 }else{
                     resolve(result);
+
                 }
             })
         })
