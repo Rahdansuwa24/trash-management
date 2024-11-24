@@ -251,7 +251,7 @@ router.get('/freeze-account/:id', async(req, res, next)=>{
     const id = req.params.id;
     await Model_Users.freezeAcc(id);
     req.flash('success','Berhasil Membekukan Akun');
-    res.redirect('/admin/data-warga')
+    res.redirect('/admin/data-user')
   } catch (error) {
     req.flash('error','Terjadi kesalahan pada fungsi');
     res.redirect('/admin/dashboard')
@@ -264,7 +264,7 @@ router.get('/activate-account/:id', async(req, res, next)=>{
     await Model_Users.ActivateAcc(id);
     console.log('IDD : ', id);
     req.flash('success','Berhasil Membuka pembekuan Akun');
-    res.redirect('/admin/data-warga')
+    res.redirect('/admin/data-user')
   } catch (error) {
     req.flash('error','Terjadi kesalahan pada fungsi');
     res.redirect('/admin/dashboard')

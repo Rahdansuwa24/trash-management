@@ -96,82 +96,69 @@
 	<!-- [ Header ] end -->
 	
     <!-- [ Main Content ] start -->
-    <section class="pcoded-main-container">
-        <div class="pcoded-content">
-            <!-- [ breadcrumb ] start -->
-            <div class="page-header">
-                <div class="page-block">
-                    <div class="row align-items-center">
-                        <div class="col-md-12">
-                            <div class="page-header-title">
-                                <h5 class="m-b-10">ISI DATA PENJUALAN SAMPAH</h5>
-                            </div>
-                            <ul class="breadcrumb">
-                                <li class="breadcrumb-item"><a href="/users/warga"><i class="feather icon-home"></i></a></li>
-                                <li class="breadcrumb-item"><a href="/users/warga">Dashboard</a></li>
-                                <li class="breadcrumb-item"><a href="/users/warga/sell">Sell</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!-- [ breadcrumb ] end -->
-            <!-- [ Main Content ] start -->
-            
-            <div class="row">
-                <div class="col-sm-12">
-                        <div class="card-header">
-                            <h5>Jual Sampah Anda</h5>
-                        </div>
-                        <div class="card-body">
-							<form action="/users/warga/sell/sampah/submit" method="post" enctype="multipart/form-data">
-								<h5 class="mt-3">Jenis Sampah</h5>
+	<div class="pcoded-main-container">
+		<div class="pcoded-content">
+			<div class="page-header">
+				<div class="page-block">
+					<div class="row align-items-center">
+						<div class="col-md-12">
+							<div class="page-header-title">
+								<h5 class="m-b-10">ISI DATA PENJUALAN SAMPAH</h5>
+							</div>
+							<ul class="breadcrumb">
+								<li class="breadcrumb-item"><a href="/users/warga"><i class="feather icon-home"></i></a></li>
+								<li class="breadcrumb-item"><a href="/users/warga">Dashboard</a></li>
+								<li class="breadcrumb-item"><a href="/users/warga/sell">Sell</a></li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- [ breadcrumb ] start -->
+			<!-- [ breadcrumb ] end -->
+			<!-- [ Main Content ] start -->
+			
+			<div class="row">
+				<div class="col-sm-12">
+					<form class="card" action="/users/warga/sell/sampah/submit" method="post" enctype="multipart/form-data">
+							<div class="card-header">
+								<h5>Jual Sampah Anda</h5>
+							</div>
+							<div class="card-body">
+
+								<h5 class="mt-3">Pilih Jenis Sampah</h5>
 								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
-											<option selected disabled hidden>Choose...</option>
-											<option value="plastik">Plastik</option>
-											<option value="logam">Logam</option>
-											<option value="kertas">Kertas</option>
-											<option value="lainnya">Lainnya</option>
-										</select>
-										<label class="custom-file-label" for="jenisSampah" id="labelJenisSampah">Pilih Jenis Sampah</label>
-									</div>
+									<select class="form-control" name="jenis_sampah" id="jenisSampah" onchange="updateDropdownLabel(this, 'labelJenisSampah')">
+										<option selected disabled hidden>Choose...</option>
+										<option value="plastik">Plastik</option>
+										<option value="logam">Logam</option>
+										<option value="kertas">Kertas</option>
+										<option value="lainnya">Lainnya</option>
+									</select>
 								</div>
-								<h5 class="mt-3">Lokasi Anda</h5>
+								<h5 class="mt-3">Pilih Lokasi Mitra</h5>
 								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="provinsi" id="provinsi" onchange="updateDropdownLabel(this, 'labelProvinsi')">
-											<option selected disabled hidden>provinsi:</option>
-											<!-- Options akan diisi dengan JavaScript -->
-										</select>
-										<label class="custom-file-label" for="provinsi" id="labelProvinsi">Pilih Provinsi</label>
-									</div>
+									<select class="form-control" name="provinsi" id="provinsi" onchange="updateDropdownLabel(this, 'labelProvinsi')">
+										<option selected disabled hidden>provinsi:</option>
+										<!-- Options akan diisi dengan JavaScript -->
+									</select>
 								</div>
 								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="kota" id="kota" onchange="updateDropdownLabel(this, 'labelKota')">
-											<option selected disabled hidden>kota:</option>
-										</select>
-										<label class="custom-file-label" for="kota" id="labelKota">Pilih Kota</label>
-									</div>
+									<select class="form-control" name="kota" id="kota" onchange="updateDropdownLabel(this, 'labelKota')">
+										<option selected disabled hidden>Kota</option>
+									</select>
 								</div>
 								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="kecamatan" id="kecamatan" onchange="updateDropdownLabel(this, 'labelKecamatan')">
-											<option selected disabled hidden>kecamatan:</option>
-										</select>
-										<label class="custom-file-label" for="kecamatan" id="labelKecamatan">Pilih Kecamatan</label>
-									</div>
+									<select class="form-control" name="kecamatan" id="kecamatan" onchange="updateDropdownLabel(this, 'labelKecamatan')">
+										<option selected disabled hidden>Kecamatan</option>
+									</select>
 								</div>
 								<div class="input-group mb-3">
-									<div class="custom-file">
-										<select class="custom-file-input" name="kelurahan" id="kelurahan" onchange="updateDropdownLabel(this, 'labelKelurahan')">
-											<option selected disabled hidden>kelurahan:</option>
-										</select>
-										<label class="custom-file-label" for="kelurahan" id="labelKelurahan">Pilih Kelurahan</label>
-									</div>
+									<select class="form-control" name="kelurahan" id="kelurahan" onchange="updateDropdownLabel(this, 'labelKelurahan')">
+										<option selected disabled hidden>Kelurahan</option>
+									</select>
 								</div>
+								<h5 class="mt-3">Lokasi Anda Terkini</h5>
 								<div class="input-group mb-3">
 									<input type="text" class="form-control" name="latitude" id="latitude"  value=" " placeholder="Lokasi" aria-describedby="inputGroupPrepend" required readonly>
 									<div class="invalid-feedback">
@@ -220,14 +207,15 @@
 	
 								<button type="submit" class="btn btn-primary col-md-12 mb-3">SUBMIT</button>
 								<a href="/users/warga" class="btn btn-warning col-md-12 mb-3">CANCEL</a>
-							</form>
-                        </div>
-                </div>
-            </div>
-            <!-- [ form-element ] end -->
-        </div>
-        <!-- [ Main Content ] end -->
-    </section>
+							</div>
+					</form>
+				</div>
+			</div>
+			
+			<!-- [ form-element ] end -->
+		</div>
+	</div>
+	<!-- [ Main Content ] end -->
     <!-- [ Main Content ] end -->
 
     <!-- Required Js -->
@@ -307,22 +295,21 @@
 
 	</script>
 
-	
-<script>
-    function updateDropdownLabel(selectElement, labelId) {
-        const selectedOption = selectElement.options[selectElement.selectedIndex];
-        console.log("Selected option:", selectedOption); 
-        if (selectedOption) {
-            document.getElementById(labelId).innerHTML = selectedOption.text;
-        }
-    }
+	<script>
+		function updateDropdownLabel(selectElement, labelId) {
+			const selectedOption = selectElement.options[selectElement.selectedIndex];
+			console.log("Selected option:", selectedOption); 
+			if (selectedOption) {
+				document.getElementById(labelId).innerHTML = selectedOption.text;
+			}
+		}
 
-	function updateFileName(input) {
-    const fileName = input.files[0]?.name || "Pilih file";
-    input.nextElementSibling.innerHTML = fileName; 
-}
+		function updateFileName(input) {
+		const fileName = input.files[0]?.name || "Pilih file";
+		input.nextElementSibling.innerHTML = fileName; 
+	}
 
-</script>
+	</script>
 
 
 	<script type="text/javascript">
@@ -338,75 +325,71 @@
 	    }
 	</script>
 
-<script type="text/javascript">
-	window.onload = function () {
-		getLocation();
-	};
+	<script type="text/javascript">
+		window.onload = function () {
+			getLocation();
+		};
 
-	function getLocation() {
-		if (navigator.geolocation) {
-			navigator.geolocation.getCurrentPosition(showPosition, showError);
-		} else {
-			alert("Geolocation is not supported by this browser.");
+		function getLocation() {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(showPosition, showError);
+			} else {
+				alert("Geolocation is not supported by this browser.");
+			}
 		}
-	}
 
-	function showPosition(position) {
-		const latitude = position.coords.latitude;
-		const longitude = position.coords.longitude;
+		function showPosition(position) {
+			const latitude = position.coords.latitude;
+			const longitude = position.coords.longitude;
 
-		document.querySelector('input[name="latitude"]').value = latitude;
-		document.querySelector('input[name="longitude"]').value = longitude;
+			document.querySelector('input[name="latitude"]').value = latitude;
+			document.querySelector('input[name="longitude"]').value = longitude;
 
-		getAddress(latitude, longitude);
-	}
-
-	function showError(error) {
-		switch (error.code) {
-			case error.PERMISSION_DENIED:
-				alert("User denied the request for Geolocation.");
-				break;
-			case error.POSITION_UNAVAILABLE:
-				alert("Location information is unavailable.");
-				break;
-			case error.TIMEOUT:
-				alert("The request to get user location timed out.");
-				break;
-			case error.UNKNOWN_ERROR:
-				alert("An unknown error occurred.");
-				break;
+			getAddress(latitude, longitude);
 		}
-	}
 
-	function getAddress(latitude, longitude) {
-		const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+		function showError(error) {
+			switch (error.code) {
+				case error.PERMISSION_DENIED:
+					alert("User denied the request for Geolocation.");
+					break;
+				case error.POSITION_UNAVAILABLE:
+					alert("Location information is unavailable.");
+					break;
+				case error.TIMEOUT:
+					alert("The request to get user location timed out.");
+					break;
+				case error.UNKNOWN_ERROR:
+					alert("An unknown error occurred.");
+					break;
+			}
+		}
 
-		fetch(url)
-			.then(response => response.json())
-			.then(data => {
-				console.table(data.address)
-				if (data && data.address) {
-					const address = data.address;q
-					const province = address.state || "";
-					const city = address.city || address.village || address.town || "";
-					const district = address.country || "";
-					const village = address.village
-					const subdistrict = address.suburb || address.neighbourhood || "";
-					const fullAddress = `${subdistrict}, ${district}, ${province}, ${city}, ${village}`.replace(/^, |, $/g, "");
+		function getAddress(latitude, longitude) {
+			const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
 
-					document.querySelector('input[name="lokasi"]').value = fullAddress;
-				} else {
-					alert("Unable to fetch location details.");
-				}
-			})
-			.catch(error => {
-				console.error("Error fetching location data:", error);
-			});
-	}
-</script>
+			fetch(url)
+				.then(response => response.json())
+				.then(data => {
+					console.table(data.address)
+					if (data && data.address) {
+						const address = data.address;
+						const province = address.state || "";
+						const city = address.city || address.village || address.town || "";
+						const district = address.country || "";
+						const village = address.village
+						const subdistrict = address.suburb || address.neighbourhood || "";
+						const fullAddress = `${subdistrict}, ${district}, ${province}, ${city}, ${village}`.replace(/^, |, $/g, "");
 
-	<script>
-		
+						document.querySelector('input[name="lokasi"]').value = fullAddress;
+					} else {
+						alert("Unable to fetch location details.");
+					}
+				})
+				.catch(error => {
+					console.error("Error fetching location data:", error);
+				});
+		}
 	</script>
 
 </body>

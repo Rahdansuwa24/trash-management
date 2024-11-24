@@ -56,6 +56,20 @@ class Model_Warga{
         })
     }
 
+    static async getSampahKomersil(){
+        return new Promise((resolve, reject) => {
+            connection.query(`SELECT count(jenis_sampah) as jumlah,jenis_sampah FROM laporan_sampah_komersil ls 
+                GROUP BY jenis_sampah`, (err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result);
+                }
+            })
+        })
+    }
+
     static async Update(id){
         return new Promise((resolve, reject) => {
             connection.query('UPDATE warga SET ? WHERE id_warga = ?', [Data, id], (err, result)=>{

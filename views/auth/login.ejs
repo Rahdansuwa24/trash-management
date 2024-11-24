@@ -11,6 +11,15 @@
 	<div class="main">  	
 		<input type="checkbox" id="chk" aria-hidden="true">
 		<div class="signup">
+			<form action="/log" method="post">
+				<label for="chk" aria-hidden="true">Login</label>
+				<input type="email" name="email" placeholder="Email" required="">
+				<input type="password" name="password" placeholder="Password" required="">
+				<button type="submit">Login</button>
+			</form>
+		</div>
+		
+		<div class="login">
 			<form action="/saveusers" method="post">
 				<label for="chk" aria-hidden="true">Sign up</label>
 				<input type="text" name="nama_users" placeholder="User name" required="">
@@ -22,15 +31,6 @@
 					<option value="mitra">mitra</option>
 				</select>					
 				<button type="submit">Sign up</button>
-			</form>
-		</div>
-
-		<div class="login">
-			<form autocomplete="off" action="/log" method="post">
-				<label for="chk" aria-hidden="true">Login</label>
-				<input type="email" name="email" placeholder="Email" required="">
-				<input type="password" name="password" placeholder="Password" required="">
-				<button type="submit">Login</button>
 			</form>
 		</div>
 		<div id="animation">

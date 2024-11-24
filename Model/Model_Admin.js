@@ -18,7 +18,7 @@ class Model_Admin{
                 ON ls.id_warga = w.id_warga
                 JOIN users yang_dilaporkan
                 ON yang_dilaporkan.id_users = w.id_users
-                ORDER BY waktu_lapor`
+                ORDER BY waktu_lapor DESC`
                 , (err, rows) => {
                 if(err){
                     reject(err);

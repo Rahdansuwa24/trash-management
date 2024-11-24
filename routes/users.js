@@ -257,6 +257,7 @@ router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) 
   if(tipe === 'non-pemerintah'){
     res.render('mitra/non-pemerintah/index', {
       nama_users,
+      tipe,
       dataLaporan
     });
 
@@ -268,16 +269,22 @@ router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) 
 router.get('/mitra/non-pemerintah/lapor/:id_laporan_sampah_komersil', async function(req, res, next) {
   let id = req.params.id_laporan_sampah_komersil
   let data = await Model_Sampah_Komersil.getDataByIdLpSampahKomersil(id);
+  let users = await Model_Users.getById(req.session.userID);
   res.render('mitra/non-pemerintah/lapor',{
-    data
+    data,
+    users
   });
 });
 
 router.get('/warga', async function(req, res, next) {
     let data = await Model_Users.getId(req.session.userID)
     let nama_users = data[0].nama_users
+    let sampah = await Model_Sampah_Komersil.getSampahKomersil();
+    console.log(sampah);
+    
     res.render('users/index', {
-      nama_users
+      nama_users,
+      sampah: JSON.stringify(sampah)  
     });
 });
 
@@ -291,10 +298,11 @@ router.get('/warga/sell', async function (req, res, next) {
   const { kota, kecamatan } = req.query; // Ambil filter dari query string
   let data = await Model_Users.getId(req.session.userID)
   let nama_users = data[0].nama_users
+  let sampah = await Model_Sampah_Komersil.getSampahKomersil();
 
   console.log("ID Warga:", id_warga, "ID Users:", id_users);
   console.log("Filter diterima:", { kota, kecamatan });
-
+  console.log(sampah);
   try {
       const dataMitra = await Model_Mitra.joinUsersMitra(kota, kecamatan);
       console.log("Data Mitra:", dataMitra);
@@ -303,7 +311,8 @@ router.get('/warga/sell', async function (req, res, next) {
           dataMitra,
           kota,
           kecamatan,
-          nama_users
+          nama_users,
+          sampah
       });
   } catch (err) {
       console.error("Error saat mengambil data mitra:", err);
@@ -453,7 +462,7 @@ router.post('/warga/sampah_ilegal/submit', function(req, res, next) {
       let mac_address = addrs.mac;
       let file_foto = req.files['file_foto'];
       let file_video = req.files['file_video'];
-      let { provinsi, kota, kelurahan, kecamatan, lokasi, mitra, nomor_hp } = req.body;
+      let { provinsi, kota, kelurahan, kecamatan, lokasi, mitra, nomor_hp, latitude, longitude, alamat } = req.body;
 
 
       if (!file_foto && !file_video) {
@@ -463,7 +472,6 @@ router.post('/warga/sampah_ilegal/submit', function(req, res, next) {
 
       let Data = {
         mac_address,
-
         file_foto: file_foto ? file_foto[0].filename : null,
         file_video: file_video ? file_video[0].filename : null,
         provinsi,
@@ -472,6 +480,9 @@ router.post('/warga/sampah_ilegal/submit', function(req, res, next) {
         kecamatan,
         lokasi,
         mitra,
+        latitude,
+        longitude,
+        alamat,
         nomor_hp
       };
 
@@ -584,7 +595,7 @@ router.post('/mitra/pemerintah/laporan_masuk/balas_akun/submit', async function(
     try {
 
       await Model_Mitra.BalasLaporanIlegal(data);
-      req.flash('success','Berhasil melaporkan akun');
+      req.flash('success','Berhasil membalas laporan');
       res.redirect('/users/mitra/pemerintah/laporan_masuk');
 
     } catch (error) {
@@ -636,7 +647,6 @@ router.post('/mitra/non-pemerintah/laporan_akun', async(req, res, next) => {
     }
   })
 })
-=======
 router.get('/mitra/pemerintah/laporan_masuk/balas_akun', function(req, res, next) {
   res.render('mitra/pemerintah/balas_akun')
 });

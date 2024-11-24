@@ -183,10 +183,10 @@
                                                     Tindakan
                                                 </button>
                                                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                                                    <a class="dropdown-item" href="#">Hapus akun</a>
+                                                    <a class="dropdown-item" href="/admin/delete-users/<%= rows[i].id_users %>">Hapus akun</a>
                                                     <% if (rows[i].status == 'active') { %>
                                                         <a class="dropdown-item" href="/admin/freeze-account/<%= rows[i].id_users %>">Bekukan Akun</a>
-                                                        <a class="dropdown-item" href="#">Banned Akun</a>
+                                                        <!-- <a class="dropdown-item" href="">Banned Akun</a> -->
                                                     <% }else{ %>
                                                         <a class="dropdown-item" href="/admin/activate-account/<%= rows[i].id_users %>">Aktifkan Akun</a>
                                                     <% } %>

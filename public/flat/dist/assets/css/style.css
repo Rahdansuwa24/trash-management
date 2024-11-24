@@ -846,6 +846,15 @@ pre code {
     margin-right: auto;
     margin-left: auto;
 }
+.container-nav {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    padding-right: 15px;
+    padding-left: 15px;
+    margin-right: auto;
+    margin-left: auto;
+}
 
 @media (min-width: 576px) {
     .container {
@@ -6485,7 +6494,7 @@ a.close.disabled {
 }
 
 .carousel-item img{
-    object-fit:fill;
+    object-fit:contain;
     background-color: #000;
 }
 .carousel-item video{
@@ -23842,13 +23851,13 @@ pre[class*=language-]:before {
     .pcoded-header.header-dark .input-group .input-group-text,
       .pcoded-header.header-dark a,
       .pcoded-header.header-dark dropdown-toggle {
-        color: #535763;
+        color: #ffffff;
     }
 
     .pcoded-header.header-dark .input-group .input-group-text:hover,
         .pcoded-header.header-dark a:hover,
         .pcoded-header.header-dark dropdown-toggle:hover {
-        color: #3c3f47;
+        color: #f3a29a;
     }
 }
 

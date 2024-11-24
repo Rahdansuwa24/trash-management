@@ -36,11 +36,13 @@
 				
 				<div class="">
 					<div class="main-menu-header">
-						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
-						<div class="user-details">
-							<span>Danang Group</span>
-							<div id="more-details">Mitra</div>
-						</div>
+            <div class="user-card">
+              <img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
+              <div class="user-details">
+                <span><%= nama_users %></span>
+                <div id="more-details"><%= tipe %></div>
+              </div>
+            </div>         
 					</div>
 				</div>
 				
@@ -137,7 +139,14 @@
                   <div class="block" style="padding: 3%;">
 
                     <h6>Jenis Sampah: <%= dataLaporan[i].jenis_sampah  %></h6>
-                    <h6 id="latitude">Lokasi: <%= dataLaporan[i].latitude %></h6>, <h6 id="longitude"><%= dataLaporan[i].longitude %></h6>
+                    <h6 id="lokasi">
+                      Lokasi: 
+                      <a href="https://www.google.com/maps?q=<%= dataLaporan[i].latitude %>,<%= dataLaporan[i].longitude %>" 
+                         target="_blank" 
+                         rel="noopener noreferrer">
+                        <%= dataLaporan[i].latitude %>, <%= dataLaporan[i].longitude %>
+                      </a>
+                    </h6>
                     <h6>No HP: <%= dataLaporan[i].no_telp %></h6>
                     <a href="/users/mitra/non-pemerintah/lapor/<%= dataLaporan[i].id_laporan_sampah_komersil %>" class="btn btn-danger">Laporkan</a>
                   </div>
@@ -238,9 +247,72 @@
       });
     </script>
 
-    <script>
+<script type="text/javascript">
+	window.onload = function () {
+		getLocation();
+	};
 
-    </script>
+	function getLocation() {
+		if (navigator.geolocation) {
+			navigator.geolocation.getCurrentPosition(showPosition, showError);
+		} else {
+			alert("Geolocation is not supported by this browser.");
+		}
+	}
+
+	function showPosition(position) {
+		const latitude = position.coords.latitude;
+		const longitude = position.coords.longitude;
+
+		document.querySelector('input[name="latitude"]').value = latitude;
+		document.querySelector('input[name="longitude"]').value = longitude;
+
+		getAddress(latitude, longitude);
+	}
+
+	function showError(error) {
+		switch (error.code) {
+			case error.PERMISSION_DENIED:
+				alert("User denied the request for Geolocation.");
+				break;
+			case error.POSITION_UNAVAILABLE:
+				alert("Location information is unavailable.");
+				break;
+			case error.TIMEOUT:
+				alert("The request to get user location timed out.");
+				break;
+			case error.UNKNOWN_ERROR:
+				alert("An unknown error occurred.");
+				break;
+		}
+	}
+
+	function getAddress(latitude, longitude) {
+		const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
+
+		fetch(url)
+			.then(response => response.json())
+			.then(data => {
+				console.table(data.address)
+				if (data && data.address) {
+					const address = data.address;
+					const province = address.state || "";
+					const city = address.city || address.village || address.town || "";
+					const district = address.country || "";
+					const village = address.village
+					const subdistrict = address.suburb || address.neighbourhood || "";
+					const fullAddress = `${subdistrict}, ${district}, ${province}, ${city}, ${village}`.replace(/^, |, $/g, "");
+
+					document.querySelector('input[name="lokasi"]').value = fullAddress;
+				} else {
+					alert("Unable to fetch location details.");
+				}
+			})
+			.catch(error => {
+				console.error("Error fetching location data:", error);
+			});
+	}
+</script>
 	<!-- <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script> -->
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>

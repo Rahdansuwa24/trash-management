@@ -205,13 +205,22 @@ $(document).ready(function() {
         });
      
 		$(function() {
+            var sampah = document.querySelector('.sampah').value
+            var dataSampah = JSON.parse(sampah)
+            var namaSampah = dataSampah.map(e => {
+                return e.jenis_sampah
+            });
+            var jumlahSampah = dataSampah.map(e => {
+                return e.jumlah
+            });
+            
             var options = {
                 chart: {
                     height: 320,
                     type: 'pie',
                 },
-                labels: ['Plastik', 'Logam', 'Kertas', 'Lainnya'],
-                series: [44, 55, 13, 43],
+                labels: namaSampah,
+                series: jumlahSampah,
                 colors: ["#1abc9c", "#0e9e4a", "#00acc1", "#f1c40f"],
                 legend: {
                     show: true,
