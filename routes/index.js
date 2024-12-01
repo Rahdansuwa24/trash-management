@@ -1,5 +1,6 @@
 var express = require('express');
 var router = express.Router();
+const { address } = require('address');
 var bcrypt = require('bcryptjs');
 const Model_Users = require('../Model/Model_Users');
 const Model_Warga = require('../Model/Model_Warga');
@@ -124,6 +125,20 @@ router.get('/logout', function(req, res) {
   });
 });
 
+
+router.get('/kotak-balasan', async(req, res, next) => {
+  address(async (err, addrs) => {
+    if (err) {
+      console.error("Error mendapatkan address:", err);
+    } else {
+      let mac_address = addrs.mac;
+      const dataBalasan = await Model_Warga.getAllDataBalasan(mac_address);
+        res.render('users/kotak_balasan', {
+          rows: dataBalasan
+        })
+    }
+  });
+})
 
 
 module.exports = router;

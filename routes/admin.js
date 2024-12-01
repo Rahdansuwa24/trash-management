@@ -249,7 +249,7 @@ router.get('/delete-mitra/:id', ensureAuthenticated, async(req, res) => {
 router.get('/freeze-account/:id', async(req, res, next)=>{
   try {
     const id = req.params.id;
-    await Model_Users.freezeAcc(id);
+    await Model_Admin.freezeAcc(id);
     req.flash('success','Berhasil Membekukan Akun');
     res.redirect('/admin/data-user')
   } catch (error) {
@@ -261,7 +261,7 @@ router.get('/freeze-account/:id', async(req, res, next)=>{
 router.get('/activate-account/:id', async(req, res, next)=>{
   try {
     const id = req.params.id;
-    await Model_Users.ActivateAcc(id);
+    await Model_Admin.ActivateAcc(id);
     console.log('IDD : ', id);
     req.flash('success','Berhasil Membuka pembekuan Akun');
     res.redirect('/admin/data-user')

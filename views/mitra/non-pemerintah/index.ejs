@@ -93,6 +93,18 @@
                 <div class="page-block">
                     <div class="row align-items-center">
                         <div class="col-md-12">
+                          <div class="messages">
+                            <% if (messages.success) { %>
+                              <div class="alert alert-info" role="alert">
+                                <%- messages.success %>
+                              </div>
+                            <% } %>
+                            <% if (messages.error) { %>
+                              <div class="alert alert-danger" role="alert">
+                                <%- messages.error %>
+                              </div>
+                            <% } %>
+                          </div>
                             <div class="page-header-title">
                                 <h5 class="m-b-10">SELAMAT DATANG</h5>
                             </div>

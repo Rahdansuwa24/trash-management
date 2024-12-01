@@ -63,7 +63,7 @@ const ensureWarga = (req, res, next) => {
     if (req.session.userID && req.session.role_users == 'warga') {
       return next();
     } else {
-      req.flash('error','Anda tida memiliki izin untuk halaman ini !!');
+      req.flash('error','Anda tidak memiliki izin untuk halaman ini !!');
       res.redirect('/login')
     }
   };
@@ -72,7 +72,7 @@ const ensureMitra = (req, res, next) => {
   if (req.session.userID && req.session.role_users == 'mitra') {
     return next();
   } else {
-    req.flash('error','Anda tida memiliki izin untuk halaman ini !!');
+    req.flash('error','Anda tidak memiliki izin untuk halaman ini !!');
     res.redirect('/login')
   }
 };
@@ -83,28 +83,46 @@ const checkAccountStatus = async (req, res, next) => {
 
   if (user && user.status === 'frozen') {
     req.flash('error', 'Akun Anda dibekukan. Silakan hubungi administrator.');
-    return res.redirect('/login');
+    return res.redirect('/warga');
   }
   next();
 };
 
 const checkDeviceStatus = async (req, res, next) => {
-  const macAddress = req.headers['mac_address'];
+  try {
+    const mac_address = await new Promise((resolve, reject) => {
+      address((err, addrs) => {
+        if (err) {
+          console.error("Error mendapatkan address:", err);
+          req.flash('error', "Gagal mendapatkan alamat MAC");
+          return res.redirect('/users/warga/sampah_ilegal');
+        }
 
-  if (!macAddress) {
-    req.flash('error', 'Perangkat tidak dikenali.');
-    return res.redirect('/login');
+        resolve(addrs.mac);
+      });
+    });
+
+    if (!mac_address) {
+      req.flash('error', 'Alamat MAC tidak ditemukan');
+      return res.redirect('/users/warga/sampah_ilegal');
+    }
+
+    const statusDevice = await Model_Device.getStatusByMacAddress(mac_address);
+
+    if (statusDevice === 'blocked') {
+      req.flash('error', 'Perangkat anda di blokir, silahkan hubungi administrator untuk membuka blokir');
+      return res.redirect('/users/warga/sampah_ilegal');
+    }
+
+    req.mac_address = mac_address;
+    next();
+  } catch (error) {
+    console.error("Error di middleware checkDeviceStatus:", error);
+    req.flash('error', 'Terjadi kesalahan saat memverifikasi perangkat');
+    res.redirect('/users/warga/sampah_ilegal');
   }
-
-  const statusDevice = await Model_Device.getStatusByMacAddress(macAddress);
-  
-  if (statusDevice === 'blocked') {
-    req.flash('error', 'Akses diblokir untuk perangkat ini. Silakan hubungi administrator.');
-    return res.redirect('/login');
-  }
-
-  next();
 };
+
 
 router.get('/warga/complete-profile-warga', ensureWarga, async(req, res, next) => {
   res.render('auth/complete-profile-warga');
@@ -131,7 +149,7 @@ router.post('/warga/save-profile', async(req, res) => {
     res.redirect('/users/warga');      
   } catch (error) {
     req.flash('error', 'Terjadi kesalahan pada fungsi');
-    res.redirect('/users/warga');
+    res.redirect('/');
   }
 })
 
@@ -228,7 +246,7 @@ router.get('/mitra/pemerintah', ensureMitra, async function(req, res, next) {
 //   })
 // });
 
-router.get('/mitra/pemerintah/laporan_masuk', async function(req, res, next) {
+router.get('/mitra/pemerintah/laporan_masuk', ensureMitra, async function(req, res, next) {
   let data = await Model_Users.getById(req.session.userID);
   let row = await Model_Sampah_Ilegal.getAllData();
   console.log('data: ', row);
@@ -266,7 +284,7 @@ router.get('/mitra/non-pemerintah', ensureMitra, async function(req, res, next) 
   }
 });
 
-router.get('/mitra/non-pemerintah/lapor/:id_laporan_sampah_komersil', async function(req, res, next) {
+router.get('/mitra/non-pemerintah/lapor/:id_laporan_sampah_komersil', ensureMitra, async function(req, res, next) {
   let id = req.params.id_laporan_sampah_komersil
   let data = await Model_Sampah_Komersil.getDataByIdLpSampahKomersil(id);
   let users = await Model_Users.getById(req.session.userID);
@@ -276,14 +294,13 @@ router.get('/mitra/non-pemerintah/lapor/:id_laporan_sampah_komersil', async func
   });
 });
 
-router.get('/warga', async function(req, res, next) {
-    let data = await Model_Users.getId(req.session.userID)
-    let nama_users = data[0].nama_users
+router.get('/warga', ensureWarga, async function(req, res, next) {
+    let data = await Model_Users.getById(req.session.userID)
     let sampah = await Model_Sampah_Komersil.getSampahKomersil();
     console.log(sampah);
     
     res.render('users/index', {
-      nama_users,
+      data,
       sampah: JSON.stringify(sampah)  
     });
 });
@@ -292,7 +309,7 @@ router.get('/warga', async function(req, res, next) {
 //   res.render('users/sell', { id_warga: req.session.userID });
 // });
 
-router.get('/warga/sell', async function (req, res, next) {
+router.get('/warga/sell', ensureWarga, async function (req, res, next) {
   const id_warga = req.session.wargaId; // ID warga dari sesi
   const id_users = req.session.userID; // ID user dari sesi
   const { kota, kecamatan } = req.query; // Ambil filter dari query string
@@ -322,7 +339,7 @@ router.get('/warga/sell', async function (req, res, next) {
 
 
 
-router.post('/warga/sell/sampah/submit', function(req, res, next) {
+router.post('/warga/sell/sampah/submit', checkAccountStatus, function(req, res, next) {
   uploadFields(req, res, async function (err) {
     if (err) {
       console.error("Error saat upload:", err.message);
@@ -391,7 +408,7 @@ router.post('/warga/sell/sampah/submit', function(req, res, next) {
 //   await Model_Sampah_Komersil.store(Data)
 //  });
 
- router.get('/warga/sell/sampah_komersil/delete', async function(req, res, next) {
+ router.get('/warga/sell/sampah_komersil/delete', ensureWarga, async function(req, res, next) {
   let id_warga = req.session.userID
   console.log(id_warga)
   let dataSampahKomersil = await Model_Sampah_Komersil.getId(id_warga)
@@ -421,14 +438,14 @@ router.post('/warga/sell/sampah/submit', function(req, res, next) {
     res.redirect('/warga/sell')
 });
 
-router.get('/warga/kotak_balasan', async function(req,res,next){
-  let data = await Model_Users.getById(req.session.userID);
-  let balasan = await Model_Warga.getAllDataBalasan()
-  res.render('users/kotak_balasan', {
-    users: data,
-    rows: balasan
-  })
-});
+// router.get('/warga/kotak_balasan', async function(req,res,next){
+//   let data = await Model_Users.getById(req.session.userID);
+//   let balasan = await Model_Warga.getAllDataBalasan()
+//   res.render('users/kotak_balasan', {
+//     users: data,
+//     rows: balasan
+//   })
+// });
 
 router.get('/warga/sampah_ilegal', async function(req, res, next) {
   let dataMitra = await Model_Mitra.joinUsersMitraIlegal()
@@ -444,7 +461,7 @@ router.get('/warga/sampah_ilegal', async function(req, res, next) {
   })
 });
 
-router.post('/warga/sampah_ilegal/submit', function(req, res, next) {
+router.post('/warga/sampah_ilegal/submit', checkDeviceStatus, function(req, res, next) {
   uploadFields(req, res, async function (err) {
     if (err) {
       console.error("Error saat upload:", err.message);
@@ -520,7 +537,7 @@ router.get('/warga/sampah_ilegal/delete', function(req, res, next) {
 });
 
 
-router.get('/mitra/pemerintah/laporan_masuk/balas_akun/:id_laporan_sampah_ilegal', async function(req, res, next) {
+router.get('/mitra/pemerintah/laporan_masuk/balas_akun/:id_laporan_sampah_ilegal', ensureMitra, async function(req, res, next) {
   let id_lp = req.params.id_laporan_sampah_ilegal;
   let id = req.session.userID;
   let user = await Model_Users.getById(id);
@@ -533,7 +550,7 @@ router.get('/mitra/pemerintah/laporan_masuk/balas_akun/:id_laporan_sampah_ilegal
   })
 });
 
-router.get('/mitra/pemerintah/laporan_masuk/report_akun/:id_laporan_sampah_ilegal', async function(req, res, next) {
+router.get('/mitra/pemerintah/laporan_masuk/report_akun/:id_laporan_sampah_ilegal', ensureMitra, async function(req, res, next) {
   let id_lp = req.params.id_laporan_sampah_ilegal;
   let id = req.session.userID;
   let user = await Model_Users.getById(id);
@@ -564,7 +581,7 @@ router.post('/mitra/pemerintah/laporan_masuk/report_akun/submit', async function
     }
     try {
 
-      await Model_Mitra.laporAkunIlegal(data);
+      await Model_Device.laporAkunIlegal(data);
       req.flash('success','Berhasil melaporkan akun');
       res.redirect('/users/mitra/pemerintah/laporan_masuk');
 
@@ -605,7 +622,7 @@ router.post('/mitra/pemerintah/laporan_masuk/balas_akun/submit', async function(
   })
 });
 
-router.get('/mitra/pemerintah/laporan_masuk/tolak/:id_laporan_sampah_ilegal', async function(req, res, next) {
+router.get('/mitra/pemerintah/laporan_masuk/tolak/:id_laporan_sampah_ilegal', ensureMitra, async function(req, res, next) {
   try {
     let id = req.params.id_laporan_sampah_ilegal;
     await Model_Sampah_Ilegal.Delete(id);
@@ -647,10 +664,4 @@ router.post('/mitra/non-pemerintah/laporan_akun', async(req, res, next) => {
     }
   })
 })
-router.get('/mitra/pemerintah/laporan_masuk/balas_akun', function(req, res, next) {
-  res.render('mitra/pemerintah/balas_akun')
-});
-router.get('/mitra/pemerintah/laporan_masuk/report_akun', function(req, res, next) {
-  res.render('mitra/pemerintah/report_akun')
-});
 module.exports = router;

@@ -9,6 +9,18 @@
 </head>
 <body>
 	<div class="main">  	
+		<div class="messages">
+			<% if (messages.success) { %>
+			  <div class="alert alert-info" role="alert">
+				<%- messages.success %>
+			  </div>
+			<% } %>
+			<% if (messages.error) { %>
+			  <div class="alert alert-danger" role="alert">
+				<%- messages.error %>
+			  </div>
+			<% } %>
+		  </div>
 		<input type="checkbox" id="chk" aria-hidden="true">
 		<div class="signup">
 			<form action="/log" method="post">

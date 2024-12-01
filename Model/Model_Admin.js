@@ -97,6 +97,48 @@ class Model_Admin{
             })
         })
     }
+
+    static async freezeAcc(id) {
+        return new Promise((resolve, reject) => {
+            connection.query('UPDATE users SET status = "frozen" WHERE id_users = ?', [id], function(err, result){
+                if(err){
+                    console.error('Error updating account:', err);
+                    reject(err);
+                } else {
+                    console.log('Update result:', result);
+                    resolve(result);
+                }
+            })
+        });
+    }
+
+    static async ActivateAcc(id) {
+        return new Promise((resolve, reject) => {
+            connection.query(`UPDATE users SET status = 'active' WHERE id_users = ?`, [id], function(err, result){
+                if(err){
+                    console.error('Error updating account:', err);
+                    reject(err);
+                } else {
+                    console.log('Update result:', result);
+                    resolve(result);
+                }
+            })
+        });
+    }
+
+    // static async blockAcc(id) {
+    //     return new Promise((resolve, reject) => {
+    //         connection.query('UPDATE users SET status = "blocked" WHERE id_users = ?', [id], function(err, result){
+    //             if(err){
+    //                 console.error('Error updating account:', err);
+    //                 reject(err);
+    //             } else {
+    //                 console.log('Update result:', result);
+    //                 resolve(result);
+    //             }
+    //         })
+    //     });
+    // }
     
 }
 

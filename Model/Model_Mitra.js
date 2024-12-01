@@ -167,16 +167,129 @@ class Model_Mitra{
         })
     }
 
+    static async countReportsForWarga(id_warga) {
+        return new Promise((resolve, reject) => {
+            connection.query(`SELECT COUNT(*) as jumlah_laporan FROM lapor_akun_laporan_sampah_komersil la 
+                JOIN laporan_sampah_komersil ls 
+                ON la.id_laporan_sampah_komersil = ls.id_laporan_sampah_komersil 
+                WHERE ls.id_warga = ?`, 
+            [id_warga], (err, result) => {
+                if(err){
+                    reject(err);
+                }else{
+                    resolve(result[0].jumlah_laporan);
+                }
+            })
+        })
+    }
 
+    // static async getIdWargaFromLaporan(idLaporan) {
+    //     return new Promise((resolve, reject) => {
+    //         connection.query(`SELECT ls.id_warga FROM laporan_sampah_komersil ls
+    //             JOIN warga w ON ls.id_warga = w.id_warga
+    //             JOIN users u ON w.id_users = u.id_users
+    //             WHERE ls.id_laporan_sampah_komersil = ?`
+    //         [idLaporan], (err, result) => {
+    //             if(err){
+    //                 reject(err);
+    //             }else{
+    //                 resolve(result[0]);
+    //                 console.log('USER-ID: ', result)
+    //             }
+    //         })
+    //     })
+    // }
+
+    // static async getIdUsersFromLaporan(idLaporan) {
+    //     return new Promise((resolve, reject) => {
+    //         connection.query(`SELECT u.id_users FROM laporan_sampah_ilegal ls
+    //             JOIN warga w ON ls.id_warga = w.id_warga
+    //             JOIN users u ON w.id_users = u.id_users
+    //             WHERE ls.id_laporan_sampah_komersil = ?`
+    //         [idLaporan], (err, result) => {
+    //             if(err){
+    //                 reject(err);
+    //             }else{
+    //                 resolve(result[0]);
+    //                 console.log('USER-ID: ', result)
+    //             }
+    //         })
+    //     })
+    // }
+
+    static async getIdUsersByWarga(idWarga){
+        return new Promise((resolve, reject) => {
+            connection.query('SELECT id_users FROM warga WHERE id_warga = ?' ,[idWarga] ,(err, result) =>{
+                if(err){
+                    reject(err);
+                    console.error('Error pada fungsi getIDUbyWarga', err)
+                }else{
+                    resolve(result[0].id_users);
+                    console.log('Hasil id user: ', result)
+                }
+            })
+        })
+    }
+
+    static async freezeAcc(id) {
+        return new Promise((resolve, reject) => {
+            connection.query('UPDATE users SET status = "frozen" WHERE id_users = ?', [id], function(err, result){
+                if(err){
+                    console.error('Error updating account:', err);
+                    reject(err);
+                } else {
+                    console.log('Update result:', result);
+                    resolve(result);
+                }
+            })
+        });
+    }
+
+    static async checkAndFreezeAccount(id_warga) {
+        try {
+            const reportCount = await this.countReportsForWarga(id_warga);
+            console.log('Jumlah Laporan: ', reportCount);
+            
+            if (reportCount >= 3) {
+                const idUsers = await this.getIdUsersByWarga(id_warga);
+                console.log('IDU: ', idUsers);
+
+                await this.freezeAcc(idUsers);
+                console.log(`Akun warga dengan id ${id_warga} dibekukan karena memiliki ${reportCount} laporan`);
+            }
+        } catch (error) {
+            console.error('Kesalahan saat memeriksa dan memblokir akun:', error);
+        }
+    }
+
+    static async getIdWargaFromReport(idLaporan) {
+        return new Promise((resolve, reject) => {
+            connection.query(
+                `SELECT id_warga FROM laporan_sampah_komersil WHERE id_laporan_sampah_komersil = ?`, 
+                [idLaporan], 
+                (err, results) => {
+                    if (err) {
+                        reject(err);
+                    } else {
+                        resolve(results[0].id_warga);
+                        console.log('ID WARGA: ', results);
+                    }
+                }
+            );
+        });
+    }
 
     static async laporAkunKomersil(data){
         return new Promise((resolve, reject) => {
-            connection.query(`INSERT INTO lapor_akun_laporan_sampah_komersil SET ?`, data, (err, result)=> {
+            connection.query(`INSERT INTO lapor_akun_laporan_sampah_komersil SET ?`, data, async (err, result)=> {
                 if(err){
                     reject(err);
                     console.log(err);
                 }else{
-                    resolve(result)
+                    const iDWarga = await this.getIdWargaFromReport(data.id_laporan_sampah_komersil);
+                    console.log('Warga ID: ', iDWarga);
+                    await this.checkAndFreezeAccount(iDWarga);
+                    resolve(result);
                 }
             })
         })
@@ -207,6 +320,7 @@ class Model_Mitra{
             })
         })
     }
+    
 
 
     static async Delete(id){

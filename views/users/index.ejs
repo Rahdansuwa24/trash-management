@@ -37,8 +37,8 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span><%= nama_users %></span>
-							<div id="more-details">Warga</div>
+							<span><%= data.nama_users %></span>
+							<div id="more-details"><%= data.role_users %></div>
 						</div>
 					</div>
 				</div>
@@ -52,9 +52,6 @@
 					</li>
                     <li class="nav-item">
 					    <a href="/users/warga/sell" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-plus"></i></span><span class="pcoded-mtext">Sell</span></a>
-					</li>
-					<li class="nav-item">
-					    <a href="/users/warga/kotak_balasan" class="nav-link "><span class="pcoded-micon"><i class="feather icon-file-plus"></i></span><span class="pcoded-mtext">Kotak Balasan</span></a>
 					</li>
 					<li class="nav-item pcoded-menu-caption">
 						<label>EXIT</label>
@@ -94,6 +91,18 @@
                 <div class="page-block">
                     <div class="row align-items-center">
                         <div class="col-md-12">
+							<div class="messages">
+								<% if (messages.success) { %>
+								  <div class="alert alert-info" role="alert">
+									<%- messages.success %>
+								  </div>
+								<% } %>
+								<% if (messages.error) { %>
+								  <div class="alert alert-danger" role="alert">
+									<%- messages.error %>
+								  </div>
+								<% } %>
+							  </div>
                             <div class="page-header-title">
                                 <h5 class="m-b-10">SELAMAT DATANG</h5>
                             </div>
