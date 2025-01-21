@@ -14,6 +14,33 @@ class Model_Warga{
         });
     }
 
+    static async countPenjualan(Mitra){
+        return new Promise((resolve, reject) => {
+            connection.query(`SELECT count(id_laporan_sampah_ilegal) as jumlah FROM laporan_sampah_ilegal ls 
+                where mitra = ?`, [Mitra],(err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result[0].jumlah);
+                }
+            })
+        })
+    }
+
+    static async countPembelian(Mitra){
+        return new Promise((resolve, reject) => {
+            connection.query(`SELECT count(id_balasan_laporan_sampah_ilegal) as jumlah FROM balasan_laporan_sampah_ilegal ls 
+                where id_mitra = ?`, [Mitra],(err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result[0].jumlah);
+                }
+            })
+        })
+    }
 
     static async getAllData(){
         return new Promise((resolve, reject) => {

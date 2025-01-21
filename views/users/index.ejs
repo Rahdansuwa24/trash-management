@@ -37,8 +37,8 @@
 					<div class="main-menu-header">
 						<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
 						<div class="user-details">
-							<span><%= data.nama_users %></span>
-							<div id="more-details"><%= data.role_users %></div>
+							<span><%= nama_users %></span>
+							<div id="more-details">Warga</div>
 						</div>
 					</div>
 				</div>
@@ -98,7 +98,15 @@
 								  </div>
 								<% } %>
 								<% if (messages.error) { %>
-								  <div class="alert alert-danger" role="alert">
+								  <div class="alert alert-danger" role="alert"><div class="">
+									<div class="main-menu-header">
+										<img class="img-radius" src="/flat/dist/assets/images/user/avatar-2.jpg" alt="User-Profile-Image">
+										<div class="user-details">
+											<span><%= nama_users %></span>
+											<div id="more-details">Warga</div>
+										</div>
+									</div>
+								</div>
 									<%- messages.error %>
 								  </div>
 								<% } %>
@@ -174,14 +182,9 @@
                         <div class="card-footer bg-primary text-white">
                             <div class="row text-center">
                                 <div class="col">
-                                    <h4 class="m-0 text-white">10</h4>
-                                    <span>Dijual</span>
+                                    <h4 class="m-0 text-white"><%- penjualan %></h4>
+                                    <span>PENJUALAN</span>
                                 </div>
-                                <div class="col">
-                                    <h4 class="m-0 text-white">5</h4>
-                                    <span>Terjual</span>
-                                </div>
-                                
                             </div>
                         </div>
                     </div>

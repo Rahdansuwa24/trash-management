@@ -219,11 +219,18 @@ router.get('/mitra/pemerintah', ensureMitra, async function(req, res, next) {
   let Mitra = await Model_Mitra.getByIdUsers(id);
   let tipe = Mitra.jenis_mitra
   req.session.mitraId = Mitra.id_mitra
+  let id_mitra = req.session.mitraId
   let data = await Model_Users.getId(req.session.userID)
+  let mitra = user.nama_users
+  let penjualan = await Model_Sampah_Ilegal.countPenjualan(mitra)
+  let pembelian = await Model_Sampah_Ilegal.countPembelian(id_mitra)
+  console.log(penjualan)
   console.log('id_mitra: ', req.session.mitraId)
   if(tipe == 'pemerintah'){
     res.render('mitra/pemerintah/index', {
-      user
+      user,
+      penjualan,
+      pembelian
     });
 
   }else{
@@ -294,14 +301,24 @@ router.get('/mitra/non-pemerintah/lapor/:id_laporan_sampah_komersil', ensureMitr
   });
 });
 
-router.get('/warga', ensureWarga, async function(req, res, next) {
-    let data = await Model_Users.getById(req.session.userID)
+router.get('/warga', async function(req, res, next) {
+    let data = await Model_Users.getId(req.session.userID)
+    let nama_users = data[0].nama_users
+    let id_warga = req.session.wargaId
+    let penjualan = await Model_Sampah_Komersil.countPenjualan(id_warga)
     let sampah = await Model_Sampah_Komersil.getSampahKomersil();
-    console.log(sampah);
+    let filteredSampah = sampah.filter(item => item.id_warga === id_warga);
+    console.log(filteredSampah);
+    console.log(id_warga)
+    console.log(penjualan)
     
     res.render('users/index', {
       data,
-      sampah: JSON.stringify(sampah)  
+      nama_users,
+      sampah: JSON.stringify(filteredSampah),
+      id_warga,
+      penjualan
+
     });
 });
 
@@ -312,24 +329,26 @@ router.get('/warga', ensureWarga, async function(req, res, next) {
 router.get('/warga/sell', ensureWarga, async function (req, res, next) {
   const id_warga = req.session.wargaId; // ID warga dari sesi
   const id_users = req.session.userID; // ID user dari sesi
-  const { kota, kecamatan } = req.query; // Ambil filter dari query string
+  const kota = req.session.kota; // Ambil data kota dari session
+  console.log("Filter kota dari session:", kota);
   let data = await Model_Users.getId(req.session.userID)
   let nama_users = data[0].nama_users
   let sampah = await Model_Sampah_Komersil.getSampahKomersil();
+  let penjualan = await Model_Sampah_Komersil.countPenjualan()
 
   console.log("ID Warga:", id_warga, "ID Users:", id_users);
-  console.log("Filter diterima:", { kota, kecamatan });
+  console.log("Filter diterima:", { kota});
   console.log(sampah);
   try {
-      const dataMitra = await Model_Mitra.joinUsersMitra(kota, kecamatan);
+      const dataMitra = await Model_Mitra.joinUsersMitraKomersilTest(kota);
       console.log("Data Mitra:", dataMitra);
       res.render('users/sell', {
           id_warga,
           dataMitra,
           kota,
-          kecamatan,
           nama_users,
-          sampah
+          sampah,
+          penjualan
       });
   } catch (err) {
       console.error("Error saat mengambil data mitra:", err);
@@ -337,9 +356,67 @@ router.get('/warga/sell', ensureWarga, async function (req, res, next) {
   }
 });
 
+router.get('/warga/get-session-kota', (req, res) => {
+  try {
+    const kota = req.session.kota || null; 
+    console.log("Mengirim kota dari session:", kota);
+    res.json({ kota });
+  } catch (err) {
+    console.error("Error saat mengakses session kota:", err);
+    res.status(500).json({ error: "Gagal mengambil data kota dari session." });
+  }
+});
+
+router.get('/warga/get-mitra', async (req, res) => {
+  const kota = req.query.kota;
+
+  if (!kota) {
+    console.error("Parameter kota tidak diberikan.");
+    return res.status(400).json({ error: "Parameter 'kota' wajib disediakan." });
+  }
+
+  try {
+    const dataMitra = await Model_Mitra.joinUsersMitraKomersilTest(kota);
+
+    if (dataMitra.length === 0) {
+      console.log(`Tidak ada mitra yang tersedia untuk kota: ${kota}`);
+      return res.json([]);
+    }
+
+    console.log(`Ditemukan ${dataMitra.length} mitra untuk kota: ${kota}`);
+    res.json(dataMitra);
+  } catch (err) {
+    console.error("Error saat mengambil data mitra:", err);
+    res.status(500).json({ error: "Terjadi kesalahan saat memuat data mitra." });
+  }
+});
+
+router.get('/warga/get-mitra-ilegal', async (req, res) => {
+  const kota = req.query.kota;
+
+  if (!kota) {
+    console.error("Parameter kota tidak diberikan.");
+    return res.status(400).json({ error: "Parameter 'kota' wajib disediakan." });
+  }
+
+  try {
+    const dataMitra = await Model_Mitra.joinUsersMitraIlegal(kota);
+
+    if (dataMitra.length === 0) {
+      console.log(`Tidak ada mitra yang tersedia untuk kota: ${kota}`);
+      return res.json([]);
+    }
+
+    console.log(`Ditemukan ${dataMitra.length} mitra untuk kota: ${kota}`);
+    res.json(dataMitra);
+  } catch (err) {
+    console.error("Error saat mengambil data mitra:", err);
+    res.status(500).json({ error: "Terjadi kesalahan saat memuat data mitra." });
+  }
+});
 
 
-router.post('/warga/sell/sampah/submit', checkAccountStatus, function(req, res, next) {
+router.post('/warga/sell/sampah/submit', function(req, res, next) {
   uploadFields(req, res, async function (err) {
     if (err) {
       console.error("Error saat upload:", err.message);
@@ -352,10 +429,16 @@ router.post('/warga/sell/sampah/submit', checkAccountStatus, function(req, res, 
     let file_video = req.files['file_video'];
     let { jenis_sampah, provinsi, kota, kelurahan, kecamatan, latitude, longitude, mitra } = req.body;
 
+
     if (!file_foto && !file_video) {
       req.flash('error', "File foto atau video wajib diunggah.");
       return res.redirect('/users/warga/sell');
     }
+
+    if (kota) {
+      req.session.kota = kota; 
+    }
+
 
     let Data = {
       id_warga,
@@ -448,7 +531,8 @@ router.post('/warga/sell/sampah/submit', checkAccountStatus, function(req, res, 
 // });
 
 router.get('/warga/sampah_ilegal', async function(req, res, next) {
-  let dataMitra = await Model_Mitra.joinUsersMitraIlegal()
+  const kota = req.session.kota;
+  let dataMitra = await Model_Mitra.joinUsersMitraIlegal(kota)
   // address((err, addrs) => {
   //   if (err) {
   //     console.error("Error mendapatkan address:", err);

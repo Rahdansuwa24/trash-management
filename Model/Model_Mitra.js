@@ -111,15 +111,12 @@ class Model_Mitra{
             });
         });
     }
-    static async joinUsersMitraIlegal() {
+    static async joinUsersMitraIlegal(kota) {
         return new Promise((resolve, reject) => {
             const query = `
-                 SELECT u.*, m.*
-            FROM users u
-            LEFT JOIN mitra m ON u.id_users = m.id_users
-            WHERE m.jenis_mitra = 'pemerintah';
+                SELECT u.nama_users, m.kota, m.kecamatan FROM users u LEFT JOIN mitra m ON u.id_users = m.id_users WHERE m.kota = ? and m.jenis_mitra = 'pemerintah';
         `;
-            connection.query(query,(err, result) => {
+            connection.query(query, [kota],(err, result) => {
                 if (err) {
                     reject(err);
                     console.log(err);
@@ -130,17 +127,12 @@ class Model_Mitra{
         });
     }
 
-    static async joinUsersMitraKomersilTest(kota, kecamatan) {
+    static async joinUsersMitraKomersilTest(kota) {
         return new Promise((resolve, reject) => {
             const query = `
-                SELECT u.nama_users, m.kota, m.kecamatan
-                FROM users u
-                LEFT JOIN mitra m ON u.id_users = m.id_users
-                WHERE (m.kota = ? OR ? IS NULL)
-                  AND (m.kecamatan = ? OR ? IS NULL)
-                  AND m.jenis_mitra = 'non-pemerintah';
+                SELECT u.nama_users, m.kota, m.kecamatan FROM users u LEFT JOIN mitra m ON u.id_users = m.id_users WHERE m.kota = ? and m.jenis_mitra = 'non-pemerintah';
             `;
-            const values = [kota, kota, kecamatan, kecamatan];
+            const values = [kota];
     
             connection.query(query, values, (err, result) => {
                 if (err) {
@@ -156,7 +148,7 @@ class Model_Mitra{
 
     static async mitraKomersil(){
         return new Promise((resolve, reject) => {
-            connection.query(`select w.no_telp, u.nama_users, l.longitude, l.latitude, l.file_foto, l.file_video, l.id_laporan_sampah_komersil, l.jenis_sampah from users u left join warga w on u.id_users = w.id_users left join laporan_sampah_komersil l on l.id_warga = w.id_warga where u.role_users = 'warga';`, (err, result)=>{
+            connection.query(`select w.no_telp, u.nama_users, l.longitude, l.latitude, l.file_foto, l.file_video, l.id_laporan_sampah_komersil, l.jenis_sampah from users u left join warga w on u.id_users = w.id_users left join laporan_sampah_komersil l on l.id_warga = w.id_warga where u.role_users = 'warga' order by l.id_laporan_sampah_komersil desc;`, (err, result)=>{
                 if(err){
                     reject(err);
                     console.log(err)

@@ -165,14 +165,14 @@
 										</div>
 										<h5 class="mt-3">Pilih Mitra</h5>
 										<div class="input-group mb-3">
-											<select class="form-control" name="mitra" id="mitra">
+											<select class="form-control" name="mitra" id="mitra" onchange="updateSessionKota(this)">
 												<% if (dataMitra && dataMitra.length > 0) { %>
 													<option selected disabled hidden>Pilih Mitra</option>
 													<% dataMitra.forEach(mitra => { %>
 														<option value="<%= mitra.nama_users%>"><%= mitra.nama_users %></option>
 													<% }) %>
 												<% } else { %>
-													<option value="" disabled>Tidak ada mitra tersedia</option>
+													<option value="" disabled>Tidak ada mitra tersedia Pilih Kota Terlebih Dahulu</option>
 												<% } %>
 											</select>
 										</div>
@@ -270,25 +270,38 @@
 					document.getElementById('kelurahan').innerHTML = options;
 				});
 		});
-		document.getElementById('mitra').addEventListener('change', (e) => {
-		const kecamatanName = document.getElementById('kecamatan').value;
-		const kotaName = document.getElementById('kota').value;
-
-		console.log("Mengirim data:", { kota: kotaName, kecamatan: kecamatanName });
-
-		fetch(`/get-mitra?kota=${kotaName}&kecamatan=${kecamatanName}`)
-			.then(response => response.json())
-			.then(mitra => {
-				let options = '<option selected disabled hidden>Pilih Mitra</option>';
-				mitra.forEach(m => {
-					options += `<option value="${m.id_users}">${m.nama_users}</option>`;
-				});
-				document.getElementById('mitra').innerHTML = options;
-			})
-			.catch(err => console.error("Error fetching mitra:", err));
-	});
 
 	</script>
+
+<script>
+	document.getElementById('kota').addEventListener('change', async (e) => {
+  const kota = e.target.value; 
+  try {
+    const response = await fetch(`/users/warga/get-mitra-ilegal?kota=${encodeURIComponent(kota)}`);
+    const dataMitra = await response.json();
+
+    const mitraDropdown = document.getElementById('mitra');
+    mitraDropdown.innerHTML = '<option selected disabled hidden>Pilih Mitra</option>';
+    if (dataMitra.length > 0) {
+      dataMitra.forEach(mitra => {
+        const option = document.createElement('option');
+        option.value = mitra.nama_users;
+        option.textContent = mitra.nama_users;
+        mitraDropdown.appendChild(option);
+      });
+    } else {
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'Tidak ada mitra tersedia';
+      option.disabled = true;
+      mitraDropdown.appendChild(option);
+    }
+  } catch (err) {
+    console.error("Error saat mengambil data mitra:", err);
+  }
+});
+
+  </script>
 
 	<script>
 		function updateDropdownLabel(selectElement, labelId) {

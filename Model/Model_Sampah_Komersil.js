@@ -58,13 +58,26 @@ class Model_Warga{
 
     static async getSampahKomersil(){
         return new Promise((resolve, reject) => {
-            connection.query(`SELECT count(jenis_sampah) as jumlah,jenis_sampah FROM laporan_sampah_komersil ls 
-                GROUP BY jenis_sampah`, (err, result)=>{
+            connection.query(`SELECT count(jenis_sampah) as jumlah,jenis_sampah, id_warga FROM laporan_sampah_komersil ls 
+                GROUP BY jenis_sampah, id_warga`, (err, result)=>{
                 if(err){
                     reject(err);
                     console.log(err)
                 }else{
                     resolve(result);
+                }
+            })
+        })
+    }
+    static async countPenjualan(id_warga){
+        return new Promise((resolve, reject) => {
+            connection.query(`SELECT count(id_warga) as jumlah FROM laporan_sampah_komersil ls 
+                where id_warga = ?`, [id_warga],(err, result)=>{
+                if(err){
+                    reject(err);
+                    console.log(err)
+                }else{
+                    resolve(result[0].jumlah);
                 }
             })
         })
