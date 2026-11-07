@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import { compressImage } from '../utils/imageCompressor';
 import { ShieldAlert, Camera, MapPin, CheckCircle, Copy, Check, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function LaporSampahLiar() {
@@ -24,16 +25,18 @@ export default function LaporSampahLiar() {
   const [copied, setCopied] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        setErrorMsg('Ukuran foto melebihi 5 MB. Mohon pilih foto lain.');
-        return;
+      try {
+        const compressed = await compressImage(file, { maxWidth: 1280, quality: 0.8 });
+        setFotoFile(compressed);
+        setPreviewUrl(URL.createObjectURL(compressed));
+        setErrorMsg('');
+      } catch (err) {
+        setFotoFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
       }
-      setFotoFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-      setErrorMsg('');
     }
   };
 

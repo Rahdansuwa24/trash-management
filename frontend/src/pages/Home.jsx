@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Search, ShieldAlert, Coins, CheckCircle2, ArrowRight, MapPin } from 'lucide-react';
+import { Search, ShieldAlert, Coins, CheckCircle2, ArrowRight, MapPin, Users } from 'lucide-react';
 
 export default function Home() {
   const [ticketInput, setTicketInput] = useState('');
@@ -24,7 +24,7 @@ export default function Home() {
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-6">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-civic-100 text-civic-800 border border-civic-200">
             <span className="w-2 h-2 rounded-full bg-civic-600 animate-pulse"></span>
-            Portal Terpadu Smart City & Ekonomi Sirkular
+            Inisiatif Kebersihan Mandiri Tingkat RT/RW
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">
@@ -33,7 +33,7 @@ export default function Home() {
           </h1>
 
           <p className="max-w-2xl mx-auto text-base sm:text-lg text-slate-600 leading-relaxed">
-            Laporkan titik sampah liar di sekitar Anda secara cepat tanpa perlu login, atau setorkan sampah daur ulang Anda ke mitra bank sampah untuk mendapatkan poin.
+            Laporkan tumpukan sampah liar di sekitar lingkungan tanpa perlu login, atau setorkan sampah daur ulang Anda ke bank sampah unit RT/RW untuk menabung poin.
           </p>
 
           {/* Quick Ticket Lookup Box */}
@@ -58,52 +58,113 @@ export default function Home() {
                 className="px-5 py-2.5 bg-civic-700 hover:bg-civic-800 text-white rounded-lg font-medium text-sm transition-colors flex items-center justify-center gap-2 min-h-[44px]"
               >
                 Lacak Tiket
-                <ArrowRight className="w-4 h-4" />
               </button>
             </form>
             {searchError && (
               <p className="text-xs text-rose-600 mt-2 text-left">{searchError}</p>
             )}
-            <div className="flex items-center justify-between text-xs text-slate-500 mt-2.5 pt-2 border-t border-slate-100">
-              <span>Ingin mencoba fitur lacak?</span>
-              <button
-                type="button"
-                onClick={() => setTicketInput('LAPOR-2611-8921')}
-                className="text-civic-700 hover:underline font-medium"
-              >
-                Gunakan Kode Demo (LAPOR-2611-8921)
-              </button>
-            </div>
           </div>
 
-          {/* Direct Action CTAs */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
+          {/* Direct CTA Buttons */}
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Link
               to="/lapor"
-              className="w-full sm:w-auto px-6 py-3 rounded-lg bg-civic-700 hover:bg-civic-800 text-white font-medium text-sm flex items-center justify-center gap-2 transition-colors min-h-[44px]"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-medium text-sm transition-colors shadow-sm min-h-[44px]"
             >
               <ShieldAlert className="w-4 h-4" />
-              Lapor Titik Sampah Liar
+              Lapor Sampah Liar
             </Link>
             <Link
               to="/setor"
-              className="w-full sm:w-auto px-6 py-3 rounded-lg bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-medium text-sm flex items-center justify-center gap-2 transition-colors min-h-[44px]"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-civic-700 hover:bg-civic-800 text-white font-medium text-sm transition-colors shadow-sm min-h-[44px]"
             >
-              <Coins className="w-4 h-4 text-civic-600" />
-              Tukar Sampah Jadi Poin
+              <Coins className="w-4 h-4" />
+              Setor Bank Sampah
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 3 Pillar Features */}
+      {/* 2 Core Services */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
+            Dua Alur Pelayanan Utama Lingkungan
+          </h2>
+          <p className="text-sm text-slate-600">
+            Dikelola secara transparan untuk menjaga kebersihan jalan dan memutar rantai daur ulang warga.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {/* Card 1 */}
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold">
+                <ShieldAlert className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">1. Pelaporan Sampah Liar Publik</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Temukan tumpukan sampah liar di selokan, tanah kosong, atau pinggir jalan? Kirim foto dan titik lokasi tanpa login. Tim kebersihan lingkungan akan meninjau dan membersihkannya.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-2 pt-2">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Penerbitan kode tiket otomatis (contoh: LAPOR-2611-XXXX)
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Bukti foto sebelum dan sesudah penanganan
+                </li>
+              </ul>
+            </div>
+            <div className="pt-6 mt-4 border-t border-slate-100">
+              <Link
+                to="/lapor"
+                className="text-sm font-semibold text-rose-700 hover:text-rose-800 flex items-center gap-1.5"
+              >
+                Mulai Buat Laporan <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+            <div className="space-y-4">
+              <div className="w-12 h-12 rounded-xl bg-civic-100 text-civic-700 flex items-center justify-center font-bold">
+                <Coins className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900">2. Bank Sampah Unit RT/RW</h3>
+              <p className="text-sm text-slate-600 leading-relaxed">
+                Pilah botol plastik, kardus, atau minyak jelantah dari rumah. Jadwalkan penyetoran ke unit bank sampah lingkungan untuk memperoleh poin bernilai ekonomis.
+              </p>
+              <ul className="text-xs text-slate-500 space-y-2 pt-2">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Katalog kategori transparan dengan konversi harga riil
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600" /> Catatan mutasi poin tersimpan rapi per akun warga
+                </li>
+              </ul>
+            </div>
+            <div className="pt-6 mt-4 border-t border-slate-100">
+              <Link
+                to="/setor"
+                className="text-sm font-semibold text-civic-700 hover:text-civic-800 flex items-center gap-1.5"
+              >
+                Setor Sampah Sekarang <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 3 Step Workflow */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-2xl mx-auto mb-10 space-y-2">
           <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
             Alur Kerja Sederhana dan Bertanggung Jawab
           </h2>
           <p className="text-sm text-slate-600">
-            Dirancang untuk menghubungkan warga, pemerintah kota, dan pengepul daur ulang dalam satu wadah.
+            Menghubungkan warga lingkungan, pengurus RT/RW, dan pengelola bank sampah unit.
           </p>
         </div>
 
@@ -122,9 +183,9 @@ export default function Home() {
             <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-700 flex items-center justify-center font-bold">
               <CheckCircle2 className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900">Verifikasi Tim DLH</h3>
+            <h3 className="text-lg font-bold text-slate-900">Verifikasi Tim Lingkungan</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Dinas Lingkungan Hidup meninjau laporan, mengirim armada truk pembersih, dan mengunggah foto lokasi sesudah dibersihkan sebagai transparansi publik.
+              Petugas kebersihan lingkungan (RT/RW) meninjau laporan, bergerak ke lokasi, dan mengunggah foto sesudah dibersihkan sebagai transparansi warga.
             </p>
           </div>
 
@@ -134,13 +195,13 @@ export default function Home() {
             </div>
             <h3 className="text-lg font-bold text-slate-900">Sirkular Bank Sampah</h3>
             <p className="text-sm text-slate-600 leading-relaxed">
-              Sampah rumah tangga seperti plastik botol, kertas kardus, dan minyak jelantah dapat ditukar dengan poin yang tercatat di riwayat mutasi resmi.
+              Sampah anorganik terpilah ditimbang oleh petugas unit bank sampah, dan nilai poin langsung masuk ke akun warga yang bersangkutan.
             </p>
           </div>
         </div>
       </section>
 
-      {/* Demo Credentials Box for Reviewers */}
+      {/* Demo Credentials Box */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="bg-slate-900 text-slate-200 p-6 rounded-xl border border-slate-800 space-y-4">
           <div className="flex items-center gap-2 text-white font-semibold text-base">
@@ -148,7 +209,7 @@ export default function Home() {
             Panduan Uji Coba Portofolio (Data Demo Siap Pakai)
           </div>
           <p className="text-xs sm:text-sm text-slate-300">
-            Gunakan data pengujian berikut untuk meninjau masing-masing peran dan alur sistem:
+            Gunakan akun pengujian berikut untuk meninjau masing-masing peran dan alur sistem:
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
             <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
@@ -156,13 +217,13 @@ export default function Home() {
               <strong className="text-emerald-400 font-mono text-sm">LAPOR-2611-8921</strong>
             </div>
             <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
-              <span className="text-slate-400 block mb-1">Akun Warga / Bank Sampah:</span>
+              <span className="text-slate-400 block mb-1">Akun Warga (RT 03):</span>
               <strong className="text-white block">warga.budi@trashmanage.com</strong>
               <span className="text-slate-400">Pass: Password123!</span>
             </div>
             <div className="p-3 bg-slate-800/80 rounded-lg border border-slate-700">
-              <span className="text-slate-400 block mb-1">Akun DLH (Pemerintah):</span>
-              <strong className="text-white block">dlh.surabaya@trashmanage.com</strong>
+              <span className="text-slate-400 block mb-1">Akun Petugas (RT/RW):</span>
+              <strong className="text-white block">petugas.rw05@trashmanage.com</strong>
               <span className="text-slate-400">Pass: Password123!</span>
             </div>
           </div>

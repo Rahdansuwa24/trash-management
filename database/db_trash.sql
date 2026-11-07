@@ -200,29 +200,29 @@ INSERT INTO `kategori_sampah` (`id_kategori`, `nama_kategori`, `poin_per_kg`, `e
 
 -- 2. Seed Users
 INSERT INTO `users` (`id_user`, `nama`, `email`, `password`, `role`, `status`) VALUES
-(1, 'Administrator Smart City', 'admin@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'admin', 'active'),
-(2, 'Dinas Lingkungan Hidup Surabaya', 'dlh.surabaya@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
-(3, 'Bank Sampah Berkah Mandiri', 'banksampah.berkah@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
-(4, 'Budi Santoso', 'warga.budi@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'warga', 'active');
+(1, 'Pengurus Lingkungan (Koordinator RW 05)', 'admin@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'admin', 'active'),
+(2, 'Petugas Lapangan Kebersihan RW 05', 'petugas.rw05@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
+(3, 'Bank Sampah Unit Guyub Rukun RT 03', 'banksampah.rt03@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
+(4, 'Budi Santoso (Warga RT 03)', 'warga.budi@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'warga', 'active');
 
 -- 3. Seed Profiles
 INSERT INTO `profiles_warga` (`id_warga`, `id_user`, `jenis_kelamin`, `no_telp`, `alamat`, `provinsi`, `kota`, `kecamatan`, `kelurahan`, `total_poin`) VALUES
-(1, 4, 'L', '081234567890', 'Jl. Rungkut Madya No. 45', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Medokan Ayu', 150);
+(1, 4, 'L', '081234567890', 'Jl. Kenanga No. 14, RT 03 / RW 05', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Kalirungkut', 150);
 
 INSERT INTO `profiles_mitra` (`id_mitra`, `id_user`, `jenis_mitra`, `instansi_nama`, `no_telp`, `alamat`, `provinsi`, `kota`, `kecamatan`, `kelurahan`) VALUES
-(1, 2, 'pemerintah', 'Dinas Lingkungan Hidup Kota Surabaya', '031-8280000', 'Jl. Menanggal Timur No. 1', 'Jawa Timur', 'Surabaya', 'Gayungan', 'Menanggal'),
-(2, 3, 'non-pemerintah', 'Bank Sampah Berkah Mandiri', '085678901234', 'Jl. Ngagel Jaya Selatan No. 12', 'Jawa Timur', 'Surabaya', 'Wonokromo', 'Ngagel');
+(1, 2, 'non-pemerintah', 'Tim Satgas Kebersihan RW 05', '081233445566', 'Posko Kebersihan RW 05', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Kalirungkut'),
+(2, 3, 'non-pemerintah', 'Bank Sampah Unit Guyub Rukun RT 03', '085678901234', 'Balai RT 03 Kalirungkut', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Kalirungkut');
 
 -- 4. Seed Contoh Transaksi Bank Sampah
 INSERT INTO `transaksi_sampah_komersil` (`id_transaksi`, `kode_transaksi`, `id_warga`, `id_mitra`, `id_kategori`, `estimasi_berat_kg`, `berat_aktual_kg`, `total_poin_diperoleh`, `foto_sampah_url`, `alamat_jemput`, `kota`, `kecamatan`, `status`) VALUES
-(1, 'TRX-202611-001', 1, 2, 1, 10.00, 10.00, 150, 'https://placehold.co/600x400/png?text=Botol+Plastik', 'Jl. Rungkut Madya No. 45', 'Surabaya', 'Rungkut', 'SELESAI');
+(1, 'TRX-202611-001', 1, 2, 1, 10.00, 10.00, 150, 'https://placehold.co/600x400/png?text=Botol+Plastik', 'Jl. Kenanga No. 14, RT 03 / RW 05', 'Surabaya', 'Rungkut', 'SELESAI');
 
 INSERT INTO `riwayat_poin` (`id_warga`, `id_transaksi`, `perubahan_poin`, `tipe`, `keterangan`) VALUES
-(1, 1, 150, 'EARN_TRANSAKSI', 'Penukaran 10 Kg Botol Plastik PET ke Bank Sampah Berkah Mandiri');
+(1, 1, 150, 'EARN_TRANSAKSI', 'Penukaran 10 Kg Botol Plastik PET di Bank Sampah Unit Guyub Rukun RT 03');
 
 -- 5. Seed Contoh Laporan Sampah Liar Publik (Siap Dicoba dengan Kode Tiket)
 INSERT INTO `laporan_sampah_ilegal` (`id_laporan`, `kode_tiket`, `id_user`, `id_mitra_penangan`, `nama_pelapor`, `nomor_kontak`, `client_device_id`, `deskripsi_kejadian`, `foto_bukti_url`, `alamat_lokasi`, `kota`, `kecamatan`, `latitude`, `longitude`, `status`) VALUES
-(1, 'LAPOR-2611-8921', NULL, 1, 'Andi (Warga)', '081987654321', 'device-demo-uuid-1234', 'Tumpukan sampah plastik dan limbah rumah tangga liar di pinggir saluran air.', 'https://placehold.co/600x400/png?text=Tumpukan+Sampah+Liar', 'Jl. Wonorejo Rungkut dekat jembatan', 'Surabaya', 'Rungkut', -7.31820000, 112.78450000, 'DALAM_PENANGANAN');
+(1, 'LAPOR-2611-8921', NULL, 1, 'Andi (Warga)', '081987654321', 'device-demo-uuid-1234', 'Tumpukan sampah plastik liar di dekat pintu air RT 03.', 'https://placehold.co/600x400/png?text=Tumpukan+Sampah+Liar', 'Jl. Kenanga samping selokan RT 03', 'Surabaya', 'Rungkut', -7.31820000, 112.78450000, 'DALAM_PENANGANAN');
 
 INSERT INTO `tindak_lanjut_aduan` (`id_laporan`, `id_mitra`, `keterangan_tindakan`, `foto_bukti_penanganan_url`) VALUES
-(1, 1, 'Tim Reaksi Cepat DLH Surabaya telah menjadwalkan armada truk pengangkut ke lokasi pada sore hari ini.', 'https://placehold.co/600x400/png?text=Armada+DLH+Menuju+Lokasi');
+(1, 1, 'Petugas kebersihan RW 05 telah menjadwalkan gerobak pengangkut untuk pembersihan sore ini.', 'https://placehold.co/600x400/png?text=Petugas+Menuju+Lokasi');

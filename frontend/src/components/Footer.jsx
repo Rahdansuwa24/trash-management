@@ -14,7 +14,7 @@ export default function Footer() {
               TrashManage
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Inisiatif digital untuk kota bersih dan ekonomi sirkular. Mempermudah warga melapor sampah liar dan mendaur ulang sampah bernilai ekonomis.
+              Inisiatif digital untuk kebersihan lingkungan dan ekonomi sirkular berbasis komunitas RT/RW. Mempermudah warga memantau kebersihan dan menabung sampah bernilai ekonomis.
             </p>
           </div>
 
@@ -22,33 +22,33 @@ export default function Footer() {
             <h3 className="text-white text-sm font-semibold mb-3 tracking-wider uppercase">Layanan Warga</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <a href="/lapor" className="hover:text-white transition-colors">Pelaporan Sampah Liar Publik</a>
+                <a href="/lapor" className="hover:text-white transition-colors">Pelaporan Sampah Liar Lingkungan</a>
               </li>
               <li>
                 <a href="/lacak" className="hover:text-white transition-colors">Pantau Status Aduan Tiket</a>
               </li>
               <li>
-                <a href="/setor" className="hover:text-white transition-colors">Setor Sampah ke Bank Sampah</a>
+                <a href="/setor" className="hover:text-white transition-colors">Setor Sampah ke Bank Sampah RT/RW</a>
               </li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-white text-sm font-semibold mb-3 tracking-wider uppercase">Kolaborasi & Regulasi</h3>
+            <h3 className="text-white text-sm font-semibold mb-3 tracking-wider uppercase">Pengelolaan Lingkungan</h3>
             <p className="text-sm text-slate-400 leading-relaxed mb-2">
-              Bekerja sama dengan Dinas Lingkungan Hidup (DLH) Pemda dan jaringan mitra Bank Sampah resmi.
+              Dikelola secara mandiri oleh tim pengurus RT/RW dan unit bank sampah lingkungan setempat.
             </p>
             <div className="text-xs text-slate-500">
-              Versi 1.0.0 (Pragmatic MVP Mode)
+              Sistem Operasional Lingkungan (Versi 1.0.0)
             </div>
           </div>
         </div>
 
         <div className="mt-8 pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500 gap-4">
-          <p>© {new Date().getFullYear()} TrashManage Platform. Proyek Portofolio Rekayasa Web.</p>
+          <p>© {new Date().getFullYear()} TrashManage. Inisiatif Pengelolaan Sampah Komunitas RT/RW.</p>
           <div className="flex gap-4">
             <span>Standar Aksesibilitas WCAG AA</span>
-            <span>Anti-Slop Clean Design</span>
+            <span>Amanah & Transparan</span>
           </div>
         </div>
       </div>

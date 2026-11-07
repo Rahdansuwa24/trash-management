@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
+import { compressImage } from '../utils/imageCompressor';
 import TicketBadge from '../components/TicketBadge';
-import { Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale } from 'lucide-react';
+import { Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, LogIn, AlertCircle } from 'lucide-react';
 
 export default function SetorSampah() {
+  const { user, setLoginModalOpen } = useAuth();
+
   const [activeTab, setActiveTab] = useState('setor'); // 'setor' or 'riwayat'
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState(null);
   const [weight, setWeight] = useState('');
-  const [alamat, setAlamat] = useState('Jl. Rungkut Madya No. 45');
+  const [alamat, setAlamat] = useState(user?.profile?.alamat || 'Jl. Kenanga No. 14, RT 03 / RW 05');
   const [kota, setKota] = useState('Surabaya');
   const [kecamatan, setKecamatan] = useState('Rungkut');
   const [catatan, setCatatan] = useState('');
@@ -17,6 +21,7 @@ export default function SetorSampah() {
   const [previewUrl, setPreviewUrl] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [compressing, setCompressing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successTrx, setSuccessTrx] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
@@ -26,7 +31,7 @@ export default function SetorSampah() {
 
   useEffect(() => {
     fetchInitialData();
-  }, []);
+  }, [user]);
 
   const fetchInitialData = async () => {
     try {
@@ -37,11 +42,16 @@ export default function SetorSampah() {
         setSelectedCat(catRes.data[0]);
       }
 
-      const trxRes = await api.getMyTransactions().catch(() => ({ data: [] }));
-      setMyTransactions(trxRes.data || []);
+      if (user) {
+        const trxRes = await api.getMyTransactions().catch(() => ({ data: [] }));
+        setMyTransactions(trxRes.data || []);
 
-      const ptRes = await api.getPointsHistory().catch(() => ({ data: { total_poin: 0, history: [] } }));
-      setPointsData(ptRes.data || { total_poin: 0, history: [] });
+        const ptRes = await api.getPointsHistory().catch(() => ({ data: { total_poin: 0, history: [] } }));
+        setPointsData(ptRes.data || { total_poin: 0, history: [] });
+      } else {
+        setMyTransactions([]);
+        setPointsData({ total_poin: 0, history: [] });
+      }
     } catch (err) {
       console.warn('Initial data warning:', err.message);
     } finally {
@@ -49,11 +59,20 @@ export default function SetorSampah() {
     }
   };
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFotoFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      try {
+        setCompressing(true);
+        const compressed = await compressImage(file, { maxWidth: 1280, quality: 0.8 });
+        setFotoFile(compressed);
+        setPreviewUrl(URL.createObjectURL(compressed));
+      } catch (err) {
+        setFotoFile(file);
+        setPreviewUrl(URL.createObjectURL(file));
+      } finally {
+        setCompressing(false);
+      }
     }
   };
 
@@ -67,6 +86,10 @@ export default function SetorSampah() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
     if (!selectedCat) {
       setErrorMsg('Pilih kategori sampah terlebih dahulu.');
       return;
@@ -104,10 +127,10 @@ export default function SetorSampah() {
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             <Coins className="w-7 h-7 text-civic-700" />
-            Bank Sampah Komunitas
+            Bank Sampah Unit RT/RW
           </h1>
           <p className="text-sm text-slate-600">
-            Setorkan sampah anorganik terpilah Anda dan tukarkan menjadi poin bernilai ekonomis.
+            Setorkan sampah anorganik terpilah dari rumah dan tukarkan menjadi poin bernilai ekonomis.
           </p>
         </div>
 
@@ -116,13 +139,36 @@ export default function SetorSampah() {
             <Coins className="w-5 h-5" />
           </div>
           <div>
-            <span className="text-[11px] font-semibold text-civic-800 uppercase tracking-wider block">Saldo Poin Anda</span>
+            <span className="text-[11px] font-semibold text-civic-800 uppercase tracking-wider block">
+              {user ? 'Saldo Poin Anda' : 'Saldo (Belum Masuk)'}
+            </span>
             <span className="text-2xl font-extrabold text-civic-900 font-mono">
-              {pointsData.total_poin.toLocaleString('id-ID')} <span className="text-sm font-semibold">Poin</span>
+              {user ? pointsData.total_poin.toLocaleString('id-ID') : '0'}{' '}
+              <span className="text-sm font-semibold">Poin</span>
             </span>
           </div>
         </div>
       </div>
+
+      {/* Auth Banner if not logged in */}
+      {!user && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-amber-900 text-xs sm:text-sm">
+            <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
+            <span>
+              Anda belum masuk ke akun warga. Silakan masuk untuk melihat saldo poin dan riwayat setoran pribadi Anda.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setLoginModalOpen(true)}
+            className="px-4 py-2 bg-civic-700 hover:bg-civic-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 shrink-0 min-h-[40px]"
+          >
+            <LogIn className="w-4 h-4" />
+            Masuk Akun Warga
+          </button>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex border-b border-slate-200">
@@ -158,13 +204,14 @@ export default function SetorSampah() {
           {successTrx && (
             <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-4">
               <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto" />
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-emerald-900">Pengajuan Setor Berhasil Dibuat</h3>
-                <p className="text-sm text-emerald-700">
-                  Kode Transaksi: <strong className="font-mono text-base">{successTrx.kode_transaksi}</strong>
+              <div>
+                <h3 className="text-lg font-bold text-emerald-950">Pengajuan Setor Sampah Berhasil!</h3>
+                <p className="text-xs text-emerald-800 mt-1">
+                  Kode Transaksi Anda:{' '}
+                  <strong className="font-mono text-sm underline">{successTrx.kode_transaksi}</strong>
                 </p>
-                <p className="text-xs text-slate-600 max-w-md mx-auto pt-1">
-                  Mitra Bank Sampah akan mengonfirmasi penjemputan ke alamat Anda. Poin akhir akan disesuaikan dengan hasil timbangan riil.
+                <p className="text-xs text-emerald-700 mt-2">
+                  Petugas unit bank sampah akan menjadwalkan penimbangan di alamat Anda.
                 </p>
               </div>
               <button
@@ -172,259 +219,284 @@ export default function SetorSampah() {
                 onClick={() => {
                   setSuccessTrx(null);
                   setWeight('');
+                  setCatatan('');
                   setFotoFile(null);
                   setPreviewUrl(null);
                 }}
-                className="px-5 py-2 bg-civic-700 hover:bg-civic-800 text-white rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold hover:bg-emerald-800 min-h-[40px]"
               >
-                Buat Setoran Baru
+                Buat Pengajuan Baru
               </button>
             </div>
           )}
 
-          {!successTrx && (
-            <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-              {errorMsg && (
-                <div className="p-4 rounded-lg bg-rose-50 border border-rose-200 text-rose-700 text-sm">
-                  {errorMsg}
-                </div>
-              )}
+          {errorMsg && (
+            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs sm:text-sm">
+              {errorMsg}
+            </div>
+          )}
 
-              {/* Category Picker */}
+          <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+            {/* Step 1: Kategori Sampah */}
+            <div className="space-y-3">
+              <label className="block text-sm font-bold text-slate-900">
+                1. Pilih Kategori Sampah Anorganik <span className="text-rose-600">*</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {categories.map((cat) => {
+                  const isSelected = selectedCat?.id_kategori === cat.id_kategori;
+                  return (
+                    <button
+                      key={cat.id_kategori}
+                      type="button"
+                      onClick={() => setSelectedCat(cat)}
+                      className={`p-4 rounded-xl border text-left transition-all min-h-[44px] ${
+                        isSelected
+                          ? 'border-civic-700 bg-civic-50/70 ring-2 ring-civic-600/20'
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start">
+                        <span className="font-bold text-xs text-slate-900">{cat.nama_kategori}</span>
+                        <span className="text-[11px] font-mono font-bold text-civic-700">
+                          +{cat.poin_per_kg} Poin/kg
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2">{cat.deskripsi}</p>
+                      <div className="mt-2 text-[10px] text-slate-400 font-mono">
+                        Estimasi Rp {Number(cat.estimasi_harga_per_kg).toLocaleString('id-ID')}/kg
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Step 2: Berat & Estimasi */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
               <div className="space-y-2">
-                <label className="block text-sm font-semibold text-slate-800">
-                  Pilih Kategori Sampah Daur Ulang <span className="text-rose-600">*</span>
+                <label className="block text-sm font-bold text-slate-900">
+                  2. Estimasi Berat (Kilogram) <span className="text-rose-600">*</span>
                 </label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                  {categories.map((cat) => {
-                    const isSelected = selectedCat?.id_kategori === cat.id_kategori;
-                    return (
-                      <button
-                        type="button"
-                        key={cat.id_kategori}
-                        onClick={() => setSelectedCat(cat)}
-                        className={`p-4 rounded-xl border text-left transition-all min-h-[44px] ${
-                          isSelected
-                            ? 'border-civic-600 bg-civic-50/70 ring-2 ring-civic-600'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-bold text-sm text-slate-900">{cat.nama_kategori}</span>
-                          <span className="text-xs font-bold text-civic-700 bg-civic-100 px-2 py-0.5 rounded">
-                            {cat.poin_per_kg} Poin/Kg
-                          </span>
-                        </div>
-                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">{cat.deskripsi}</p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Weight Input & Live Calculator */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-1">
-                    Estimasi Berat Sampah (Kg) <span className="text-rose-600">*</span>
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0.5"
-                      required
-                      value={weight}
-                      onChange={(e) => setWeight(e.target.value)}
-                      placeholder="Contoh: 5.5"
-                      className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
-                    />
-                    <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm text-slate-400 font-medium">Kg</span>
-                  </div>
-                </div>
-
-                {/* Live Estimator Card */}
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Estimasi Perolehan</span>
-                    <div className="text-lg font-bold text-civic-800 font-mono">
-                      {calculatedPoints} Poin
-                    </div>
-                  </div>
-                  <div className="text-right space-y-0.5">
-                    <span className="text-[11px] font-semibold text-slate-500 uppercase">Estimasi Nilai</span>
-                    <div className="text-sm font-semibold text-slate-700">
-                      Rp {estimatedValue.toLocaleString('id-ID')}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Address Details */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-1">
-                    Kota / Wilayah <span className="text-rose-600">*</span>
-                  </label>
+                <div className="relative">
                   <input
-                    type="text"
+                    type="number"
+                    step="0.5"
+                    min="0.5"
                     required
-                    value={kota}
-                    onChange={(e) => setKota(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
+                    value={weight}
+                    onChange={(e) => setWeight(e.target.value)}
+                    placeholder="Contoh: 5.5"
+                    className="w-full pl-4 pr-12 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
                   />
+                  <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                    Kg
+                  </span>
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-800 mb-1">
-                    Kecamatan <span className="text-rose-600">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={kecamatan}
-                    onChange={(e) => setKecamatan(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
-                  />
-                </div>
+                <p className="text-[11px] text-slate-500">
+                  *Timbangan final akan diverifikasi oleh petugas unit bank sampah saat pengambilan.
+                </p>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-800 mb-1">
-                  Alamat Lengkap Titik Penjemputan <span className="text-rose-600">*</span>
-                </label>
+              {/* Live Calculator Card */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2 flex flex-col justify-center">
+                <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+                  Kalkulator Estimasi Perolehan
+                </span>
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs text-slate-600">Estimasi Poin:</span>
+                  <span className="text-xl font-extrabold text-civic-700 font-mono">
+                    +{calculatedPoints} Poin
+                  </span>
+                </div>
+                <div className="flex justify-between items-baseline text-xs text-slate-500 border-t border-slate-200/60 pt-1.5">
+                  <span>Nilai Setara:</span>
+                  <span className="font-mono font-semibold text-slate-700">
+                    Rp {estimatedValue.toLocaleString('id-ID')}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Alamat Penjemputan / Lokasi RT-RW */}
+            <div className="space-y-4 pt-4 border-t border-slate-100">
+              <label className="block text-sm font-bold text-slate-900">
+                3. Alamat Rumah / Titik Penjemputan Lingkungan <span className="text-rose-600">*</span>
+              </label>
+
+              <div className="space-y-3">
                 <input
                   type="text"
                   required
                   value={alamat}
                   onChange={(e) => setAlamat(e.target.value)}
-                  placeholder="Nama jalan, nomor rumah, atau patokan lokasi"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
+                  placeholder="Contoh: Jl. Kenanga No. 14, RT 03 / RW 05"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
                 />
-              </div>
 
-              {/* Photo Input (Optional) */}
-              <div>
-                <label className="block text-sm font-semibold text-slate-800 mb-1">
-                  Foto Sampah (Opsional)
-                </label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-civic-50 file:text-civic-700 hover:file:bg-civic-100"
-                />
-                {previewUrl && (
-                  <img src={previewUrl} alt="Preview" className="mt-2 h-24 rounded-lg object-cover" />
-                )}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <input
+                    type="text"
+                    required
+                    value={kecamatan}
+                    onChange={(e) => setKecamatan(e.target.value)}
+                    placeholder="Kecamatan (Contoh: Rungkut)"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm min-h-[44px]"
+                  />
+                  <input
+                    type="text"
+                    required
+                    value={kota}
+                    onChange={(e) => setKota(e.target.value)}
+                    placeholder="Kota (Contoh: Surabaya)"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm min-h-[44px]"
+                  />
+                </div>
               </div>
+            </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-800 mb-1">
-                  Catatan untuk Mitra Pengepul
-                </label>
-                <input
-                  type="text"
-                  value={catatan}
-                  onChange={(e) => setCatatan(e.target.value)}
-                  placeholder="Contoh: Sampah sudah dikemas rapi dalam karung di depan pagar"
-                  className="w-full px-3.5 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
-                />
-              </div>
+            {/* Step 4: Foto Sampah Terpilah (dengan kompresi otomatis) */}
+            <div className="space-y-2 pt-4 border-t border-slate-100">
+              <label className="block text-sm font-bold text-slate-900">
+                4. Foto Sampah Terpilah (Opsional tapi dianjurkan)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full text-xs text-slate-500 file:mr-3 file:py-2.5 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-civic-50 file:text-civic-700 hover:file:bg-civic-100"
+              />
+              {compressing && (
+                <p className="text-[11px] text-civic-700 flex items-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Mengompresi foto sebelum upload...
+                </p>
+              )}
+              {previewUrl && (
+                <div className="mt-2 w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
+                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+            </div>
 
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-3 px-6 bg-civic-700 hover:bg-civic-800 text-white font-semibold rounded-lg text-sm transition-colors flex items-center justify-center gap-2 min-h-[48px]"
-                >
-                  {submitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      Memproses Pengajuan...
-                    </>
-                  ) : (
-                    'Ajukan Penjemputan Sampah'
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
+            {/* Catatan Tambahan */}
+            <div className="space-y-2 pt-4 border-t border-slate-100">
+              <label className="block text-sm font-bold text-slate-900">
+                5. Catatan Tambahan untuk Petugas
+              </label>
+              <textarea
+                rows={2}
+                value={catatan}
+                onChange={(e) => setCatatan(e.target.value)}
+                placeholder="Contoh: Sampah diletakkan di teras depan, bisa diambil setelah pukul 15.00..."
+                className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm"
+              ></textarea>
+            </div>
+
+            <button
+              type="submit"
+              disabled={submitting}
+              className="w-full py-3 bg-civic-700 hover:bg-civic-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Mengirim Pengajuan...
+                </>
+              ) : (
+                <>
+                  Ajukan Penjemputan Sampah Sekarang
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
+            </button>
+          </form>
         </div>
       )}
 
-      {/* Tab 2: Riwayat Transaksi & Mutasi Poin */}
+      {/* Tab 2: Riwayat Transaksi */}
       {activeTab === 'riwayat' && (
         <div className="space-y-6">
-          {/* Active Transactions */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Daftar Transaksi Setor Sampah</h3>
-            {myTransactions.length === 0 ? (
-              <p className="text-sm text-slate-500 py-6 text-center">Belum ada transaksi setor sampah.</p>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {myTransactions.map((t) => (
-                  <div key={t.id_transaksi} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-sm text-slate-900">{t.kode_transaksi}</span>
-                        <TicketBadge status={t.status} />
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        Kategori: <strong className="text-slate-800">{t.nama_kategori}</strong> | Estimasi: {t.estimasi_berat_kg} Kg
-                        {t.berat_aktual_kg ? ` | Aktual: ${t.berat_aktual_kg} Kg` : ''}
-                      </p>
-                      <span className="text-[11px] text-slate-400 block">
-                        {new Date(t.tanggal_transaksi).toLocaleDateString('id-ID', { dateStyle: 'medium' })} • {t.alamat_jemput}
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-sm font-bold text-civic-700 font-mono block">
-                        +{t.total_poin_diperoleh} Poin
-                      </span>
-                      {t.nama_mitra && (
-                        <span className="text-[11px] text-slate-500 block">Mitra: {t.nama_mitra}</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+          {!user && (
+            <div className="p-8 bg-white rounded-2xl border border-slate-200 text-center space-y-3">
+              <LogIn className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">Silakan Masuk Terlebih Dahulu</p>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                Riwayat transaksi dan mutasi poin hanya tersimpan dan dapat diakses oleh akun warga yang terautentikasi.
+              </p>
+              <button
+                type="button"
+                onClick={() => setLoginModalOpen(true)}
+                className="px-4 py-2 bg-civic-700 text-white rounded-lg text-xs font-semibold"
+              >
+                Masuk Akun Warga
+              </button>
+            </div>
+          )}
 
-          {/* Point Ledger History */}
-          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-900">Buku Besar Mutasi Poin</h3>
-            {pointsData.history.length === 0 ? (
-              <p className="text-sm text-slate-500 py-6 text-center">Belum ada riwayat mutasi poin.</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                    <tr>
-                      <th className="py-2.5 px-3 font-semibold">Waktu</th>
-                      <th className="py-2.5 px-3 font-semibold">Tipe</th>
-                      <th className="py-2.5 px-3 font-semibold">Keterangan</th>
-                      <th className="py-2.5 px-3 font-semibold text-right">Poin</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {pointsData.history.map((h) => (
-                      <tr key={h.id_riwayat} className="hover:bg-slate-50/50">
-                        <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
-                          {new Date(h.created_at).toLocaleDateString('id-ID', { dateStyle: 'short' })}
-                        </td>
-                        <td className="py-3 px-3 font-medium text-slate-700">{h.tipe}</td>
-                        <td className="py-3 px-3 text-slate-600">{h.keterangan}</td>
-                        <td className="py-3 px-3 text-right font-mono font-bold text-civic-700">
-                          +{h.perubahan_poin}
-                        </td>
-                      </tr>
+          {user && (
+            <>
+              {/* Transactions list */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-slate-900">Daftar Transaksi Penyetoran Anda</h3>
+                {myTransactions.length === 0 ? (
+                  <p className="text-sm text-slate-500 py-6 text-center">Belum ada riwayat transaksi penyetoran sampah.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {myTransactions.map((t) => (
+                      <div key={t.id_transaksi} className="p-4 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                        <div>
+                          <span className="font-mono font-bold text-civic-700 block">{t.kode_transaksi}</span>
+                          <span className="font-semibold text-slate-800">{t.nama_kategori}</span>
+                          <span className="text-slate-500 block">Berat: {t.estimasi_berat_kg} Kg</span>
+                        </div>
+                        <div className="text-right space-y-1">
+                          <TicketBadge status={t.status} />
+                          <span className="text-xs font-mono font-bold text-civic-700 block">
+                            +{t.total_poin_diperoleh} Poin
+                          </span>
+                        </div>
+                      </div>
                     ))}
-                  </tbody>
-                </table>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* Point Ledger History */}
+              <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                <h3 className="text-base font-bold text-slate-900">Buku Besar Mutasi Poin</h3>
+                {pointsData.history.length === 0 ? (
+                  <p className="text-sm text-slate-500 py-6 text-center">Belum ada catatan mutasi poin.</p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                        <tr>
+                          <th className="py-2.5 px-3 font-semibold">Waktu</th>
+                          <th className="py-2.5 px-3 font-semibold">Tipe</th>
+                          <th className="py-2.5 px-3 font-semibold">Keterangan</th>
+                          <th className="py-2.5 px-3 font-semibold text-right">Poin</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {pointsData.history.map((h) => (
+                          <tr key={h.id_riwayat} className="hover:bg-slate-50/50">
+                            <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
+                              {new Date(h.created_at).toLocaleDateString('id-ID', { dateStyle: 'short' })}
+                            </td>
+                            <td className="py-3 px-3 font-medium text-slate-700">{h.tipe}</td>
+                            <td className="py-3 px-3 text-slate-600">{h.keterangan}</td>
+                            <td className="py-3 px-3 text-right font-mono font-bold text-civic-700">
+                              +{h.perubahan_poin}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

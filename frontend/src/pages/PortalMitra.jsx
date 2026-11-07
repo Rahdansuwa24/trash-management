@@ -1,27 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
-import { Building2, Truck, CheckCircle, Scale, Loader2, Sparkles, AlertCircle } from 'lucide-react';
+import { Building2, Truck, Scale, MapPin, Calendar, Clock, CheckCircle, AlertTriangle, ArrowRight, X, Loader2, Image as ImageIcon } from 'lucide-react';
 
 export default function PortalMitra() {
-  const [partnerType, setPartnerType] = useState('dlh'); // 'dlh' or 'banksampah'
+  const [partnerType, setPartnerType] = useState('lapangan'); // 'lapangan' (petugas kebersihan) or 'banksampah'
+  const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState([]);
   const [pickups, setPickups] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
-
-  // DLH Modal state
+  
+  // Modal state for lapangan action
   const [selectedReport, setSelectedReport] = useState(null);
-  const [keteranganAction, setKeteranganAction] = useState('');
   const [statusAction, setStatusAction] = useState('DALAM_PENANGANAN');
-  const [fotoTindakan, setFotoTindakan] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [keteranganAction, setKeteranganAction] = useState('');
+  const [fotoBuktiFile, setFotoBuktiFile] = useState(null);
+  const [submittingAction, setSubmittingAction] = useState(false);
 
-  // Bank Sampah Modal state
+  // Modal state for bank sampah completion
   const [selectedPickup, setSelectedPickup] = useState(null);
-  const [actualWeight, setActualWeight] = useState('');
-  const [catatanMitra, setCatatanMitra] = useState('');
-  const [pickupLoading, setPickupLoading] = useState(false);
+  const [beratAktual, setBeratAktual] = useState('');
+  const [submittingPickup, setSubmittingPickup] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -31,81 +30,73 @@ export default function PortalMitra() {
     try {
       setLoading(true);
       setErrorMsg('');
-
-      if (partnerType === 'dlh') {
-        const res = await api.getMitraReports();
+      if (partnerType === 'lapangan') {
+        const res = await api.getMitraReports('?status=MENUNGGU_VERIFIKASI,INVESTIGASI,DALAM_PENANGANAN');
         setReports(res.data || []);
       } else {
-        const res = await api.getWastePickups();
+        const res = await api.getWastePickups('?status=MENUNGGU_PENJEMPUTAN,DIJADWALKAN');
         setPickups(res.data || []);
       }
     } catch (err) {
-      setErrorMsg(err.message || 'Gagal memuat data.');
+      setErrorMsg(err.message || 'Gagal mengambil data tugas operasional.');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDLHSubmit = async (e) => {
+  const handleActionSubmit = async (e) => {
     e.preventDefault();
-    if (!keteranganAction.trim()) return;
-
+    if (!selectedReport) return;
     try {
-      setActionLoading(true);
-      const data = new FormData();
-      data.append('keterangan_tindakan', keteranganAction);
-      data.append('status', statusAction);
-      if (fotoTindakan) {
-        data.append('file_foto_tindakan', fotoTindakan);
+      setSubmittingAction(true);
+      const formData = new FormData();
+      formData.append('status', statusAction);
+      formData.append('keterangan_tindakan', keteranganAction);
+      if (fotoBuktiFile) {
+        formData.append('file_foto_bukti', fotoBuktiFile);
       }
 
-      await api.submitCleanupAction(selectedReport.id_laporan, data);
+      await api.submitCleanupAction(selectedReport.id_laporan, formData);
       setSelectedReport(null);
       setKeteranganAction('');
-      setFotoTindakan(null);
+      setFotoBuktiFile(null);
       fetchData();
     } catch (err) {
       alert(`Gagal menyimpan tindakan: ${err.message}`);
     } finally {
-      setActionLoading(false);
+      setSubmittingAction(false);
     }
   };
 
   const handlePickupComplete = async (e) => {
     e.preventDefault();
-    if (!actualWeight || parseFloat(actualWeight) <= 0) {
-      alert('Masukkan berat timbangan aktual.');
-      return;
-    }
-
+    if (!selectedPickup || !beratAktual) return;
     try {
-      setPickupLoading(true);
+      setSubmittingPickup(true);
       await api.completePickup(selectedPickup.id_transaksi, {
-        berat_aktual_kg: parseFloat(actualWeight),
-        catatan_mitra: catatanMitra
+        berat_aktual_kg: parseFloat(beratAktual)
       });
       setSelectedPickup(null);
-      setActualWeight('');
-      setCatatanMitra('');
+      setBeratAktual('');
       fetchData();
     } catch (err) {
-      alert(`Gagal menyelesaikan transaksi: ${err.message}`);
+      alert(`Gagal menyelesaikan penimbangan: ${err.message}`);
     } finally {
-      setPickupLoading(false);
+      setSubmittingPickup(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
             <Building2 className="w-7 h-7 text-civic-700" />
-            Portal Aksi Mitra & Dinas Lingkungan Hidup
+            Portal Petugas & Pengelola Lingkungan (RT/RW)
           </h1>
           <p className="text-sm text-slate-600">
-            Dasbor operasional penanganan aduan lapangan (DLH) dan verifikasi timbangan daur ulang (Bank Sampah).
+            Dasbor operasional penanganan aduan sampah liar lingkungan dan verifikasi timbangan unit bank sampah.
           </p>
         </div>
 
@@ -113,15 +104,15 @@ export default function PortalMitra() {
         <div className="flex bg-slate-100 p-1 rounded-xl self-stretch sm:self-auto">
           <button
             type="button"
-            onClick={() => setPartnerType('dlh')}
+            onClick={() => setPartnerType('lapangan')}
             className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all min-h-[40px] flex items-center gap-1.5 ${
-              partnerType === 'dlh'
+              partnerType === 'lapangan'
                 ? 'bg-white text-slate-900 shadow-sm'
                 : 'text-slate-600 hover:text-slate-900'
             }`}
           >
             <Truck className="w-4 h-4 text-civic-700" />
-            DLH Pemda
+            Petugas Lapangan (Aduan Liar)
           </button>
           <button
             type="button"
@@ -133,60 +124,98 @@ export default function PortalMitra() {
             }`}
           >
             <Scale className="w-4 h-4 text-civic-700" />
-            Mitra Bank Sampah
+            Bank Sampah Unit RT/RW
           </button>
         </div>
       </div>
 
-      {loading && (
-        <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center space-y-3">
-          <Loader2 className="w-8 h-8 text-civic-700 animate-spin mx-auto" />
-          <p className="text-sm text-slate-600 font-medium">Memuat data operasional...</p>
-        </div>
-      )}
-
       {errorMsg && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-xl">
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-sm flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
           {errorMsg}
         </div>
       )}
 
-      {/* VIEW 1: DLH REPORTS */}
-      {!loading && partnerType === 'dlh' && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900">Daftar Aduan Sampah Liar Masuk ({reports.length})</h2>
-            <span className="text-xs text-slate-500">Pembaruan Berkala</span>
+      {loading && (
+        <div className="p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-civic-700" />
+          <p className="text-sm font-medium">Memuat data penugasan lingkungan...</p>
+        </div>
+      )}
+
+      {/* VIEW 1: FIELD CLEANUP REPORTS */}
+      {!loading && partnerType === 'lapangan' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold text-slate-900">
+              Daftar Aduan Sampah Liar Perlu Penanganan ({reports.length})
+            </h2>
+            <button
+              onClick={fetchData}
+              className="text-xs text-civic-700 font-semibold hover:underline"
+            >
+              Segarkan Data
+            </button>
           </div>
 
           {reports.length === 0 ? (
-            <p className="text-sm text-slate-500 py-8 text-center">Tidak ada aduan aktif saat ini.</p>
+            <div className="p-12 bg-white rounded-2xl border border-slate-200 text-center text-slate-500">
+              <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-700">Tidak ada aduan sampah liar yang tertunda.</p>
+              <p className="text-xs text-slate-500 mt-1">Seluruh titik aduan lingkungan telah bersih atau tertangani.</p>
+            </div>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {reports.map((r) => (
-                <div key={r.id_laporan} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1 max-w-2xl">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm text-slate-900">{r.kode_tiket}</span>
-                      <TicketBadge status={r.status} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {reports.map((item) => (
+                <div key={item.id_laporan} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
+                  <div>
+                    <div className="h-44 bg-slate-100 relative">
+                      {item.foto_bukti_url ? (
+                        <img
+                          src={item.foto_bukti_url}
+                          alt="Bukti sampah liar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                          <ImageIcon className="w-8 h-8 opacity-40" />
+                        </div>
+                      )}
+                      <div className="absolute top-3 left-3">
+                        <TicketBadge status={item.status} />
+                      </div>
                     </div>
-                    <p className="text-sm text-slate-800 font-medium">{r.alamat_lokasi} (Kec. {r.kecamatan}, {r.kota})</p>
-                    <p className="text-xs text-slate-600 line-clamp-2">{r.deskripsi_kejadian}</p>
-                    <span className="text-[11px] text-slate-400 block">
-                      Pelapor: {r.nama_pelapor} • Telp: {r.nomor_kontak}
-                    </span>
+
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <span className="text-xs font-mono font-bold text-civic-700 block">{item.kode_tiket}</span>
+                        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mt-1">{item.deskripsi_kejadian}</h3>
+                      </div>
+
+                      <div className="text-xs text-slate-600 space-y-1.5 pt-2 border-t border-slate-100">
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{item.alamat_lokasi}, {item.kecamatan}, {item.kota}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span>{new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
+                  <div className="p-5 pt-0">
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedReport(r);
-                        setStatusAction(r.status === 'MENUNGGU_VERIFIKASI' ? 'DALAM_PENANGANAN' : 'SELESAI_DIBERSIHKAN');
+                        setSelectedReport(item);
+                        setStatusAction(item.status === 'MENUNGGU_VERIFIKASI' ? 'DALAM_PENANGANAN' : item.status);
                       }}
-                      className="px-4 py-2 bg-civic-700 hover:bg-civic-800 text-white font-medium text-xs rounded-lg transition-colors min-h-[40px]"
+                      className="w-full py-2.5 px-4 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                     >
-                      Tindak Lanjuti
+                      Tindak Lanjuti Aduan
+                      <ArrowRight className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
@@ -198,51 +227,62 @@ export default function PortalMitra() {
 
       {/* VIEW 2: BANK SAMPAH PICKUPS */}
       {!loading && partnerType === 'banksampah' && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900">Daftar Pengajuan Setor Sampah Warga ({pickups.length})</h2>
-            <span className="text-xs text-slate-500">Penjemputan & Penimbangan</span>
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold text-slate-900">
+              Daftar Penyetoran Sampah Warga ({pickups.length})
+            </h2>
+            <button
+              onClick={fetchData}
+              className="text-xs text-civic-700 font-semibold hover:underline"
+            >
+              Segarkan Data
+            </button>
           </div>
 
           {pickups.length === 0 ? (
-            <p className="text-sm text-slate-500 py-8 text-center">Tidak ada pengajuan penjemputan saat ini.</p>
+            <div className="p-12 bg-white rounded-2xl border border-slate-200 text-center text-slate-500">
+              <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-700">Tidak ada jadwal penimbangan sampah warga.</p>
+              <p className="text-xs text-slate-500 mt-1">Semua transaksi penimbangan telah selesai diverifikasi.</p>
+            </div>
           ) : (
-            <div className="divide-y divide-slate-100">
-              {pickups.map((p) => (
-                <div key={p.id_transaksi} className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="space-y-1 max-w-2xl">
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-sm text-slate-900">{p.kode_transaksi}</span>
-                      <TicketBadge status={p.status} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {pickups.map((trx) => (
+                <div key={trx.id_transaksi} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-slate-300 transition-colors">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <span className="text-xs font-mono font-bold text-civic-700">{trx.kode_transaksi}</span>
+                      <TicketBadge status={trx.status} />
                     </div>
-                    <p className="text-sm text-slate-800 font-medium">
-                      Kategori: <strong className="text-civic-800">{p.nama_kategori}</strong> • Estimasi: {p.estimasi_berat_kg} Kg
-                      {p.berat_aktual_kg ? ` • Aktual: ${p.berat_aktual_kg} Kg` : ''}
-                    </p>
-                    <p className="text-xs text-slate-600">{p.alamat_jemput} ({p.kota})</p>
-                    <span className="text-[11px] text-slate-400 block">
-                      Warga: {p.nama_warga} • Kontak: {p.kontak_warga || '-'}
-                    </span>
+
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{trx.nama_warga || 'Warga Lingkungan'}</h3>
+                      <p className="text-xs text-slate-500">Kategori: <strong className="text-slate-800">{trx.nama_kategori}</strong></p>
+                      <p className="text-xs text-slate-500">Estimasi Warga: <strong className="text-slate-800">{trx.estimasi_berat_kg} Kg</strong></p>
+                    </div>
+
+                    <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1 text-slate-600">
+                      <div className="flex items-center gap-1.5 font-medium text-slate-900">
+                        <MapPin className="w-3.5 h-3.5 text-civic-700" />
+                        <span>Alamat Penjemputan / Setoran:</span>
+                      </div>
+                      <p className="pl-5 text-slate-600">{trx.alamat_jemput}, {trx.kecamatan}</p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-3 shrink-0">
-                    {p.status !== 'SELESAI' ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedPickup(p);
-                          setActualWeight(p.estimasi_berat_kg);
-                        }}
-                        className="px-4 py-2 bg-civic-700 hover:bg-civic-800 text-white font-medium text-xs rounded-lg transition-colors min-h-[40px] flex items-center gap-1.5"
-                      >
-                        <Scale className="w-3.5 h-3.5" />
-                        Verifikasi Timbangan
-                      </button>
-                    ) : (
-                      <span className="text-xs text-emerald-700 font-semibold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">
-                        Poin Dikreditkan (+{p.total_poin_diperoleh})
-                      </span>
-                    )}
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedPickup(trx);
+                        setBeratAktual(trx.estimasi_berat_kg);
+                      }}
+                      className="w-full py-2.5 px-4 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+                    >
+                      Verifikasi Timbangan & Beri Poin
+                      <Scale className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
               ))}
@@ -251,15 +291,15 @@ export default function PortalMitra() {
         </div>
       )}
 
-      {/* DLH MODAL */}
+      {/* FIELD ACTION MODAL */}
       {selectedReport && (
         <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl">
             <h3 className="text-lg font-bold text-slate-900">
-              Tindak Lanjuti Aduan: <span className="font-mono text-civic-700">{selectedReport.kode_tiket}</span>
+              Tindak Lanjuti Aduan Lingkungan: <span className="font-mono text-civic-700">{selectedReport.kode_tiket}</span>
             </h3>
 
-            <form onSubmit={handleDLHSubmit} className="space-y-4">
+            <form onSubmit={handleActionSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Status Penanganan</label>
                 <select
@@ -268,7 +308,7 @@ export default function PortalMitra() {
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
                 >
                   <option value="INVESTIGASI">Tahap Investigasi Petugas</option>
-                  <option value="DALAM_PENANGANAN">Dalam Penanganan Armada Truk</option>
+                  <option value="DALAM_PENANGANAN">Dalam Penanganan Petugas Kebersihan</option>
                   <option value="SELESAI_DIBERSIHKAN">Selesai Dibersihkan (Tuntas)</option>
                   <option value="DITOLAK">Tolak Laporan (Fiktif / Luar Wilayah)</option>
                 </select>
@@ -283,20 +323,20 @@ export default function PortalMitra() {
                   rows={3}
                   value={keteranganAction}
                   onChange={(e) => setKeteranganAction(e.target.value)}
-                  placeholder="Contoh: Tim regu 3 telah membersihkan 2 ton sampah liar dan memasang papan larangan buang sampah..."
+                  placeholder="Contoh: Petugas kebersihan RT 03 telah mengangkut tumpukan sampah dan membersihkan saluran air..."
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"
                 ></textarea>
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Foto Bukti Hasil Pembersihan (Before-After)
+                  Unggah Foto Lokasi Sesudah Ditangani (Bukti Transparansi)
                 </label>
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={(e) => setFotoTindakan(e.target.files[0] || null)}
-                  className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-civic-50 file:text-civic-700"
+                  onChange={(e) => setFotoBuktiFile(e.target.files[0])}
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-civic-50 file:text-civic-700 hover:file:bg-civic-100"
                 />
               </div>
 
@@ -304,17 +344,17 @@ export default function PortalMitra() {
                 <button
                   type="button"
                   onClick={() => setSelectedReport(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg min-h-[44px]"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={actionLoading}
-                  className="px-4 py-2 bg-civic-700 hover:bg-civic-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                  disabled={submittingAction}
+                  className="px-5 py-2 text-xs font-semibold text-white bg-civic-700 hover:bg-civic-800 rounded-lg min-h-[44px] flex items-center gap-1.5"
                 >
-                  {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                  Simpan Tindakan
+                  {submittingAction && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Simpan Tindak Lanjut
                 </button>
               </div>
             </form>
@@ -330,33 +370,25 @@ export default function PortalMitra() {
               Verifikasi Timbangan: <span className="font-mono text-civic-700">{selectedPickup.kode_transaksi}</span>
             </h3>
 
-            <p className="text-xs text-slate-600">
-              Kategori: <strong>{selectedPickup.nama_kategori}</strong>. Masukkan berat riil hasil timbangan untuk menghitung poin warga.
-            </p>
+            <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1">
+              <p>Warga: <strong>{selectedPickup.nama_warga}</strong></p>
+              <p>Kategori: <strong>{selectedPickup.nama_kategori}</strong></p>
+              <p>Estimasi Warga: <strong>{selectedPickup.estimasi_berat_kg} Kg</strong></p>
+            </div>
 
             <form onSubmit={handlePickupComplete} className="space-y-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Berat Aktual Timbangan (Kg) <span className="text-rose-600">*</span>
+                  Hasil Timbangan Aktual (Kg) <span className="text-rose-600">*</span>
                 </label>
                 <input
                   type="number"
                   step="0.1"
                   required
-                  value={actualWeight}
-                  onChange={(e) => setActualWeight(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm font-mono font-bold"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Catatan Penimbangan</label>
-                <input
-                  type="text"
-                  value={catatanMitra}
-                  onChange={(e) => setCatatanMitra(e.target.value)}
-                  placeholder="Contoh: Sampah bersih, kardus kering"
+                  value={beratAktual}
+                  onChange={(e) => setBeratAktual(e.target.value)}
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"
+                  placeholder="Misal: 10.5"
                 />
               </div>
 
@@ -364,17 +396,17 @@ export default function PortalMitra() {
                 <button
                   type="button"
                   onClick={() => setSelectedPickup(null)}
-                  className="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-xs font-semibold"
+                  className="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg min-h-[44px]"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={pickupLoading}
-                  className="px-4 py-2 bg-civic-700 hover:bg-civic-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5"
+                  disabled={submittingPickup}
+                  className="px-5 py-2 text-xs font-semibold text-white bg-civic-700 hover:bg-civic-800 rounded-lg min-h-[44px] flex items-center gap-1.5"
                 >
-                  {pickupLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
-                  Selesaikan & Berikan Poin
+                  {submittingPickup && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Selesaikan & Kirim Poin
                 </button>
               </div>
             </form>

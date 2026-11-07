@@ -65,7 +65,7 @@ exports.createTransaction = async (req, res, next) => {
     const category = catRows[0];
     const estimatedPoints = Math.floor(berat * category.poin_per_kg);
 
-    // Identify citizen profile
+    // Identify citizen profile from authenticated user
     let idWarga = null;
     if (req.user && req.user.id_user) {
       const [wargaRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);
@@ -74,10 +74,11 @@ exports.createTransaction = async (req, res, next) => {
       }
     }
 
-    // Fallback to demo citizen if unauthenticated (demo mode)
     if (!idWarga) {
-      const [defaultWarga] = await pool.query('SELECT id_warga FROM profiles_warga LIMIT 1');
-      idWarga = defaultWarga.length > 0 ? defaultWarga[0].id_warga : 1;
+      return res.status(401).json({
+        success: false,
+        message: 'Silakan masuk (login) dengan akun warga lingkungan RT/RW untuk menyetorkan sampah dan menabung poin.'
+      });
     }
 
     const fotoFile = req.file || (req.files && req.files.file_foto ? req.files.file_foto[0] : null);
@@ -121,7 +122,7 @@ exports.createTransaction = async (req, res, next) => {
 
     res.status(201).json({
       success: true,
-      message: 'Pengajuan setor sampah berhasil dibuat. Bank Sampah / Pengepul akan memverifikasi jadwal penjemputan.',
+      message: 'Pengajuan setor sampah berhasil dibuat. Petugas bank sampah unit akan menjadwalkan penimbangan.',
       kode_transaksi: kodeTrx,
       data: {
         id_transaksi: result.insertId,
@@ -140,15 +141,20 @@ exports.createTransaction = async (req, res, next) => {
 
 exports.getMyTransactions = async (req, res, next) => {
   try {
-    let idWarga = req.user ? req.user.id_warga : null;
+    let idWarga = null;
 
-    if (!idWarga && req.user && req.user.id_user) {
+    if (req.user && req.user.id_user) {
       const [wRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);
       if (wRows.length > 0) idWarga = wRows[0].id_warga;
     }
 
-    // Fallback to demo citizen
-    if (!idWarga) idWarga = 1;
+    if (!idWarga) {
+      return res.json({
+        success: true,
+        total: 0,
+        data: []
+      });
+    }
 
     const sql = `
       SELECT 
@@ -186,12 +192,21 @@ exports.getMyTransactions = async (req, res, next) => {
 
 exports.getPointsAndHistory = async (req, res, next) => {
   try {
-    let idWarga = req.user ? req.user.id_warga : null;
-    if (!idWarga && req.user && req.user.id_user) {
+    let idWarga = null;
+    if (req.user && req.user.id_user) {
       const [wRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);
       if (wRows.length > 0) idWarga = wRows[0].id_warga;
     }
-    if (!idWarga) idWarga = 1;
+
+    if (!idWarga) {
+      return res.json({
+        success: true,
+        data: {
+          total_poin: 0,
+          history: []
+        }
+      });
+    }
 
     const [profileRows] = await pool.query('SELECT total_poin FROM profiles_warga WHERE id_warga = ?', [idWarga]);
     const totalPoin = profileRows.length > 0 ? profileRows[0].total_poin : 0;
