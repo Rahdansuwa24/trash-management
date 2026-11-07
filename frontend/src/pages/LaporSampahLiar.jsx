@@ -1,10 +1,18 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../utils/imageCompressor';
 import { ShieldAlert, Camera, MapPin, CheckCircle, Copy, Check, ArrowRight, Loader2, ExternalLink } from 'lucide-react';
 
 export default function LaporSampahLiar() {
+  const { user } = useAuth();
+
+  // Admin berfokus pada pengawasan, metrik dan moderasi di dashboard, bukan membuat aduan publik
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
   const [formData, setFormData] = useState({
     nama_pelapor: '',
     nomor_kontak: '',

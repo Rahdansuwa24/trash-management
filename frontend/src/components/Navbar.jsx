@@ -10,10 +10,16 @@ export default function Navbar() {
 
   // Filter navigasi berdasarkan peran pengguna
   const navLinks = [
-    { name: 'Beranda', path: '/' },
-    { name: 'Lapor Sampah Liar', path: '/lapor', icon: ShieldAlert },
-    { name: 'Lacak Aduan', path: '/lacak', icon: Search }
+    { name: 'Beranda', path: '/' }
   ];
+
+  // Lapor Sampah Liar hanya untuk warga/publik, bukan admin
+  if (user?.role !== 'admin') {
+    navLinks.push({ name: 'Lapor Sampah Liar', path: '/lapor', icon: ShieldAlert });
+  }
+
+  // Lacak Aduan untuk memantau status tiket penanganan
+  navLinks.push({ name: 'Lacak Aduan', path: '/lacak', icon: Search });
 
   // Bank Sampah (Setor Sampah & Tukar Poin) hanya untuk nasabah/warga atau publik, bukan mitra dan bukan admin
   if (user?.role !== 'mitra' && user?.role !== 'admin') {
