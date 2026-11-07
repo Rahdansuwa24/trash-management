@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth, DEMO_ACCOUNTS } from '../context/AuthContext';
 import { X, Lock, Mail, Loader2, UserCheck, ShieldCheck, User, Phone, Home, CheckCircle2 } from 'lucide-react';
 
 export default function LoginModal() {
+  const navigate = useNavigate();
   const { loginModalOpen, setLoginModalOpen, login, register, quickLogin } = useAuth();
   const [tab, setTab] = useState('login'); // 'login' or 'register'
 
@@ -34,7 +36,14 @@ export default function LoginModal() {
     try {
       setLoading(true);
       setErrorMsg('');
-      await login(email, password);
+      const loggedUser = await login(email, password);
+      if (loggedUser?.role === 'admin') {
+        navigate('/admin');
+      } else if (loggedUser?.role === 'mitra') {
+        navigate('/mitra');
+      } else {
+        navigate('/setor');
+      }
     } catch (err) {
       setErrorMsg(err.message || 'Kombinasi email atau password salah.');
     } finally {
@@ -51,6 +60,7 @@ export default function LoginModal() {
         ...regData,
         role: 'warga'
       });
+      navigate('/setor');
     } catch (err) {
       setErrorMsg(err.message || 'Gagal melakukan pendaftaran akun.');
     } finally {
@@ -62,7 +72,14 @@ export default function LoginModal() {
     try {
       setLoading(true);
       setErrorMsg('');
-      await quickLogin(acc);
+      const loggedUser = await quickLogin(acc);
+      if (loggedUser?.role === 'admin') {
+        navigate('/admin');
+      } else if (loggedUser?.role === 'mitra') {
+        navigate('/mitra');
+      } else {
+        navigate('/setor');
+      }
     } catch (err) {
       setErrorMsg(err.message || 'Gagal login demo.');
     } finally {

@@ -1,11 +1,21 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { Search, ShieldAlert, Coins, CheckCircle2, ArrowRight, MapPin, Users } from 'lucide-react';
 
 export default function Home() {
+  const { user } = useAuth();
   const [ticketInput, setTicketInput] = useState('');
   const [searchError, setSearchError] = useState('');
   const navigate = useNavigate();
+
+  // Pengguna dengan peran staf/pengelola langsung diarahkan ke workspace operasional masing-masing
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+  if (user?.role === 'mitra') {
+    return <Navigate to="/mitra" replace />;
+  }
 
   const handleSearchTicket = (e) => {
     e.preventDefault();

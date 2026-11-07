@@ -8,32 +8,38 @@ export default function Navbar() {
   const location = useLocation();
   const { user, logout, setLoginModalOpen } = useAuth();
 
-  // Filter navigasi berdasarkan peran pengguna
-  const navLinks = [
-    { name: 'Beranda', path: '/' }
-  ];
+  // Navigasi brand logo berdasarkan peran aktif
+  const brandHome = user?.role === 'admin' ? '/admin' : user?.role === 'mitra' ? '/mitra' : '/';
 
-  // Lapor Sampah Liar hanya untuk warga/publik, bukan admin
-  if (user?.role !== 'admin') {
+  // Filter navigasi berdasarkan peran pengguna
+  const navLinks = [];
+
+  // Beranda publik hanya untuk warga lingkungan dan pengunjung umum
+  if (user?.role !== 'admin' && user?.role !== 'mitra') {
+    navLinks.push({ name: 'Beranda', path: '/' });
+  }
+
+  // Panel Admin RW khusus untuk administrator
+  if (user?.role === 'admin') {
+    navLinks.push({ name: 'Admin RW', path: '/admin', icon: ShieldCheck });
+  }
+
+  // Portal Petugas untuk petugas lapangan/bank sampah & pengawasan admin
+  if (user?.role === 'mitra' || user?.role === 'admin') {
+    navLinks.push({ name: 'Portal Petugas', path: '/mitra', icon: Building2 });
+  }
+
+  // Lapor Sampah Liar hanya untuk warga/publik, bukan admin dan bukan mitra
+  if (user?.role !== 'admin' && user?.role !== 'mitra') {
     navLinks.push({ name: 'Lapor Sampah Liar', path: '/lapor', icon: ShieldAlert });
   }
 
   // Lacak Aduan untuk memantau status tiket penanganan
   navLinks.push({ name: 'Lacak Aduan', path: '/lacak', icon: Search });
 
-  // Bank Sampah (Setor Sampah & Tukar Poin) hanya untuk nasabah/warga atau publik, bukan mitra dan bukan admin
+  // Bank Sampah (Setor Sampah & Tukar Poin) hanya untuk nasabah/warga atau publik
   if (user?.role !== 'mitra' && user?.role !== 'admin') {
     navLinks.push({ name: 'Bank Sampah', path: '/setor', icon: Coins });
-  }
-
-  // Portal Petugas hanya untuk petugas mitra & admin
-  if (user?.role === 'mitra' || user?.role === 'admin') {
-    navLinks.push({ name: 'Portal Petugas', path: '/mitra', icon: Building2 });
-  }
-
-  // Panel Admin RW hanya untuk administrator
-  if (user?.role === 'admin') {
-    navLinks.push({ name: 'Admin RW', path: '/admin', icon: ShieldCheck });
   }
 
   return (
@@ -41,7 +47,7 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo & Brand */}
-          <Link to="/" className="flex items-center gap-2.5 font-bold text-slate-900 group">
+          <Link to={brandHome} className="flex items-center gap-2.5 font-bold text-slate-900 group">
             <div className="w-9 h-9 rounded-lg bg-civic-700 text-white flex items-center justify-center transition-colors group-hover:bg-civic-800">
               <Recycle className="w-5 h-5" />
             </div>
