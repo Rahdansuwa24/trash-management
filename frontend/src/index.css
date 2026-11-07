@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-800 selection:bg-civic-100 selection:text-civic-900;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Accessibility: Visible Focus Rings */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-civic-600 ring-offset-2 ring-offset-white;
+  }
+
+  /* Minimum tap target for interactive elements on mobile */
+  button, a, input, select, textarea {
+    @apply touch-manipulation;
+  }
+}
