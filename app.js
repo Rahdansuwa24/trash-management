@@ -1,59 +1,69 @@
-var dotenv = require('dotenv')
-dotenv.config({path: './.env'})
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
+const path = require('path');
+const env = require('./src/config/env');
 
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-var flash = require('express-flash')
-var session = require('express-session')
+const healthRoute = require('./src/routes/health.route');
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var adminRouter = require('./routes/admin');
+const app = express();
 
-
-var app = express();
-
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'ejs');
-
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Security and middleware
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+}));
+app.use(cors({
+  origin: true,
+  credentials: true
+}));
+app.use(morgan(env.NODE_ENV === 'production' ? 'combined' : 'dev'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Static folder (if any fallback assets)
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(session({
-  cookie: {
-    maxAge: 10 * 60 * 1000
-  },
-  store: new session.MemoryStore,
-  saveUninitialized: true,
-  resave: 'true',
-  secret: 'secret'
-}))
-app.use(flash())
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
-app.use('/admin', adminRouter);
-
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+// Root & Healthcheck
+app.get('/', (req, res) => {
+  res.json({
+    service: 'Trash Management API',
+    status: 'online',
+    version: '1.0.0',
+    documentation: '/api'
+  });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = process.env.APP_ENV === 'development' ? err : {};
+app.use('/health', healthRoute);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+// API router placeholder (mounted in Task 7)
+// app.use('/api', apiRouter);
+
+// Catch 404 for undefined routes
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: `Route not found: ${req.method} ${req.originalUrl}`
+  });
 });
+
+// Centralized Error Handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled Error:', err);
+  const status = err.status || 500;
+  res.status(status).json({
+    success: false,
+    message: err.message || 'Internal Server Error',
+    ...(env.NODE_ENV === 'development' && { stack: err.stack })
+  });
+});
+
+if (require.main === module) {
+  app.listen(env.PORT, () => {
+    console.log(`Trash Management Backend running on port ${env.PORT} (${env.NODE_ENV})`);
+  });
+}
 
 module.exports = app;
