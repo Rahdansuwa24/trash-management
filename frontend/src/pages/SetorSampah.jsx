@@ -236,9 +236,12 @@ export default function SetorSampah() {
     }
   };
 
-  // Mitra otomatis dialihkan ke Portal Petugas (form setor sampah dihilangkan sama sekali untuk mitra)
+  // Mitra dialihkan ke Portal Petugas, dan Admin dialihkan ke Dashboard Admin (form setor sampah ditiadakan untuk non-warga)
   if (user?.role === 'mitra') {
     return <Navigate to="/mitra" replace />;
+  }
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
   }
 
   return (

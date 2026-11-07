@@ -68,10 +68,10 @@ exports.createTransaction = async (req, res, next) => {
     const estimatedPoints = Math.floor(berat * category.poin_per_kg);
 
     // Identify citizen profile from authenticated user
-    if (req.user && req.user.role === 'mitra') {
+    if (req.user && (req.user.role === 'mitra' || req.user.role === 'admin')) {
       return res.status(403).json({
         success: false,
-        message: 'Akun petugas/mitra bertugas menerima dan menimbang sampah warga melalui Portal Petugas, bukan mengajukan setoran.'
+        message: 'Pengajuan setor sampah khusus untuk akun warga lingkungan. Petugas dan admin tidak dapat mengajukan setoran.'
       });
     }
 

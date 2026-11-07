@@ -15,8 +15,8 @@ export default function Navbar() {
     { name: 'Lacak Aduan', path: '/lacak', icon: Search }
   ];
 
-  // Bank Sampah (Setor Sampah & Tukar Poin) hanya untuk nasabah/warga atau publik, bukan mitra
-  if (user?.role !== 'mitra') {
+  // Bank Sampah (Setor Sampah & Tukar Poin) hanya untuk nasabah/warga atau publik, bukan mitra dan bukan admin
+  if (user?.role !== 'mitra' && user?.role !== 'admin') {
     navLinks.push({ name: 'Bank Sampah', path: '/setor', icon: Coins });
   }
 
