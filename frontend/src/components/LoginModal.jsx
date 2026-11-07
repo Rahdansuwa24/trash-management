@@ -268,40 +268,55 @@ export default function LoginModal() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Alamat Rumah <span className="text-rose-600">*</span></label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Blok & Nomor Rumah <span className="text-rose-600">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={regData.alamat}
                   onChange={(e) => setRegData({ ...regData, alamat: e.target.value })}
-                  placeholder="Contoh: Jl. Mawar No. 12"
+                  placeholder="Contoh: Jl. Kenanga Blok B4 No. 12"
                   className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs min-h-[40px]"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-2.5">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nomor RT</label>
-                  <input
-                    type="text"
-                    required
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Wilayah RT <span className="text-rose-600">*</span>
+                  </label>
+                  <select
                     value={regData.rt}
                     onChange={(e) => setRegData({ ...regData, rt: e.target.value })}
-                    placeholder="03"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs min-h-[40px]"
-                  />
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs min-h-[40px] bg-white"
+                  >
+                    <option value="01">RT 01</option>
+                    <option value="02">RT 02</option>
+                    <option value="03">RT 03</option>
+                    <option value="04">RT 04</option>
+                    <option value="05">RT 05</option>
+                  </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Nomor RW</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Wilayah RW</label>
                   <input
                     type="text"
-                    required
-                    value={regData.rw}
-                    onChange={(e) => setRegData({ ...regData, rw: e.target.value })}
-                    placeholder="05"
-                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs min-h-[40px]"
+                    readOnly
+                    value="RW 05 (Kalirungkut)"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-600 text-xs min-h-[40px]"
                   />
                 </div>
+              </div>
+
+              <div className="p-3 bg-civic-50/70 border border-civic-200 rounded-xl text-[11px] text-civic-800 space-y-1">
+                <span className="font-bold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-civic-700 shrink-0" />
+                  Buku Tabungan Daur Ulang Mandiri
+                </span>
+                <p className="text-civic-700">
+                  Akun Anda akan langsung memiliki saldo awal 0 Poin dan dapat digunakan menyetor sampah ke pengurus Bank Sampah Unit RT.
+                </p>
               </div>
 
               <button
