@@ -3,16 +3,19 @@ import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../utils/imageCompressor';
 import TicketBadge from '../components/TicketBadge';
-import { Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, LogIn, AlertCircle } from 'lucide-react';
+import { 
+  Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, 
+  LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2 
+} from 'lucide-react';
 
 export default function SetorSampah() {
   const { user, setLoginModalOpen } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('setor'); // 'setor' or 'riwayat'
+  const [activeTab, setActiveTab] = useState('setor'); // 'setor', 'tukar', or 'riwayat'
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState(null);
   const [weight, setWeight] = useState('');
-  const [alamat, setAlamat] = useState(user?.profile?.alamat || 'Jl. Kenanga No. 14, RT 03 / RW 05');
+  const [alamat, setAlamat] = useState(user?.profile?.alamat || 'Jl. Kenanga Blok B4 No. 14, RT 03 / RW 05');
   const [kota, setKota] = useState('Surabaya');
   const [kecamatan, setKecamatan] = useState('Rungkut');
   const [catatan, setCatatan] = useState('');
@@ -24,10 +27,42 @@ export default function SetorSampah() {
   const [compressing, setCompressing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [successTrx, setSuccessTrx] = useState(null);
+  const [redeemSuccess, setRedeemSuccess] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
 
   const [myTransactions, setMyTransactions] = useState([]);
   const [pointsData, setPointsData] = useState({ total_poin: 0, history: [] });
+
+  // 3 Opsi Nyata Penukaran Tabungan Daur Ulang Lingkungan RT/RW
+  const redemptionCatalog = [
+    {
+      id: 'iuran_rt',
+      title: 'Potongan Iuran Kebersihan & Keamanan RT',
+      cost: 50,
+      rupiahValue: 'Rp 10.000',
+      icon: Receipt,
+      desc: 'Potongan langsung iuran bulanan warga. Klaim diverifikasi bendahara RT saat penarikan iuran.',
+      badge: 'Paling Populer'
+    },
+    {
+      id: 'sembako_minyak',
+      title: 'Minyak Goreng 1 Liter di Balai RT',
+      cost: 100,
+      rupiahValue: 'Rp 20.000',
+      icon: ShoppingBag,
+      desc: 'Voucher sembako minyak goreng kemasan, dapat diambil di Balai RT 03 saat jadwal timbang sampah.',
+      badge: 'Sembako Komunitas'
+    },
+    {
+      id: 'kas_tunai',
+      title: 'Pencairan Kas Tabungan Tunai',
+      cost: 50,
+      rupiahValue: 'Rp 10.000 (Kelipatan)',
+      icon: Wallet,
+      desc: 'Pencairan saldo tabungan daur ulang dalam bentuk uang tunai langsung saat rapat RT bulanan.',
+      badge: 'Kas Tunai'
+    }
+  ];
 
   useEffect(() => {
     fetchInitialData();
@@ -120,6 +155,18 @@ export default function SetorSampah() {
     }
   };
 
+  const handleRedeemClick = (item) => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+    if (pointsData.total_poin < item.cost) {
+      alert(`Saldo poin Anda belum mencukupi untuk klaim ${item.title}. Anda memiliki ${pointsData.total_poin} Poin, dibutuhkan minimal ${item.cost} Poin.`);
+      return;
+    }
+    setRedeemSuccess(item);
+  };
+
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header with Balance */}
@@ -130,7 +177,7 @@ export default function SetorSampah() {
             Bank Sampah Unit RT/RW
           </h1>
           <p className="text-sm text-slate-600">
-            Setorkan sampah anorganik terpilah dari rumah dan tukarkan menjadi poin bernilai ekonomis.
+            Setorkan sampah anorganik terpilah dari rumah dan tukarkan menjadi poin tabungan bernilai ekonomis.
           </p>
         </div>
 
@@ -171,11 +218,11 @@ export default function SetorSampah() {
       )}
 
       {/* Tabs */}
-      <div className="flex border-b border-slate-200">
+      <div className="flex border-b border-slate-200 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('setor')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] ${
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap ${
             activeTab === 'setor'
               ? 'border-civic-700 text-civic-800'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -184,17 +231,31 @@ export default function SetorSampah() {
           <PlusCircle className="w-4 h-4" />
           Form Setor Sampah
         </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('tukar')}
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap ${
+            activeTab === 'tukar'
+              ? 'border-civic-700 text-civic-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Gift className="w-4 h-4" />
+          Tukar Poin Tabungan (3 Opsi)
+        </button>
+
         <button
           type="button"
           onClick={() => setActiveTab('riwayat')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] ${
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap ${
             activeTab === 'riwayat'
               ? 'border-civic-700 text-civic-800'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <History className="w-4 h-4" />
-          Riwayat Transaksi & Poin ({myTransactions.length})
+          Buku Besar Mutasi ({myTransactions.length})
         </button>
       </div>
 
@@ -330,7 +391,7 @@ export default function SetorSampah() {
                   required
                   value={alamat}
                   onChange={(e) => setAlamat(e.target.value)}
-                  placeholder="Contoh: Jl. Kenanga No. 14, RT 03 / RW 05"
+                  placeholder="Contoh: Jl. Kenanga Blok B4 No. 14, RT 03 / RW 05"
                   className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm focus:border-civic-600 min-h-[44px]"
                 />
 
@@ -413,7 +474,109 @@ export default function SetorSampah() {
         </div>
       )}
 
-      {/* Tab 2: Riwayat Transaksi */}
+      {/* Tab 2: KATALOG TUKAR POIN */}
+      {activeTab === 'tukar' && (
+        <div className="space-y-6">
+          {redeemSuccess && (
+            <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-3">
+              <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
+              <h3 className="text-lg font-bold text-emerald-950">Pengajuan Klaim Penukaran Berhasil!</h3>
+              <p className="text-xs text-emerald-800 max-w-md mx-auto">
+                Pengajuan klaim untuk <strong>{redeemSuccess.title}</strong> senilai <strong>{redeemSuccess.cost} Poin</strong> telah tercatat.
+              </p>
+              <p className="text-xs text-emerald-700">
+                Silakan konfirmasi ke Bendahara RT / Pengurus Bank Sampah saat jadwal pertemuan warga atau penarikan iuran.
+              </p>
+              <button
+                type="button"
+                onClick={() => setRedeemSuccess(null)}
+                className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold"
+              >
+                Tutup Pemberitahuan
+              </button>
+            </div>
+          )}
+
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+            <div>
+              <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                <Gift className="w-6 h-6 text-civic-700" />
+                Katalog Penukaran Tabungan Daur Ulang RT/RW
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                Gunakan akumulasi saldo poin dari pemilahan sampah Anda untuk manfaat riil di lingkungan perumahan.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+              {redemptionCatalog.map((item) => {
+                const isAffordable = user && pointsData.total_poin >= item.cost;
+                const IconComponent = item.icon;
+
+                return (
+                  <div
+                    key={item.id}
+                    className="p-5 rounded-2xl border border-slate-200 bg-white hover:border-slate-300 transition-all flex flex-col justify-between space-y-4"
+                  >
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-start">
+                        <div className="w-10 h-10 rounded-xl bg-civic-50 text-civic-700 flex items-center justify-center font-bold">
+                          <IconComponent className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-civic-800 bg-civic-100 px-2 py-0.5 rounded-md">
+                          {item.badge}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-900">{item.title}</h3>
+                        <div className="flex items-baseline gap-1.5 mt-1">
+                          <span className="text-lg font-mono font-extrabold text-civic-700">
+                            {item.cost} Poin
+                          </span>
+                          <span className="text-xs text-slate-500 font-medium">({item.rupiahValue})</span>
+                        </div>
+                      </div>
+
+                      <p className="text-xs text-slate-600 leading-relaxed">{item.desc}</p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-2">
+                      <div className="flex justify-between text-[11px] text-slate-500 font-medium">
+                        <span>Status Poin Anda:</span>
+                        <span className={isAffordable ? 'text-emerald-700 font-bold' : 'text-slate-500'}>
+                          {user ? `${pointsData.total_poin} / ${item.cost} Poin` : 'Belum Masuk'}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRedeemClick(item)}
+                        className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px] ${
+                          isAffordable
+                            ? 'bg-civic-700 hover:bg-civic-800 text-white shadow-sm'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                        }`}
+                      >
+                        {isAffordable ? 'Klaim Penukaran Sekarang' : user ? 'Poin Belum Cukup' : 'Masuk untuk Menukar'}
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
+              <span className="font-bold text-slate-800">Tata Cara Penukaran Komunitas:</span>
+              <p>
+                Seluruh klaim penukaran diselesaikan secara gotong royong oleh Pengurus Bank Sampah Unit dan Bendahara RT setempat saat agenda pertemuan warga atau penarikan iuran lingkungan.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Riwayat Transaksi */}
       {activeTab === 'riwayat' && (
         <div className="space-y-6">
           {!user && (
