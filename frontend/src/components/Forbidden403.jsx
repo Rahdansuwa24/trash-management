@@ -43,11 +43,11 @@ export default function Forbidden403({ requiredRoles = [] }) {
 
         <div className="flex flex-col sm:flex-row gap-2.5 pt-2">
           <Link
-            to="/"
+            to={user?.role === 'admin' ? '/admin' : user?.role === 'mitra' ? '/mitra' : '/'}
             className="flex-1 py-2.5 px-4 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors min-h-[44px]"
           >
             <ArrowLeft className="w-4 h-4" />
-            Kembali ke Beranda
+            Kembali ke Halaman Utama
           </Link>
 
           {user ? (

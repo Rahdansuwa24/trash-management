@@ -3,7 +3,9 @@ const router = express.Router();
 const adminController = require('../controllers/admin.controller');
 const { authenticate, authorize } = require('../middleware/auth.middleware');
 
-// For dev/demo accessibility, we can allow open inspection or require admin
+// Proteksi backend ketat: Hanya pengguna dengan peran 'admin' yang dapat mengakses seluruh endpoint ini
+router.use(authenticate, authorize('admin'));
+
 // Users & Stats
 router.get('/users', adminController.getUsers);
 router.put('/users/:id/status', adminController.updateUserStatus);
