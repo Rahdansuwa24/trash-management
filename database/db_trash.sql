@@ -191,6 +191,25 @@ CREATE TABLE `aduan_pelanggaran_akun` (
   CONSTRAINT `fk_pelanggaran_terlapor` FOREIGN KEY (`id_terlapor_user`) REFERENCES `users` (`id_user`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 10. Tabel: katalog_penukaran (Katalog Sembako & Reward Tabungan Daur Ulang RT/RW)
+DROP TABLE IF EXISTS `katalog_penukaran`;
+CREATE TABLE `katalog_penukaran` (
+  `id_katalog` INT NOT NULL AUTO_INCREMENT,
+  `kode_item` VARCHAR(50) NOT NULL UNIQUE,
+  `judul` VARCHAR(150) NOT NULL,
+  `biaya_poin` INT NOT NULL,
+  `nilai_rupiah` VARCHAR(50) NOT NULL,
+  `kategori_badge` VARCHAR(50) NOT NULL DEFAULT 'Sembako',
+  `icon_name` VARCHAR(50) NOT NULL DEFAULT 'ShoppingBag',
+  `deskripsi` TEXT NOT NULL,
+  `stok` INT NOT NULL DEFAULT 50,
+  `is_active` BOOLEAN NOT NULL DEFAULT TRUE,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_katalog`),
+  INDEX `idx_katalog_active` (`is_active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ==============================================================================
@@ -252,3 +271,12 @@ INSERT INTO `tindak_lanjut_aduan` (`id_laporan`, `id_mitra`, `keterangan_tindaka
 
 -- Log untuk Tiket 2 (Selesai Tuntas dengan Bukti Foto Bersih)
 (2, 1, 'Lokasi tanah kosong telah bersih total. Seluruh ranting dan plastik telah dipindahkan ke TPS3R, serta dipasang spanduk larangan membuang sampah.', 'https://placehold.co/600x400/png?text=Bukti+Lokasi+Sudah+Bersih+Total', NOW() - INTERVAL 2 DAY);
+
+-- 9. Katalog Penukaran Poin (Sembako & Insentif Lingkungan Komunitas)
+INSERT INTO `katalog_penukaran` (`id_katalog`, `kode_item`, `judul`, `biaya_poin`, `nilai_rupiah`, `kategori_badge`, `icon_name`, `deskripsi`, `stok`, `is_active`) VALUES
+(1, 'iuran_rt', 'Potongan Iuran Kebersihan & Keamanan RT', 50, 'Rp 10.000', 'Iuran Warga', 'Receipt', 'Potongan langsung iuran bulanan warga. Klaim diverifikasi bendahara RT saat penarikan iuran.', 100, 1),
+(2, 'sembako_minyak', 'Minyak Goreng 1 Liter di Balai RT', 100, 'Rp 20.000', 'Sembako Satuan', 'ShoppingBag', 'Voucher sembako minyak goreng kemasan 1L, dapat diambil di Balai RT 03 saat jadwal timbang sampah.', 50, 1),
+(3, 'beras_warga', 'Beras Premium 2.5 Kg di Balai RT', 175, 'Rp 35.000', 'Beras Warga', 'Wheat', 'Beras putih premium kemasan 2.5 kg bersertifikat, disubsidi dari kas hasil daur ulang bank sampah.', 35, 1),
+(4, 'paket_sembako_berkah', 'Paket Sembako Lengkap (Beras + Minyak + Gula)', 250, 'Rp 50.000', 'Paket Berkah', 'ShoppingBasket', 'Paket komplit: Beras Premium 2.5 kg, Minyak Goreng 1L, dan Gula Pasir 1 kg. Diambil saat penimbangan bulanan.', 20, 1),
+(5, 'kas_tunai', 'Pencairan Kas Tabungan Tunai', 50, 'Rp 10.000 (Kelipatan)', 'Kas Tunai', 'Wallet', 'Pencairan saldo tabungan daur ulang dalam bentuk uang tunai langsung saat rapat RT bulanan.', 999, 1);
+

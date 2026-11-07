@@ -232,3 +232,19 @@ exports.getPointsAndHistory = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getKatalog = async (req, res, next) => {
+  try {
+    const [rows] = await pool.query(
+      'SELECT id_katalog, kode_item, judul, biaya_poin, nilai_rupiah, kategori_badge, icon_name, deskripsi, stok FROM katalog_penukaran WHERE is_active = 1 ORDER BY biaya_poin ASC'
+    );
+    res.json({
+      success: true,
+      total: rows.length,
+      data: rows
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

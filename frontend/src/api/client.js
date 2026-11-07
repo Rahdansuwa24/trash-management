@@ -40,6 +40,7 @@ export const api = {
 
   // Waste Bank (Warga)
   getCategories: () => request('/warga/categories'),
+  getKatalog: () => request('/warga/katalog'),
   submitWasteTransaction: (formData) => request('/warga/transactions', { method: 'POST', body: formData }),
   getMyTransactions: () => request('/warga/transactions'),
   getPointsHistory: () => request('/warga/points'),
@@ -58,5 +59,10 @@ export const api = {
   // Admin
   getUsers: (params = '') => request(`/admin/users${params}`),
   updateUserStatus: (id, status) => request(`/admin/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
-  getStats: () => request('/admin/stats')
+  getStats: () => request('/admin/stats'),
+  getAdminKatalog: () => request('/admin/katalog'),
+  createAdminKatalog: (payload) => request('/admin/katalog', { method: 'POST', body: JSON.stringify(payload) }),
+  updateAdminKatalog: (id, payload) => request(`/admin/katalog/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
+  toggleAdminKatalogStatus: (id) => request(`/admin/katalog/${id}/toggle`, { method: 'PATCH' }),
+  deleteAdminKatalog: (id) => request(`/admin/katalog/${id}`, { method: 'DELETE' })
 };

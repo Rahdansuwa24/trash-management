@@ -33,8 +33,19 @@ export default function SetorSampah() {
   const [myTransactions, setMyTransactions] = useState([]);
   const [pointsData, setPointsData] = useState({ total_poin: 0, history: [] });
 
-  // 5 Pilihan Nyata Penukaran Tabungan Daur Ulang Lingkungan RT/RW
-  const redemptionCatalog = [
+  const ICON_MAP = {
+    Receipt,
+    ShoppingBag,
+    Wheat,
+    ShoppingBasket,
+    Wallet,
+    Coins,
+    Gift,
+    Package
+  };
+
+  // Fallback awal katalog penukaran jika offline/sebelum API terhubung
+  const defaultRedemptionCatalog = [
     {
       id: 'iuran_rt',
       title: 'Potongan Iuran Kebersihan & Keamanan RT',
@@ -82,6 +93,8 @@ export default function SetorSampah() {
     }
   ];
 
+  const [catalogItems, setCatalogItems] = useState(defaultRedemptionCatalog);
+
   useEffect(() => {
     fetchInitialData();
   }, [user]);
@@ -93,6 +106,22 @@ export default function SetorSampah() {
       if (catRes.data && catRes.data.length > 0) {
         setCategories(catRes.data);
         setSelectedCat(catRes.data[0]);
+      }
+
+      // Ambil katalog penukaran dinamis dari backend (yang dikelola admin)
+      const katalogRes = await api.getKatalog().catch(() => null);
+      if (katalogRes && katalogRes.data && katalogRes.data.length > 0) {
+        const dynamicItems = katalogRes.data.map((item) => ({
+          id: item.id_katalog || item.kode_item,
+          title: item.judul,
+          cost: item.biaya_poin,
+          rupiahValue: item.nilai_rupiah,
+          badge: item.kategori_badge,
+          icon: ICON_MAP[item.icon_name] || Gift,
+          desc: item.deskripsi,
+          stok: item.stok
+        }));
+        setCatalogItems(dynamicItems);
       }
 
       if (user) {
@@ -260,7 +289,7 @@ export default function SetorSampah() {
           }`}
         >
           <Gift className="w-4 h-4" />
-          Tukar Poin Tabungan (5 Pilihan)
+          Tukar Poin Tabungan ({catalogItems.length} Pilihan)
         </button>
 
         <button
@@ -527,9 +556,9 @@ export default function SetorSampah() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {redemptionCatalog.map((item) => {
+              {catalogItems.map((item) => {
                 const isAffordable = user && pointsData.total_poin >= item.cost;
-                const IconComponent = item.icon;
+                const IconComponent = item.icon || Gift;
 
                 return (
                   <div
