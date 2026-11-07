@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Recycle, Menu, X, ShieldAlert, Search, Coins, Building2, User, LogOut, LogIn } from 'lucide-react';
+import { Recycle, Menu, X, ShieldAlert, Search, Coins, Building2, User, LogOut, LogIn, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 export default function Navbar() {
@@ -8,14 +8,21 @@ export default function Navbar() {
   const location = useLocation();
   const { user, logout, setLoginModalOpen } = useAuth();
 
+  // Filter navigasi berdasarkan peran pengguna
   const navLinks = [
     { name: 'Beranda', path: '/' },
     { name: 'Lapor Sampah Liar', path: '/lapor', icon: ShieldAlert },
     { name: 'Lacak Aduan', path: '/lacak', icon: Search },
-    { name: 'Bank Sampah', path: '/setor', icon: Coins },
-    { name: 'Portal Petugas', path: '/mitra', icon: Building2 },
-    { name: 'Admin', path: '/admin' }
+    { name: 'Bank Sampah', path: '/setor', icon: Coins }
   ];
+
+  if (user?.role === 'mitra' || user?.role === 'admin') {
+    navLinks.push({ name: 'Portal Petugas', path: '/mitra', icon: Building2 });
+  }
+
+  if (user?.role === 'admin') {
+    navLinks.push({ name: 'Admin RW', path: '/admin', icon: ShieldCheck });
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-slate-200">
