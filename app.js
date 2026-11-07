@@ -38,8 +38,9 @@ app.get('/', (req, res) => {
 
 app.use('/health', healthRoute);
 
-// API router placeholder (mounted in Task 7)
-// app.use('/api', apiRouter);
+// API router mounted
+const apiRouter = require('./src/routes/index');
+app.use('/api', apiRouter);
 
 // Catch 404 for undefined routes
 app.use((req, res, next) => {
