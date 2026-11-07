@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { compressImage } from '../utils/imageCompressor';
-import { ShieldAlert, Camera, MapPin, CheckCircle, Copy, Check, ArrowRight, Loader2 } from 'lucide-react';
+import { ShieldAlert, Camera, MapPin, CheckCircle, Copy, Check, ArrowRight, Loader2, ExternalLink } from 'lucide-react';
 
 export default function LaporSampahLiar() {
   const [formData, setFormData] = useState({
@@ -302,7 +302,7 @@ export default function LaporSampahLiar() {
           </div>
 
           {/* Coordinates & GPS */}
-          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2">
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
                 <MapPin className="w-4 h-4 text-civic-700" />
@@ -323,17 +323,48 @@ export default function LaporSampahLiar() {
                 type="text"
                 readOnly
                 value={formData.latitude}
-                className="bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-600"
+                className="bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-600 font-mono"
                 title="Latitude"
               />
               <input
                 type="text"
                 readOnly
                 value={formData.longitude}
-                className="bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-600"
+                className="bg-white border border-slate-300 rounded px-2.5 py-1.5 text-slate-600 font-mono"
                 title="Longitude"
               />
             </div>
+
+            {/* Google Maps Preview Embed */}
+            {formData.latitude && formData.longitude && (
+              <div className="mt-2 pt-2 border-t border-slate-200/80 space-y-1.5">
+                <div className="h-44 sm:h-52 w-full rounded-lg overflow-hidden border border-slate-200 shadow-xs relative bg-slate-100">
+                  <iframe
+                    title="Pratinjau Peta Lokasi Sampah"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://maps.google.com/maps?q=${formData.latitude},${formData.longitude}&hl=id&z=16&output=embed`}
+                  ></iframe>
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-slate-500 pt-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Pin titik lokasi akurat di Google Maps
+                  </span>
+                  <a
+                    href={`https://www.google.com/maps?q=${formData.latitude},${formData.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-civic-700 hover:underline font-semibold inline-flex items-center gap-1"
+                  >
+                    Buka Tab Peta Penuh <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
