@@ -91,10 +91,14 @@ exports.register = async (req, res, next) => {
       role = 'warga',
       no_telp,
       alamat,
-      kota = 'Surabaya',
+      rt = '03',
+      rw = '05',
+      kelurahan = 'Kalirungkut',
       kecamatan = 'Rungkut',
+      kota = 'Surabaya',
       instansi_nama,
-      jenis_mitra
+      jenis_mitra = 'satgas_lapangan',
+      wilayah_tugas = 'RW 05'
     } = req.body;
 
     if (!nama || !email || !password) {
@@ -125,13 +129,13 @@ exports.register = async (req, res, next) => {
 
     if (role === 'warga') {
       await connection.query(
-        'INSERT INTO profiles_warga (id_user, no_telp, alamat, kota, kecamatan, total_poin) VALUES (?, ?, ?, ?, ?, 0)',
-        [newUserId, no_telp || null, alamat || null, kota, kecamatan]
+        'INSERT INTO profiles_warga (id_user, no_telp, alamat, rt, rw, kelurahan, kecamatan, kota, total_poin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)',
+        [newUserId, no_telp || null, alamat || null, rt, rw, kelurahan, kecamatan, kota]
       );
     } else if (role === 'mitra') {
       await connection.query(
-        'INSERT INTO profiles_mitra (id_user, jenis_mitra, instansi_nama, no_telp, alamat, kota, kecamatan) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [newUserId, jenis_mitra || 'non-pemerintah', instansi_nama || nama, no_telp || null, alamat || null, kota, kecamatan]
+        'INSERT INTO profiles_mitra (id_user, jenis_mitra, instansi_nama, wilayah_tugas, no_telp, alamat, kelurahan, kecamatan, kota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [newUserId, jenis_mitra, instansi_nama || nama, wilayah_tugas, no_telp || null, alamat || null, kelurahan, kecamatan, kota]
       );
     }
 

@@ -73,6 +73,17 @@ export function AuthProvider({ children }) {
     return await login(demoAccount.email, demoAccount.password);
   };
 
+  const register = async (payload) => {
+    const res = await api.register(payload);
+    if (res.token) {
+      localStorage.setItem('token', res.token);
+      setUser(res.user);
+      setLoginModalOpen(false);
+      return res.user;
+    }
+    throw new Error(res.message || 'Gagal registrasi.');
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -84,6 +95,7 @@ export function AuthProvider({ children }) {
         user,
         loading,
         login,
+        register,
         quickLogin,
         logout,
         loginModalOpen,
