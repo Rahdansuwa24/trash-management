@@ -5,7 +5,7 @@ import { compressImage } from '../utils/imageCompressor';
 import TicketBadge from '../components/TicketBadge';
 import { 
   Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, 
-  LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2 
+  LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2, Wheat, ShoppingBasket 
 } from 'lucide-react';
 
 export default function SetorSampah() {
@@ -33,7 +33,7 @@ export default function SetorSampah() {
   const [myTransactions, setMyTransactions] = useState([]);
   const [pointsData, setPointsData] = useState({ total_poin: 0, history: [] });
 
-  // 3 Opsi Nyata Penukaran Tabungan Daur Ulang Lingkungan RT/RW
+  // 5 Pilihan Nyata Penukaran Tabungan Daur Ulang Lingkungan RT/RW
   const redemptionCatalog = [
     {
       id: 'iuran_rt',
@@ -42,7 +42,7 @@ export default function SetorSampah() {
       rupiahValue: 'Rp 10.000',
       icon: Receipt,
       desc: 'Potongan langsung iuran bulanan warga. Klaim diverifikasi bendahara RT saat penarikan iuran.',
-      badge: 'Paling Populer'
+      badge: 'Iuran Warga'
     },
     {
       id: 'sembako_minyak',
@@ -50,8 +50,26 @@ export default function SetorSampah() {
       cost: 100,
       rupiahValue: 'Rp 20.000',
       icon: ShoppingBag,
-      desc: 'Voucher sembako minyak goreng kemasan, dapat diambil di Balai RT 03 saat jadwal timbang sampah.',
-      badge: 'Sembako Komunitas'
+      desc: 'Voucher sembako minyak goreng kemasan 1L, dapat diambil di Balai RT 03 saat jadwal timbang sampah.',
+      badge: 'Sembako Satuan'
+    },
+    {
+      id: 'beras_warga',
+      title: 'Beras Premium 2.5 Kg di Balai RT',
+      cost: 175,
+      rupiahValue: 'Rp 35.000',
+      icon: Wheat,
+      desc: 'Beras putih premium kemasan 2.5 kg bersertifikat, disubsidi dari kas hasil daur ulang bank sampah.',
+      badge: 'Beras Warga'
+    },
+    {
+      id: 'paket_sembako_berkah',
+      title: 'Paket Sembako Lengkap (Beras + Minyak + Gula)',
+      cost: 250,
+      rupiahValue: 'Rp 50.000',
+      icon: ShoppingBasket,
+      desc: 'Paket komplit: Beras Premium 2.5 kg, Minyak Goreng 1L, dan Gula Pasir 1 kg. Diambil saat penimbangan bulanan.',
+      badge: 'Paket Berkah'
     },
     {
       id: 'kas_tunai',
@@ -242,7 +260,7 @@ export default function SetorSampah() {
           }`}
         >
           <Gift className="w-4 h-4" />
-          Tukar Poin Tabungan (3 Opsi)
+          Tukar Poin Tabungan (5 Pilihan)
         </button>
 
         <button
@@ -508,7 +526,7 @@ export default function SetorSampah() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {redemptionCatalog.map((item) => {
                 const isAffordable = user && pointsData.total_poin >= item.cost;
                 const IconComponent = item.icon;
