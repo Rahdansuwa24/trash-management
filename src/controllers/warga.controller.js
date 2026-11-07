@@ -68,6 +68,13 @@ exports.createTransaction = async (req, res, next) => {
     const estimatedPoints = Math.floor(berat * category.poin_per_kg);
 
     // Identify citizen profile from authenticated user
+    if (req.user && req.user.role === 'mitra') {
+      return res.status(403).json({
+        success: false,
+        message: 'Akun petugas/mitra bertugas menerima dan menimbang sampah warga melalui Portal Petugas, bukan mengajukan setoran.'
+      });
+    }
+
     let idWarga = null;
     if (req.user && req.user.id_user) {
       const [wargaRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);

@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../utils/imageCompressor';
 import TicketBadge from '../components/TicketBadge';
 import { 
   Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, 
-  LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2, Wheat, ShoppingBasket 
+  LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2, Wheat, ShoppingBasket,
+  Building2
 } from 'lucide-react';
 
 export default function SetorSampah() {
@@ -264,6 +266,27 @@ export default function SetorSampah() {
         </div>
       )}
 
+      {/* Role Guidance Banner if logged in as Mitra */}
+      {user?.role === 'mitra' && (
+        <div className="p-5 bg-sky-50 border border-sky-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <Building2 className="w-6 h-6 text-sky-700 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-bold text-sky-950">Anda Masuk Sebagai Akun Petugas ({user.nama})</h4>
+              <p className="text-xs text-sky-800 mt-0.5">
+                Akun petugas/mitra bertugas <strong>menerima dan memverifikasi timbangan</strong> setoran warga, bukan mengajukan setor sampah. Silakan gunakan Portal Petugas untuk memproses antrean penimbangan warga.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/mitra"
+            className="px-4 py-2.5 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-semibold shrink-0 min-h-[44px] flex items-center gap-1.5 transition-colors shadow-xs"
+          >
+            Buka Portal Petugas &rarr;
+          </Link>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex border-b border-slate-200 overflow-x-auto">
         <button
@@ -344,7 +367,29 @@ export default function SetorSampah() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          {user?.role === 'mitra' ? (
+            <div className="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-700 flex items-center justify-center mx-auto">
+                <Scale className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="text-lg font-bold text-slate-900">Formulir Setor Ini Khusus Nasabah / Warga Lingkungan</h3>
+                <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
+                  Akun Anda terdaftar sebagai <strong>{user.nama} (Peran: Petugas / Mitra)</strong>. Peran Anda dalam ekosistem ini adalah sebagai <strong>penerima</strong> yang bertugas menimbang berat sampah fisik dan menerbitkan poin tabungan bagi warga.
+                </p>
+              </div>
+              <div className="pt-2">
+                <Link
+                  to="/mitra"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-bold transition-colors min-h-[44px]"
+                >
+                  Buka Antrean Penimbangan di Portal Petugas
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
             {/* Step 1: Kategori Sampah */}
             <div className="space-y-3">
               <label className="block text-sm font-bold text-slate-900">
@@ -518,6 +563,7 @@ export default function SetorSampah() {
               )}
             </button>
           </form>
+          )}
         </div>
       )}
 
