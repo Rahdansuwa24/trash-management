@@ -1,12 +1,13 @@
 -- ==============================================================================
--- DDL & SEED DATA: db_trash (TiDB Cloud Serverless / MySQL 8.0)
--- Proyek: Trash Management (Smart City & Circular Economy Hub)
--- Tanggal: 2026-11-07
+-- DDL & SEED DATA: db_trash (MySQL 8.0 / TiDB Cloud Serverless)
+-- Proyek: Trash Management (Pengelolaan Sampah Lingkungan RT/RW & Bank Sampah)
+-- Tanggal Pembaruan: 2026-11-07
+-- Karakteristik: Komunitas Nyata, Skema Terpadu RT/RW, Data Pengujian Realistis
 -- ==============================================================================
 
 SET FOREIGN_KEY_CHECKS = 0;
 
--- 1. Tabel: users (Akun Login & RBAC)
+-- 1. Tabel: users (Akun Login & Hak Akses RBAC)
 DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id_user` INT NOT NULL AUTO_INCREMENT,
@@ -22,7 +23,7 @@ CREATE TABLE `users` (
   INDEX `idx_users_role` (`role`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 2. Tabel: profiles_warga (Profil Tambahan Warga & Akumulasi Poin)
+-- 2. Tabel: profiles_warga (Profil Tambahan Warga, Lokasi RT/RW & Saldo Poin)
 DROP TABLE IF EXISTS `profiles_warga`;
 CREATE TABLE `profiles_warga` (
   `id_warga` INT NOT NULL AUTO_INCREMENT,
@@ -30,38 +31,42 @@ CREATE TABLE `profiles_warga` (
   `jenis_kelamin` ENUM('L', 'P') NULL,
   `no_telp` VARCHAR(20) NULL,
   `alamat` TEXT NULL,
-  `provinsi` VARCHAR(100) NULL,
-  `kota` VARCHAR(100) NULL,
-  `kecamatan` VARCHAR(100) NULL,
-  `kelurahan` VARCHAR(100) NULL,
+  `rt` VARCHAR(5) NULL DEFAULT '03',
+  `rw` VARCHAR(5) NULL DEFAULT '05',
+  `kelurahan` VARCHAR(100) NULL DEFAULT 'Kalirungkut',
+  `kecamatan` VARCHAR(100) NULL DEFAULT 'Rungkut',
+  `kota` VARCHAR(100) NULL DEFAULT 'Surabaya',
+  `provinsi` VARCHAR(100) NULL DEFAULT 'Jawa Timur',
   `total_poin` INT NOT NULL DEFAULT 0,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_warga`),
+  INDEX `idx_warga_rtrw` (`rt`, `rw`),
   CONSTRAINT `fk_warga_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 3. Tabel: profiles_mitra (Profil Mitra Pemerintah [DLH] & Non-Pemerintah [Bank Sampah])
+-- 3. Tabel: profiles_mitra (Profil Pengelola: Satgas Lapangan Kebersihan & Bank Sampah Unit RT/RW)
 DROP TABLE IF EXISTS `profiles_mitra`;
 CREATE TABLE `profiles_mitra` (
   `id_mitra` INT NOT NULL AUTO_INCREMENT,
   `id_user` INT NOT NULL UNIQUE,
-  `jenis_mitra` ENUM('pemerintah', 'non-pemerintah') NOT NULL,
+  `jenis_mitra` ENUM('satgas_lapangan', 'bank_sampah_unit') NOT NULL DEFAULT 'satgas_lapangan',
   `instansi_nama` VARCHAR(150) NOT NULL,
+  `wilayah_tugas` VARCHAR(100) NOT NULL DEFAULT 'RW 05',
   `no_telp` VARCHAR(20) NULL,
   `alamat` TEXT NULL,
-  `provinsi` VARCHAR(100) NULL,
-  `kota` VARCHAR(100) NOT NULL,
-  `kecamatan` VARCHAR(100) NOT NULL,
-  `kelurahan` VARCHAR(100) NULL,
+  `kelurahan` VARCHAR(100) NULL DEFAULT 'Kalirungkut',
+  `kecamatan` VARCHAR(100) NOT NULL DEFAULT 'Rungkut',
+  `kota` VARCHAR(100) NOT NULL DEFAULT 'Surabaya',
+  `provinsi` VARCHAR(100) NULL DEFAULT 'Jawa Timur',
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_mitra`),
-  INDEX `idx_mitra_kota_jenis` (`kota`, `jenis_mitra`),
+  INDEX `idx_mitra_wilayah_jenis` (`wilayah_tugas`, `jenis_mitra`),
   CONSTRAINT `fk_mitra_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 4. Tabel: kategori_sampah (Master Kategori Bank Sampah & Nilai Tukar Poin)
+-- 4. Tabel: kategori_sampah (Master Kategori Bank Sampah & Rasio Nilai Poin/Rupiah)
 DROP TABLE IF EXISTS `kategori_sampah`;
 CREATE TABLE `kategori_sampah` (
   `id_kategori` INT NOT NULL AUTO_INCREMENT,
@@ -74,7 +79,7 @@ CREATE TABLE `kategori_sampah` (
   PRIMARY KEY (`id_kategori`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 5. Tabel: transaksi_sampah_komersil (Setor / Jual Sampah ke Mitra Bank Sampah)
+-- 5. Tabel: transaksi_sampah_komersil (Setor Sampah Anorganik ke Bank Sampah Unit)
 DROP TABLE IF EXISTS `transaksi_sampah_komersil`;
 CREATE TABLE `transaksi_sampah_komersil` (
   `id_transaksi` INT NOT NULL AUTO_INCREMENT,
@@ -87,8 +92,10 @@ CREATE TABLE `transaksi_sampah_komersil` (
   `total_poin_diperoleh` INT NOT NULL DEFAULT 0,
   `foto_sampah_url` VARCHAR(255) NULL,
   `alamat_jemput` TEXT NOT NULL,
-  `kota` VARCHAR(100) NOT NULL,
+  `rt` VARCHAR(5) NULL DEFAULT '03',
+  `rw` VARCHAR(5) NULL DEFAULT '05',
   `kecamatan` VARCHAR(100) NOT NULL,
+  `kota` VARCHAR(100) NOT NULL,
   `latitude` DECIMAL(10,8) NULL,
   `longitude` DECIMAL(11,8) NULL,
   `catatan_warga` TEXT NULL,
@@ -104,7 +111,7 @@ CREATE TABLE `transaksi_sampah_komersil` (
   CONSTRAINT `fk_transaksi_kategori` FOREIGN KEY (`id_kategori`) REFERENCES `kategori_sampah` (`id_kategori`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 6. Tabel: riwayat_poin (Buku Besar Mutasi Poin Warga)
+-- 6. Tabel: riwayat_poin (Buku Besar Mutasi Kredit/Debit Poin Warga)
 DROP TABLE IF EXISTS `riwayat_poin`;
 CREATE TABLE `riwayat_poin` (
   `id_riwayat` INT NOT NULL AUTO_INCREMENT,
@@ -120,7 +127,7 @@ CREATE TABLE `riwayat_poin` (
   CONSTRAINT `fk_riwayat_transaksi` FOREIGN KEY (`id_transaksi`) REFERENCES `transaksi_sampah_komersil` (`id_transaksi`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 7. Tabel: laporan_sampah_ilegal (Pelaporan Publik Sampah Liar / TPA Ilegal)
+-- 7. Tabel: laporan_sampah_ilegal (Pelaporan Sampah Liar Publik / TPS Liar Lingkungan)
 DROP TABLE IF EXISTS `laporan_sampah_ilegal`;
 CREATE TABLE `laporan_sampah_ilegal` (
   `id_laporan` INT NOT NULL AUTO_INCREMENT,
@@ -134,9 +141,11 @@ CREATE TABLE `laporan_sampah_ilegal` (
   `foto_bukti_url` VARCHAR(255) NOT NULL,
   `video_bukti_url` VARCHAR(255) NULL,
   `alamat_lokasi` TEXT NOT NULL,
-  `kota` VARCHAR(100) NOT NULL,
-  `kecamatan` VARCHAR(100) NOT NULL,
-  `kelurahan` VARCHAR(100) NULL,
+  `rt` VARCHAR(5) NULL DEFAULT '03',
+  `rw` VARCHAR(5) NULL DEFAULT '05',
+  `kelurahan` VARCHAR(100) NULL DEFAULT 'Kalirungkut',
+  `kecamatan` VARCHAR(100) NOT NULL DEFAULT 'Rungkut',
+  `kota` VARCHAR(100) NOT NULL DEFAULT 'Surabaya',
   `latitude` DECIMAL(10,8) NOT NULL,
   `longitude` DECIMAL(11,8) NOT NULL,
   `status` ENUM('MENUNGGU_VERIFIKASI', 'INVESTIGASI', 'DALAM_PENANGANAN', 'SELESAI_DIBERSIHKAN', 'DITOLAK') NOT NULL DEFAULT 'MENUNGGU_VERIFIKASI',
@@ -145,12 +154,12 @@ CREATE TABLE `laporan_sampah_ilegal` (
   PRIMARY KEY (`id_laporan`),
   INDEX `idx_laporan_kode_tiket` (`kode_tiket`),
   INDEX `idx_laporan_status` (`status`),
-  INDEX `idx_laporan_kota` (`kota`),
+  INDEX `idx_laporan_rtrw` (`rt`, `rw`),
   CONSTRAINT `fk_laporan_user` FOREIGN KEY (`id_user`) REFERENCES `users` (`id_user`) ON DELETE SET NULL,
   CONSTRAINT `fk_laporan_mitra_penangan` FOREIGN KEY (`id_mitra_penangan`) REFERENCES `profiles_mitra` (`id_mitra`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 8. Tabel: tindak_lanjut_aduan (Log Penanganan oleh DLH + Foto Bukti Bersih)
+-- 8. Tabel: tindak_lanjut_aduan (Log Penanganan Lapangan oleh Satgas Kebersihan + Foto Bukti Bersih)
 DROP TABLE IF EXISTS `tindak_lanjut_aduan`;
 CREATE TABLE `tindak_lanjut_aduan` (
   `id_tindak_lanjut` INT NOT NULL AUTO_INCREMENT,
@@ -165,7 +174,7 @@ CREATE TABLE `tindak_lanjut_aduan` (
   CONSTRAINT `fk_tindak_lanjut_mitra` FOREIGN KEY (`id_mitra`) REFERENCES `profiles_mitra` (`id_mitra`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 9. Tabel: aduan_pelanggaran_akun (Moderasi Akun Fiktif / Spammer oleh Admin)
+-- 9. Tabel: aduan_pelanggaran_akun (Moderasi Akun Fiktif / Spammer oleh Admin RW)
 DROP TABLE IF EXISTS `aduan_pelanggaran_akun`;
 CREATE TABLE `aduan_pelanggaran_akun` (
   `id_pelanggaran` INT NOT NULL AUTO_INCREMENT,
@@ -185,12 +194,12 @@ CREATE TABLE `aduan_pelanggaran_akun` (
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ==============================================================================
--- INITIAL SEED DATA (Siap Pakai untuk Uji Testing)
+-- INITIAL SEED DATA (SIAP PAKAI UNTUK PENGUJIAN REALISTIS)
 -- Password Default Seluruh Akun: Password123!
 -- Hash: $2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK
 -- ==============================================================================
 
--- 1. Seed Master Kategori Sampah
+-- 1. Master Kategori Sampah Anorganik
 INSERT INTO `kategori_sampah` (`id_kategori`, `nama_kategori`, `poin_per_kg`, `estimasi_harga_per_kg`, `deskripsi`, `is_active`) VALUES
 (1, 'Plastik (PET/HDPE)', 15, 3000.00, 'Botol plastik bening, galon bekas, tutup botol, kemasan deterjen tebal.', 1),
 (2, 'Kertas & Kardus', 10, 2000.00, 'Kardus cokelat, kertas koran, buku bekas tanpa cover plastik.', 1),
@@ -198,31 +207,48 @@ INSERT INTO `kategori_sampah` (`id_kategori`, `nama_kategori`, `poin_per_kg`, `e
 (4, 'Minyak Jelantah', 20, 4000.00, 'Minyak goreng bekas pakai rumah tangga yang telah disaring (per liter).', 1),
 (5, 'Sampah Elektronik (E-Waste)', 50, 10000.00, 'Motherboard lama, charger rusak, kabel rongsok, komponen elektronik kecil.', 1);
 
--- 2. Seed Users
+-- 2. Akun Pengguna (RBAC Komunitas RT/RW)
 INSERT INTO `users` (`id_user`, `nama`, `email`, `password`, `role`, `status`) VALUES
-(1, 'Pengurus Lingkungan (Koordinator RW 05)', 'admin@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'admin', 'active'),
-(2, 'Petugas Lapangan Kebersihan RW 05', 'petugas.rw05@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
+(1, 'Koordinator Lingkungan RW 05', 'admin@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'admin', 'active'),
+(2, 'Satgas Kebersihan RW 05', 'petugas.rw05@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
 (3, 'Bank Sampah Unit Guyub Rukun RT 03', 'banksampah.rt03@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'mitra', 'active'),
-(4, 'Budi Santoso (Warga RT 03)', 'warga.budi@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'warga', 'active');
+(4, 'Budi Santoso (Warga RT 03)', 'warga.budi@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'warga', 'active'),
+(5, 'Siti Aminah (Warga RT 02)', 'warga.siti@trashmanage.com', '$2a$10$1Xa7Mr7bEiMesQG.dLE/zu9ebmz.NgQ8lLpoOL8LOsl6DkitM7TbK', 'warga', 'active');
 
--- 3. Seed Profiles
-INSERT INTO `profiles_warga` (`id_warga`, `id_user`, `jenis_kelamin`, `no_telp`, `alamat`, `provinsi`, `kota`, `kecamatan`, `kelurahan`, `total_poin`) VALUES
-(1, 4, 'L', '081234567890', 'Jl. Kenanga No. 14, RT 03 / RW 05', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Kalirungkut', 150);
+-- 3. Profil Pengguna Warga (Tingkat RT/RW)
+INSERT INTO `profiles_warga` (`id_warga`, `id_user`, `jenis_kelamin`, `no_telp`, `alamat`, `rt`, `rw`, `kelurahan`, `kecamatan`, `kota`, `provinsi`, `total_poin`) VALUES
+(1, 4, 'L', '081234567890', 'Jl. Kenanga No. 14', '03', '05', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur', 150),
+(2, 5, 'P', '081398765432', 'Jl. Melati No. 8', '02', '05', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur', 0);
 
-INSERT INTO `profiles_mitra` (`id_mitra`, `id_user`, `jenis_mitra`, `instansi_nama`, `no_telp`, `alamat`, `provinsi`, `kota`, `kecamatan`, `kelurahan`) VALUES
-(1, 2, 'non-pemerintah', 'Tim Satgas Kebersihan RW 05', '081233445566', 'Posko Kebersihan RW 05', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Kalirungkut'),
-(2, 3, 'non-pemerintah', 'Bank Sampah Unit Guyub Rukun RT 03', '085678901234', 'Balai RT 03 Kalirungkut', 'Jawa Timur', 'Surabaya', 'Rungkut', 'Kalirungkut');
+-- 4. Profil Mitra / Petugas Lingkungan
+INSERT INTO `profiles_mitra` (`id_mitra`, `id_user`, `jenis_mitra`, `instansi_nama`, `wilayah_tugas`, `no_telp`, `alamat`, `kelurahan`, `kecamatan`, `kota`, `provinsi`) VALUES
+(1, 2, 'satgas_lapangan', 'Tim Satgas Penanganan Kebersihan RW 05', 'RW 05 Kalirungkut', '081233445566', 'Posko Satgas Kebersihan RW 05', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur'),
+(2, 3, 'bank_sampah_unit', 'Bank Sampah Unit Guyub Rukun RT 03', 'RT 03 / RW 05', '085678901234', 'Balai RT 03 Kalirungkut', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur');
 
--- 4. Seed Contoh Transaksi Bank Sampah
-INSERT INTO `transaksi_sampah_komersil` (`id_transaksi`, `kode_transaksi`, `id_warga`, `id_mitra`, `id_kategori`, `estimasi_berat_kg`, `berat_aktual_kg`, `total_poin_diperoleh`, `foto_sampah_url`, `alamat_jemput`, `kota`, `kecamatan`, `status`) VALUES
-(1, 'TRX-202611-001', 1, 2, 1, 10.00, 10.00, 150, 'https://placehold.co/600x400/png?text=Botol+Plastik', 'Jl. Kenanga No. 14, RT 03 / RW 05', 'Surabaya', 'Rungkut', 'SELESAI');
+-- 5. Contoh Transaksi Bank Sampah (Uji Selesai & Uji Baru)
+INSERT INTO `transaksi_sampah_komersil` (`id_transaksi`, `kode_transaksi`, `id_warga`, `id_mitra`, `id_kategori`, `estimasi_berat_kg`, `berat_aktual_kg`, `total_poin_diperoleh`, `foto_sampah_url`, `alamat_jemput`, `rt`, `rw`, `kecamatan`, `kota`, `status`, `tanggal_transaksi`, `tanggal_selesai`) VALUES
+(1, 'TRX-2611-A101', 1, 2, 1, 10.00, 10.00, 150, 'https://placehold.co/600x400/png?text=10+Kg+Botol+Plastik', 'Jl. Kenanga No. 14, RT 03 / RW 05', '03', '05', 'Rungkut', 'Surabaya', 'SELESAI', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY),
+(2, 'TRX-2611-B202', 2, 2, 2, 12.00, NULL, 0, 'https://placehold.co/600x400/png?text=Kardus+Menumpuk', 'Jl. Melati No. 8, RT 02 / RW 05', '02', '05', 'Rungkut', 'Surabaya', 'MENUNGGU_PENJEMPUTAN', NOW() - INTERVAL 3 HOUR, NULL);
 
+-- 6. Riwayat Mutasi Poin Warga (Ledger)
 INSERT INTO `riwayat_poin` (`id_warga`, `id_transaksi`, `perubahan_poin`, `tipe`, `keterangan`) VALUES
-(1, 1, 150, 'EARN_TRANSAKSI', 'Penukaran 10 Kg Botol Plastik PET di Bank Sampah Unit Guyub Rukun RT 03');
+(1, 1, 150, 'EARN_TRANSAKSI', 'Penukaran 10 Kg Botol Plastik PET di Bank Sampah Unit RT 03');
 
--- 5. Seed Contoh Laporan Sampah Liar Publik (Siap Dicoba dengan Kode Tiket)
-INSERT INTO `laporan_sampah_ilegal` (`id_laporan`, `kode_tiket`, `id_user`, `id_mitra_penangan`, `nama_pelapor`, `nomor_kontak`, `client_device_id`, `deskripsi_kejadian`, `foto_bukti_url`, `alamat_lokasi`, `kota`, `kecamatan`, `latitude`, `longitude`, `status`) VALUES
-(1, 'LAPOR-2611-8921', NULL, 1, 'Andi (Warga)', '081987654321', 'device-demo-uuid-1234', 'Tumpukan sampah plastik liar di dekat pintu air RT 03.', 'https://placehold.co/600x400/png?text=Tumpukan+Sampah+Liar', 'Jl. Kenanga samping selokan RT 03', 'Surabaya', 'Rungkut', -7.31820000, 112.78450000, 'DALAM_PENANGANAN');
+-- 7. Contoh Tiket Aduan Sampah Liar Publik (3 Tahap Status Nyata)
+INSERT INTO `laporan_sampah_ilegal` (`id_laporan`, `kode_tiket`, `id_user`, `id_mitra_penangan`, `nama_pelapor`, `nomor_kontak`, `client_device_id`, `deskripsi_kejadian`, `foto_bukti_url`, `alamat_lokasi`, `rt`, `rw`, `kelurahan`, `kecamatan`, `kota`, `latitude`, `longitude`, `status`, `created_at`) VALUES
+-- Tiket 1: Sedang dalam penanganan satgas kebersihan
+(1, 'LAPOR-2611-8921', NULL, 1, 'Andi (Warga RT 03)', '081987654321', 'device-demo-uuid-1', 'Tumpukan kantong sampah plastik dan limbah rumah tangga liar di pinggir saluran air.', 'https://placehold.co/600x400/png?text=Sampah+Liar+Saluran+Air', 'Jl. Kenanga dekat jembatan pintu air', '03', '05', 'Kalirungkut', 'Rungkut', 'Surabaya', -7.31820000, 112.78450000, 'DALAM_PENANGANAN', NOW() - INTERVAL 1 DAY),
 
-INSERT INTO `tindak_lanjut_aduan` (`id_laporan`, `id_mitra`, `keterangan_tindakan`, `foto_bukti_penanganan_url`) VALUES
-(1, 1, 'Petugas kebersihan RW 05 telah menjadwalkan gerobak pengangkut untuk pembersihan sore ini.', 'https://placehold.co/600x400/png?text=Petugas+Menuju+Lokasi');
+-- Tiket 2: Sudah selesai dan tuntas dibersihkan (dilengkapi foto sebelum & sesudah)
+(2, 'LAPOR-2611-1042', 4, 1, 'Budi Santoso', '081234567890', 'device-demo-uuid-2', 'Sampah puing ranting pohon dan plastik sachet di tanah kosong dekat pos kamling.', 'https://placehold.co/600x400/png?text=Sebelum+Dibersihkan', 'Tanah kosong samping Balai RT 02', '02', '05', 'Kalirungkut', 'Rungkut', 'Surabaya', -7.31750000, 112.78300000, 'SELESAI_DIBERSIHKAN', NOW() - INTERVAL 3 DAY),
+
+-- Tiket 3: Laporan baru masuk menunggu verifikasi awal
+(3, 'LAPOR-2611-3319', NULL, 1, 'Warga Anonim', '085711223344', 'device-demo-uuid-3', 'Ada yang membuang karung berisi styrofoam sisa acara hajatan di pojok tikungan jalan.', 'https://placehold.co/600x400/png?text=Karung+Styrofoam+Liar', 'Pojok tikungan Jl. Mawar RT 01', '01', '05', 'Kalirungkut', 'Rungkut', 'Surabaya', -7.31900000, 112.78600000, 'MENUNGGU_VERIFIKASI', NOW() - INTERVAL 45 MINUTE);
+
+-- 8. Tindak Lanjut Satgas Kebersihan (Log Aksi Lapangan)
+INSERT INTO `tindak_lanjut_aduan` (`id_laporan`, `id_mitra`, `keterangan_tindakan`, `foto_bukti_penanganan_url`, `created_at`) VALUES
+-- Log untuk Tiket 1 (Proses Berjalan)
+(1, 1, 'Petugas kebersihan RW 05 telah mengerahkan 1 armada gerobak motor untuk mengangkut tumpukan sampah sore ini.', 'https://placehold.co/600x400/png?text=Petugas+Menuju+Lokasi', NOW() - INTERVAL 6 HOUR),
+
+-- Log untuk Tiket 2 (Selesai Tuntas dengan Bukti Foto Bersih)
+(2, 1, 'Lokasi tanah kosong telah bersih total. Seluruh ranting dan plastik telah dipindahkan ke TPS3R, serta dipasang spanduk larangan membuang sampah.', 'https://placehold.co/600x400/png?text=Bukti+Lokasi+Sudah+Bersih+Total', NOW() - INTERVAL 2 DAY);

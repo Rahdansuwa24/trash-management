@@ -31,6 +31,8 @@ exports.createTransaction = async (req, res, next) => {
       id_kategori,
       estimasi_berat_kg,
       alamat_jemput,
+      rt = '03',
+      rw = '05',
       kota,
       kecamatan,
       latitude,
@@ -100,8 +102,8 @@ exports.createTransaction = async (req, res, next) => {
 
     const insertSql = `
       INSERT INTO transaksi_sampah_komersil 
-      (kode_transaksi, id_warga, id_mitra, id_kategori, estimasi_berat_kg, total_poin_diperoleh, foto_sampah_url, alamat_jemput, kota, kecamatan, latitude, longitude, catatan_warga, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MENUNGGU_PENJEMPUTAN')
+      (kode_transaksi, id_warga, id_mitra, id_kategori, estimasi_berat_kg, total_poin_diperoleh, foto_sampah_url, alamat_jemput, rt, rw, kota, kecamatan, latitude, longitude, catatan_warga, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MENUNGGU_PENJEMPUTAN')
     `;
 
     const [result] = await pool.query(insertSql, [
@@ -113,6 +115,8 @@ exports.createTransaction = async (req, res, next) => {
       estimatedPoints,
       fotoUrl,
       alamat_jemput,
+      rt,
+      rw,
       kota,
       kecamatan,
       latitude ? parseFloat(latitude) : null,

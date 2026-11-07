@@ -21,9 +21,11 @@ exports.createIllegalReport = async (req, res, next) => {
       client_device_id,
       deskripsi_kejadian,
       alamat_lokasi,
+      rt = '03',
+      rw = '05',
       kota,
       kecamatan,
-      kelurahan = '',
+      kelurahan = 'Kalirungkut',
       latitude,
       longitude
     } = req.body;
@@ -56,12 +58,11 @@ exports.createIllegalReport = async (req, res, next) => {
     const fotoUrl = await uploadToR2(fotoFile, 'illegal-reports/photos');
     const videoUrl = videoFile ? await uploadToR2(videoFile, 'illegal-reports/videos') : null;
 
-    // Check if DLH partner exists in that city to auto-assign
+    // Check if Satgas partner exists to auto-assign
     let mitraId = null;
     try {
       const [mitraRows] = await pool.query(
-        'SELECT id_mitra FROM profiles_mitra WHERE jenis_mitra = "pemerintah" AND LOWER(kota) LIKE LOWER(?) LIMIT 1',
-        [`%${kota}%`]
+        'SELECT id_mitra FROM profiles_mitra WHERE (jenis_mitra = "satgas_lapangan" OR jenis_mitra = "pemerintah") LIMIT 1'
       );
       if (mitraRows.length > 0) {
         mitraId = mitraRows[0].id_mitra;
@@ -87,8 +88,8 @@ exports.createIllegalReport = async (req, res, next) => {
 
     const insertSql = `
       INSERT INTO laporan_sampah_ilegal 
-      (kode_tiket, id_user, id_mitra_penangan, nama_pelapor, nomor_kontak, client_device_id, deskripsi_kejadian, foto_bukti_url, video_bukti_url, alamat_lokasi, kota, kecamatan, kelurahan, latitude, longitude, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MENUNGGU_VERIFIKASI')
+      (kode_tiket, id_user, id_mitra_penangan, nama_pelapor, nomor_kontak, client_device_id, deskripsi_kejadian, foto_bukti_url, video_bukti_url, alamat_lokasi, rt, rw, kota, kecamatan, kelurahan, latitude, longitude, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MENUNGGU_VERIFIKASI')
     `;
 
     const userId = req.user ? req.user.id_user : null;
@@ -104,6 +105,8 @@ exports.createIllegalReport = async (req, res, next) => {
       fotoUrl,
       videoUrl,
       alamat_lokasi,
+      rt,
+      rw,
       kota,
       kecamatan,
       kelurahan,
