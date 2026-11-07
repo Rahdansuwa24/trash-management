@@ -12,14 +12,20 @@ export default function Navbar() {
   const navLinks = [
     { name: 'Beranda', path: '/' },
     { name: 'Lapor Sampah Liar', path: '/lapor', icon: ShieldAlert },
-    { name: 'Lacak Aduan', path: '/lacak', icon: Search },
-    { name: 'Bank Sampah', path: '/setor', icon: Coins }
+    { name: 'Lacak Aduan', path: '/lacak', icon: Search }
   ];
 
+  // Bank Sampah (Setor Sampah & Tukar Poin) hanya untuk nasabah/warga atau publik, bukan mitra
+  if (user?.role !== 'mitra') {
+    navLinks.push({ name: 'Bank Sampah', path: '/setor', icon: Coins });
+  }
+
+  // Portal Petugas hanya untuk petugas mitra & admin
   if (user?.role === 'mitra' || user?.role === 'admin') {
     navLinks.push({ name: 'Portal Petugas', path: '/mitra', icon: Building2 });
   }
 
+  // Panel Admin RW hanya untuk administrator
   if (user?.role === 'admin') {
     navLinks.push({ name: 'Admin RW', path: '/admin', icon: ShieldCheck });
   }

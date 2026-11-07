@@ -255,3 +255,114 @@ exports.getKatalog = async (req, res, next) => {
   }
 };
 
+exports.redeemReward = async (req, res, next) => {
+  const connection = await pool.getConnection();
+  try {
+    if (!req.user || req.user.role !== 'warga') {
+      return res.status(403).json({
+        success: false,
+        message: 'Penukaran poin tabungan daur ulang hanya diperuntukkan bagi akun warga lingkungan.'
+      });
+    }
+
+    const { id_katalog } = req.body;
+    if (!id_katalog) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID item katalog penukaran wajib disertakan.'
+      });
+    }
+
+    await connection.beginTransaction();
+
+    // 1. Ambil profil warga dengan row-level lock
+    const [wargaRows] = await connection.query(
+      'SELECT id_warga, total_poin FROM profiles_warga WHERE id_user = ? FOR UPDATE',
+      [req.user.id_user]
+    );
+
+    if (wargaRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Profil data warga tidak ditemukan.'
+      });
+    }
+
+    const warga = wargaRows[0];
+
+    // 2. Ambil item katalog dengan lock
+    const [itemRows] = await connection.query(
+      'SELECT id_katalog, judul, biaya_poin, nilai_rupiah, stok, is_active FROM katalog_penukaran WHERE id_katalog = ? FOR UPDATE',
+      [id_katalog]
+    );
+
+    if (itemRows.length === 0 || !itemRows[0].is_active) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Item penukaran tidak ditemukan atau sedang tidak aktif.'
+      });
+    }
+
+    const item = itemRows[0];
+
+    if (item.stok <= 0) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `Stok untuk item "${item.judul}" saat ini sedang habis.`
+      });
+    }
+
+    if (warga.total_poin < item.biaya_poin) {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `Saldo poin Anda (${warga.total_poin} Poin) belum mencukupi untuk klaim ${item.judul} (${item.biaya_poin} Poin).`
+      });
+    }
+
+    // 3. Potong saldo poin warga dan kurangi stok
+    const newTotalPoin = warga.total_poin - item.biaya_poin;
+    await connection.query(
+      'UPDATE profiles_warga SET total_poin = ? WHERE id_warga = ?',
+      [newTotalPoin, warga.id_warga]
+    );
+
+    await connection.query(
+      'UPDATE katalog_penukaran SET stok = GREATEST(0, stok - 1) WHERE id_katalog = ?',
+      [item.id_katalog]
+    );
+
+    // 4. Catat mutasi penukaran ke buku besar riwayat_poin
+    const keterangan = `Klaim Penukaran ${item.judul} (${item.nilai_rupiah})`;
+    const [historyResult] = await connection.query(
+      'INSERT INTO riwayat_poin (id_warga, id_transaksi, perubahan_poin, tipe, keterangan) VALUES (?, NULL, ?, "REDEEM_REWARD", ?)',
+      [warga.id_warga, -item.biaya_poin, keterangan]
+    );
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: `Berhasil menukarkan ${item.biaya_poin} Poin dengan ${item.judul}!`,
+      data: {
+        id_riwayat: historyResult.insertId,
+        id_katalog: item.id_katalog,
+        judul: item.judul,
+        biaya_poin: item.biaya_poin,
+        nilai_rupiah: item.nilai_rupiah,
+        sisa_poin: newTotalPoin,
+        keterangan
+      }
+    });
+  } catch (error) {
+    await connection.rollback();
+    next(error);
+  } finally {
+    connection.release();
+  }
+};
+
+

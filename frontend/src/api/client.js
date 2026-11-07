@@ -41,6 +41,7 @@ export const api = {
   // Waste Bank (Warga)
   getCategories: () => request('/warga/categories'),
   getKatalog: () => request('/warga/katalog'),
+  redeemReward: (id_katalog) => request('/warga/katalog/redeem', { method: 'POST', body: JSON.stringify({ id_katalog }) }),
   submitWasteTransaction: (formData) => request('/warga/transactions', { method: 'POST', body: formData }),
   getMyTransactions: () => request('/warga/transactions'),
   getPointsHistory: () => request('/warga/points'),

@@ -6,6 +6,7 @@ const { optionalAuth, authenticate } = require('../middleware/auth.middleware');
 
 router.get('/categories', wargaController.getCategories);
 router.get('/katalog', wargaController.getKatalog);
+router.post('/katalog/redeem', authenticate, wargaController.redeemReward);
 router.post('/transactions', optionalAuth, uploadSingle('file_foto'), wargaController.createTransaction);
 router.get('/transactions', optionalAuth, wargaController.getMyTransactions);
 router.get('/points', optionalAuth, wargaController.getPointsAndHistory);

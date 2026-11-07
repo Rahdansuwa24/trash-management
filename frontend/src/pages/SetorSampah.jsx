@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { compressImage } from '../utils/imageCompressor';
@@ -204,17 +204,42 @@ export default function SetorSampah() {
     }
   };
 
-  const handleRedeemClick = (item) => {
+  const [redeemingId, setRedeemingId] = useState(null);
+
+  const handleRedeemClick = async (item) => {
     if (!user) {
       setLoginModalOpen(true);
+      return;
+    }
+    if (user.role !== 'warga') {
+      alert('Fitur penukaran poin tabungan daur ulang khusus diperuntukkan bagi akun warga lingkungan.');
       return;
     }
     if (pointsData.total_poin < item.cost) {
       alert(`Saldo poin Anda belum mencukupi untuk klaim ${item.title}. Anda memiliki ${pointsData.total_poin} Poin, dibutuhkan minimal ${item.cost} Poin.`);
       return;
     }
-    setRedeemSuccess(item);
+
+    if (!window.confirm(`Konfirmasi penukaran ${item.cost} Poin untuk "${item.title}"? Saldo tabungan Anda akan langsung terpotong.`)) {
+      return;
+    }
+
+    try {
+      setRedeemingId(item.id);
+      await api.redeemReward(item.id);
+      setRedeemSuccess(item);
+      await fetchInitialData();
+    } catch (err) {
+      alert(`Gagal menukarkan poin: ${err.message}`);
+    } finally {
+      setRedeemingId(null);
+    }
   };
+
+  // Mitra otomatis dialihkan ke Portal Petugas (form setor sampah dihilangkan sama sekali untuk mitra)
+  if (user?.role === 'mitra') {
+    return <Navigate to="/mitra" replace />;
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
@@ -644,6 +669,7 @@ export default function SetorSampah() {
 
                       <button
                         type="button"
+                        disabled={redeemingId === item.id}
                         onClick={() => handleRedeemClick(item)}
                         className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px] ${
                           isAffordable
@@ -651,7 +677,18 @@ export default function SetorSampah() {
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                         }`}
                       >
-                        {isAffordable ? 'Klaim Penukaran Sekarang' : user ? 'Poin Belum Cukup' : 'Masuk untuk Menukar'}
+                        {redeemingId === item.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            Memproses Penukaran...
+                          </>
+                        ) : isAffordable ? (
+                          'Klaim Penukaran Sekarang'
+                        ) : user ? (
+                          'Poin Belum Cukup'
+                        ) : (
+                          'Masuk untuk Menukar'
+                        )}
                       </button>
                     </div>
                   </div>
