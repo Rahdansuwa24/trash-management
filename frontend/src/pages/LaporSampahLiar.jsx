@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -25,6 +25,7 @@ export default function LaporSampahLiar() {
     deskripsi_kejadian: ''
   });
 
+  const fileInputRef = useRef(null);
   const [fotoFile, setFotoFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -32,6 +33,25 @@ export default function LaporSampahLiar() {
   const [successResult, setSuccessResult] = useState(null);
   const [copied, setCopied] = useState(false);
   const [geoLoading, setGeoLoading] = useState(false);
+
+  const resetForm = () => {
+    setFormData({
+      nama_pelapor: user?.nama || '',
+      nomor_kontak: user?.profile?.no_telp || '',
+      alamat_lokasi: '',
+      kota: 'Surabaya',
+      kecamatan: '',
+      kelurahan: '',
+      latitude: '-7.31820000',
+      longitude: '112.78450000',
+      deskripsi_kejadian: ''
+    });
+    setFotoFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
 
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
@@ -91,6 +111,7 @@ export default function LaporSampahLiar() {
 
       const res = await api.submitIllegalReport(data);
       setSuccessResult(res);
+      resetForm();
     } catch (err) {
       setErrorMsg(err.message || 'Gagal mengirim laporan.');
     } finally {
@@ -151,8 +172,7 @@ export default function LaporSampahLiar() {
               type="button"
               onClick={() => {
                 setSuccessResult(null);
-                setFotoFile(null);
-                setPreviewUrl(null);
+                resetForm();
               }}
               className="px-6 py-2.5 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 rounded-lg font-medium text-sm min-h-[44px]"
             >
@@ -216,6 +236,7 @@ export default function LaporSampahLiar() {
                   >
                     <span>Unggah foto dari perangkat</span>
                     <input
+                      ref={fileInputRef}
                       id="file_foto"
                       name="file_foto"
                       type="file"

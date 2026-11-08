@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -23,8 +23,22 @@ export default function SetorSampah() {
   const [kecamatan, setKecamatan] = useState('Rungkut');
   const [catatan, setCatatan] = useState('');
   
+  const fileInputRef = useRef(null);
   const [fotoFile, setFotoFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  const resetForm = () => {
+    setWeight('');
+    setCatatan('');
+    setFotoFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    if (categories.length > 0) {
+      setSelectedCat(categories[0]);
+    }
+  };
 
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
@@ -227,6 +241,7 @@ export default function SetorSampah() {
 
       const res = await api.submitWasteTransaction(formData);
       setSuccessTrx(res.data);
+      resetForm();
       fetchInitialData();
     } catch (err) {
       setErrorMsg(err.message || 'Gagal mengajukan transaksi setor sampah.');
@@ -410,42 +425,63 @@ export default function SetorSampah() {
       {/* Tab 1: Form Setor */}
       {activeTab === 'setor' && (
         <div className="space-y-6">
-          {successTrx && (
-            <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-4">
-              <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto" />
-              <div>
-                <h3 className="text-lg font-bold text-emerald-950">Pengajuan Setor Sampah Berhasil!</h3>
-                <p className="text-xs text-emerald-800 mt-1">
-                  Kode Transaksi Anda:{' '}
-                  <strong className="font-mono text-sm underline">{successTrx.kode_transaksi}</strong>
+          {successTrx ? (
+            <div className="p-8 bg-white border border-emerald-200 rounded-2xl shadow-sm text-center space-y-5">
+              <div className="w-16 h-16 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto">
+                <CheckCircle className="w-9 h-9" />
+              </div>
+              <div className="space-y-1.5 max-w-md mx-auto">
+                <h3 className="text-xl font-bold text-slate-900">Pengajuan Setor Sampah Berhasil!</h3>
+                <p className="text-xs text-slate-600">
+                  Pengajuan Anda telah tercatat ke dalam sistem logistik bank sampah unit RT 03/RW 05.
                 </p>
-                <p className="text-xs text-emerald-700 mt-2">
+                <div className="p-3 bg-emerald-50 border border-emerald-200/80 rounded-xl inline-block mt-2">
+                  <span className="text-[11px] font-semibold text-emerald-800 uppercase tracking-wider block">
+                    Kode Transaksi Penjemputan
+                  </span>
+                  <strong className="font-mono text-base text-emerald-950 tracking-wider">
+                    {successTrx.kode_transaksi}
+                  </strong>
+                </div>
+                <p className="text-xs text-slate-500 mt-2">
                   Petugas unit bank sampah akan segera mengonfirmasi dan menjadwalkan penjemputan di alamat Anda.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setSuccessTrx(null);
-                  setWeight('');
-                  setCatatan('');
-                  setFotoFile(null);
-                  setPreviewUrl(null);
-                }}
-                className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold hover:bg-emerald-800 min-h-[40px] cursor-pointer"
-              >
-                Buat Pengajuan Baru
-              </button>
-            </div>
-          )}
 
-          {errorMsg && (
-            <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs sm:text-sm">
-              {errorMsg}
+              <div className="pt-2 flex flex-col sm:flex-row justify-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccessTrx(null);
+                    resetForm();
+                  }}
+                  className="px-6 py-2.5 bg-civic-700 text-white rounded-xl text-xs font-semibold hover:bg-civic-800 min-h-[44px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <PlusCircle className="w-4 h-4" />
+                  Buat Pengajuan Baru
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSuccessTrx(null);
+                    setActiveTab('riwayat');
+                  }}
+                  className="px-6 py-2.5 bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold hover:bg-slate-200 min-h-[44px] flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <History className="w-4 h-4" />
+                  Lihat Riwayat Setoran
+                </button>
+              </div>
             </div>
-          )}
+          ) : (
+            <>
+              {errorMsg && (
+                <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-800 text-xs sm:text-sm">
+                  {errorMsg}
+                </div>
+              )}
 
-          <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+              <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
             {/* Step 1: Kategori Sampah */}
             <div className="space-y-3">
               <label className="block text-sm font-bold text-slate-900">
@@ -570,6 +606,7 @@ export default function SetorSampah() {
                 4. Foto Sampah Terpilah (Otomatis Watermark GPS Lapangan)
               </label>
               <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
@@ -619,6 +656,8 @@ export default function SetorSampah() {
               )}
             </button>
           </form>
+          </>
+        )}
         </div>
       )}
 
