@@ -3,7 +3,30 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
 import { useAuth } from '../context/AuthContext';
-import { Building2, Truck, Scale, MapPin, Calendar, CheckCircle, AlertTriangle, ArrowRight, Loader2, Image as ImageIcon, UserCheck, Phone, Check, Search, ExternalLink } from 'lucide-react';
+import { Building2, Truck, Scale, MapPin, Calendar, CheckCircle, AlertTriangle, ArrowRight, Loader2, Image as ImageIcon, UserCheck, Phone, Check, Search, ExternalLink, Sparkles } from 'lucide-react';
+
+const STATUS_TEMPLATES = {
+  INVESTIGASI: [
+    "Tim satgas sedang menuju lokasi untuk verifikasi volume sampah dan akses armada.",
+    "Petugas telah melakukan pengecekan awal lokasi dan berkoordinasi dengan RT/RW setempat.",
+    "Investigasi selesai: Lokasi terkonfirmasi, armada pengangkut sedang disiapkan."
+  ],
+  DALAM_PENANGANAN: [
+    "Armada tossa dan tim kebersihan telah tiba di lokasi untuk proses pengangkutan sampah.",
+    "Proses pembersihan sedang berlangsung oleh petugas bersama warga setempat.",
+    "Pembersihan intensif sedang dilakukan, material sampah liar sedang dimuat ke armada."
+  ],
+  SELESAI_DIBERSIHKAN: [
+    "Seluruh sampah telah berhasil diangkut tuntas ke TPS dan lokasi telah steril dibersihkan.",
+    "Pembersihan tuntas 100%. Area telah dinormalisasi dan disemprot bersih.",
+    "Pengangkutan selesai, lokasi bersih dan telah dipasangi papan imbauan larangan membuang sampah."
+  ],
+  DITOLAK: [
+    "Laporan ditolak: Titik lokasi berada di luar wilayah operasional RW 05.",
+    "Laporan ditolak: Setelah diverifikasi ke lokasi, tidak ditemukan tumpukan sampah liar.",
+    "Laporan ditolak: Merupakan sampah sisa proyek bangunan yang menjadi tanggung jawab kontraktor."
+  ]
+};
 
 export default function PortalMitra() {
   const { user } = useAuth();
@@ -59,6 +82,22 @@ export default function PortalMitra() {
       setErrorMsg(err.message || 'Gagal mengambil data tugas operasional.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenActionModal = (item) => {
+    setSelectedReport(item);
+    const initialStatus = item.status === 'MENUNGGU_VERIFIKASI' ? 'DALAM_PENANGANAN' : item.status;
+    setStatusAction(initialStatus);
+    setKeteranganAction(STATUS_TEMPLATES[initialStatus]?.[0] || '');
+    setFotoBuktiFile(null);
+  };
+
+  const handleStatusChange = (newStatus) => {
+    setStatusAction(newStatus);
+    const allTemplates = Object.values(STATUS_TEMPLATES).flat();
+    if (!keteranganAction.trim() || allTemplates.includes(keteranganAction)) {
+      setKeteranganAction(STATUS_TEMPLATES[newStatus]?.[0] || '');
     }
   };
 
@@ -305,10 +344,7 @@ export default function PortalMitra() {
                   <div className="p-5 pt-0">
                     <button
                       type="button"
-                      onClick={() => {
-                        setSelectedReport(item);
-                        setStatusAction(item.status === 'MENUNGGU_VERIFIKASI' ? 'DALAM_PENANGANAN' : item.status);
-                      }}
+                      onClick={() => handleOpenActionModal(item)}
                       className="w-full py-2.5 px-4 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-2 min-h-[44px]"
                     >
                       Tindak Lanjuti Aduan
@@ -487,8 +523,8 @@ export default function PortalMitra() {
                 <label className="block text-xs font-semibold text-slate-700 mb-1">Status Penanganan</label>
                 <select
                   value={statusAction}
-                  onChange={(e) => setStatusAction(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white"
+                  onChange={(e) => handleStatusChange(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm bg-white focus:outline-hidden focus:border-civic-600"
                 >
                   <option value="INVESTIGASI">Tahap Investigasi Petugas</option>
                   <option value="DALAM_PENANGANAN">Dalam Penanganan Petugas Kebersihan</option>
@@ -497,17 +533,59 @@ export default function PortalMitra() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Catatan Tindakan Lapangan <span className="text-rose-600">*</span>
-                </label>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-slate-700">
+                    Catatan Tindakan Lapangan <span className="text-rose-600">*</span>
+                  </label>
+                  <span className="text-[11px] text-slate-400">Pilih template di bawah atau ketik manual</span>
+                </div>
+
+                {/* Template Pesan Cepat Berdasarkan Status */}
+                <div className="bg-slate-50 border border-slate-200/90 rounded-xl p-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-slate-700">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-civic-700" />
+                      Pilihan Template Pesan ({statusAction.replace(/_/g, ' ')}):
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-normal">Klik untuk mengisi</span>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    {(STATUS_TEMPLATES[statusAction] || []).map((tpl, idx) => {
+                      const isSelected = keteranganAction === tpl;
+                      return (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setKeteranganAction(tpl)}
+                          className={`w-full text-left text-xs p-2 rounded-lg border transition-all flex items-start gap-2 ${
+                            isSelected
+                              ? 'bg-civic-100/80 border-civic-600 text-civic-950 font-medium shadow-xs'
+                              : 'bg-white border-slate-200 text-slate-700 hover:border-civic-400 hover:bg-civic-50/50'
+                          }`}
+                        >
+                          <span
+                            className={`w-4 h-4 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 ${
+                              isSelected ? 'bg-civic-700 text-white' : 'bg-slate-200 text-slate-600'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <span className="line-clamp-2 leading-relaxed">{tpl}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 <textarea
                   required
                   rows={3}
                   value={keteranganAction}
                   onChange={(e) => setKeteranganAction(e.target.value)}
-                  placeholder="Contoh: Petugas kebersihan RT 03 telah mengangkut tumpukan sampah dan membersihkan saluran air..."
-                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm"
+                  placeholder="Ketik catatan tindakan atau klik salah satu opsi template di atas..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm focus:outline-hidden focus:border-civic-600"
                 ></textarea>
               </div>
 
