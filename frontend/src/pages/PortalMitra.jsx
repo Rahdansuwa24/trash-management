@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
+import { useAuth } from '../context/AuthContext';
 import { Building2, Truck, Scale, MapPin, Calendar, CheckCircle, AlertTriangle, ArrowRight, Loader2, Image as ImageIcon, UserCheck, Phone, Check } from 'lucide-react';
 
 export default function PortalMitra() {
-  const [partnerType, setPartnerType] = useState('banksampah'); // default to 'banksampah' or 'lapangan'
+  const { user } = useAuth();
+  const isSatgas = user?.email?.includes('petugas') || user?.nama?.toLowerCase().includes('satgas');
+  const [partnerType, setPartnerType] = useState(isSatgas ? 'lapangan' : 'banksampah'); // default to 'lapangan' for satgas, or 'banksampah'
   const [pickupFilter, setPickupFilter] = useState('ALL'); // 'ALL', 'OPEN', 'MY_TASKS'
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState([]);
@@ -25,6 +28,15 @@ export default function PortalMitra() {
   const [catatanMitra, setCatatanMitra] = useState('');
   const [submittingPickup, setSubmittingPickup] = useState(false);
   const [claimingId, setClaimingId] = useState(null);
+
+  useEffect(() => {
+    if (user) {
+      const satgas = user?.email?.includes('petugas') || user?.nama?.toLowerCase().includes('satgas');
+      if (satgas) {
+        setPartnerType('lapangan');
+      }
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchData();
@@ -57,6 +69,7 @@ export default function PortalMitra() {
       formData.append('status', statusAction);
       formData.append('keterangan_tindakan', keteranganAction);
       if (fotoBuktiFile) {
+        formData.append('file_foto_tindakan', fotoBuktiFile);
         formData.append('file_foto_bukti', fotoBuktiFile);
       }
 

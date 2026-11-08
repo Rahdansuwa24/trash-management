@@ -149,8 +149,15 @@ class LaporanModel {
     const params = [];
 
     if (status) {
-      sql += ' AND l.status = ?';
-      params.push(status);
+      const statuses = status.split(',').map((s) => s.trim()).filter(Boolean);
+      if (statuses.length === 1) {
+        sql += ' AND l.status = ?';
+        params.push(statuses[0]);
+      } else if (statuses.length > 1) {
+        const placeholders = statuses.map(() => '?').join(', ');
+        sql += ` AND l.status IN (${placeholders})`;
+        params.push(...statuses);
+      }
     }
     if (kota) {
       sql += ' AND LOWER(l.kota) = LOWER(?)';
