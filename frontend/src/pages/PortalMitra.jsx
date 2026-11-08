@@ -39,6 +39,7 @@ export default function PortalMitra() {
   const isSatgas = user?.email?.includes('petugas') || user?.nama?.toLowerCase().includes('satgas');
   const [partnerType, setPartnerType] = useState(isSatgas ? 'lapangan' : 'banksampah'); // default to 'lapangan' for satgas, or 'banksampah'
   const [pickupFilter, setPickupFilter] = useState('ALL'); // 'ALL', 'OPEN', 'MY_TASKS'
+  const [pickupTimeFilter, setPickupTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
   const [reportSearch, setReportSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState([]);
@@ -169,10 +170,25 @@ export default function PortalMitra() {
     }
   };
 
+  const isWithinTimeRange = (dateStr, range) => {
+    if (range === 'ALL' || !dateStr) return true;
+    const itemDate = new Date(dateStr);
+    const now = new Date();
+    if (range === 'THIS_WEEK') {
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return itemDate >= oneWeekAgo;
+    }
+    if (range === 'THIS_MONTH') {
+      return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+    }
+    return true;
+  };
+
   // Filter pickups
   const filteredPickups = pickups.filter(p => {
-    if (pickupFilter === 'OPEN') return p.status === 'MENUNGGU_PENJEMPUTAN';
-    if (pickupFilter === 'MY_TASKS') return p.status === 'DIKONFIRMASI_MITRA' || p.status === 'SELESAI';
+    if (pickupFilter === 'OPEN' && p.status !== 'MENUNGGU_PENJEMPUTAN') return false;
+    if (pickupFilter === 'MY_TASKS' && (p.status !== 'DIKONFIRMASI_MITRA' && p.status !== 'SELESAI')) return false;
+    if (!isWithinTimeRange(p.tanggal_transaksi, pickupTimeFilter)) return false;
     return true;
   });
 
@@ -376,34 +392,71 @@ export default function PortalMitra() {
             </div>
 
             {/* Sub-Filter Tabs */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <div className="flex bg-slate-100 p-1 rounded-lg text-xs font-medium">
                 <button
                   type="button"
                   onClick={() => setPickupFilter('ALL')}
-                  className={`px-3 py-1.5 rounded-md transition-all ${pickupFilter === 'ALL' ? 'bg-white font-bold text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                  className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${pickupFilter === 'ALL' ? 'bg-white font-bold text-slate-900 shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                   Semua ({pickups.length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setPickupFilter('OPEN')}
-                  className={`px-3 py-1.5 rounded-md transition-all ${pickupFilter === 'OPEN' ? 'bg-amber-500 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                  className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${pickupFilter === 'OPEN' ? 'bg-amber-500 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                   Perlu Dijemput ({pickups.filter(p => p.status === 'MENUNGGU_PENJEMPUTAN').length})
                 </button>
                 <button
                   type="button"
                   onClick={() => setPickupFilter('MY_TASKS')}
-                  className={`px-3 py-1.5 rounded-md transition-all ${pickupFilter === 'MY_TASKS' ? 'bg-civic-700 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                  className={`px-3 py-1.5 rounded-md transition-all cursor-pointer ${pickupFilter === 'MY_TASKS' ? 'bg-civic-700 text-white font-bold shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
                 >
                   Tugas Saya ({pickups.filter(p => p.status === 'DIKONFIRMASI_MITRA' || p.status === 'SELESAI').length})
                 </button>
               </div>
 
+              {/* Time filter */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg text-xs">
+                <button
+                  type="button"
+                  onClick={() => setPickupTimeFilter('ALL')}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                    pickupTimeFilter === 'ALL'
+                      ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Semua Waktu
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPickupTimeFilter('THIS_MONTH')}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                    pickupTimeFilter === 'THIS_MONTH'
+                      ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Bulan Ini
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPickupTimeFilter('THIS_WEEK')}
+                  className={`px-2.5 py-1 rounded-md font-medium transition-colors cursor-pointer ${
+                    pickupTimeFilter === 'THIS_WEEK'
+                      ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  7 Hari Terakhir
+                </button>
+              </div>
+
               <button
                 onClick={fetchData}
-                className="text-xs text-civic-700 font-semibold hover:underline px-2 py-1"
+                className="text-xs text-civic-700 font-semibold hover:underline px-2 py-1 cursor-pointer"
               >
                 Segarkan
               </button>

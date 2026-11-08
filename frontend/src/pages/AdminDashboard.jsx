@@ -41,6 +41,7 @@ export default function AdminDashboard() {
   const [claimsList, setClaimsList] = useState([]);
   const [claimsLoading, setClaimsLoading] = useState(false);
   const [claimStatusFilter, setClaimStatusFilter] = useState('');
+  const [claimTimeFilter, setClaimTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
   const [actionClaimLoading, setActionClaimLoading] = useState(null);
 
   // State Katalog Penukaran
@@ -55,6 +56,7 @@ export default function AdminDashboard() {
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportSearch, setReportSearch] = useState('');
   const [reportStatusFilter, setReportStatusFilter] = useState('');
+  const [reportTimeFilter, setReportTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
 
   // Form State untuk Tambah / Edit Katalog
   const [formData, setFormData] = useState({
@@ -345,16 +347,52 @@ export default function AdminDashboard() {
     };
   }, [pickupsList]);
 
-  const filteredAdminReports = reportsList.filter((item) => {
-    if (!reportSearch.trim()) return true;
-    const q = reportSearch.toLowerCase();
-    return (
-      item.kode_tiket?.toLowerCase().includes(q) ||
-      item.alamat_lokasi?.toLowerCase().includes(q) ||
-      item.nama_pelapor?.toLowerCase().includes(q) ||
-      item.deskripsi_kejadian?.toLowerCase().includes(q)
-    );
-  });
+  const filteredClaimsList = useMemo(() => {
+    return claimsList.filter((c) => {
+      if (claimTimeFilter !== 'ALL' && c.tanggal_pengajuan) {
+        const itemDate = new Date(c.tanggal_pengajuan);
+        const now = new Date();
+        if (claimTimeFilter === 'THIS_WEEK') {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (itemDate < oneWeekAgo) return false;
+        } else if (claimTimeFilter === 'THIS_MONTH') {
+          if (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+  }, [claimsList, claimTimeFilter]);
+
+  const filteredAdminReports = useMemo(() => {
+    return reportsList.filter((item) => {
+      if (reportSearch.trim()) {
+        const q = reportSearch.toLowerCase();
+        const match =
+          item.kode_tiket?.toLowerCase().includes(q) ||
+          item.alamat_lokasi?.toLowerCase().includes(q) ||
+          item.nama_pelapor?.toLowerCase().includes(q) ||
+          item.deskripsi_kejadian?.toLowerCase().includes(q);
+        if (!match) return false;
+      }
+
+      if (reportTimeFilter !== 'ALL' && item.created_at) {
+        const itemDate = new Date(item.created_at);
+        const now = new Date();
+        if (reportTimeFilter === 'THIS_WEEK') {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (itemDate < oneWeekAgo) return false;
+        } else if (reportTimeFilter === 'THIS_MONTH') {
+          if (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [reportsList, reportSearch, reportTimeFilter]);
 
   const pendingClaimsCount = claimsList.filter((c) => c.status_klaim === 'MENUNGGU_VERIFIKASI').length;
 
@@ -968,15 +1006,51 @@ export default function AdminDashboard() {
                 <div>
                   <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                     <Ticket className="w-5 h-5 text-civic-700" />
-                    Antrean Klaim Penukaran Sembako Warga ({claimsList.length})
+                    Antrean Klaim Penukaran Sembako Warga ({filteredClaimsList.length})
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
                     Verifikasi ketersediaan barang di Balai RT dan potong stok fisik saat serah terima.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-500 font-medium">Filter Status:</span>
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {/* Time Range Filter Buttons */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setClaimTimeFilter('ALL')}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        claimTimeFilter === 'ALL'
+                          ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Semua Waktu
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setClaimTimeFilter('THIS_MONTH')}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        claimTimeFilter === 'THIS_MONTH'
+                          ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Bulan Ini
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setClaimTimeFilter('THIS_WEEK')}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        claimTimeFilter === 'THIS_WEEK'
+                          ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      7 Hari Terakhir
+                    </button>
+                  </div>
+
                   <select
                     value={claimStatusFilter}
                     onChange={(e) => setClaimStatusFilter(e.target.value)}
@@ -995,8 +1069,12 @@ export default function AdminDashboard() {
                 <div className="py-8 text-center">
                   <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
                 </div>
-              ) : claimsList.length === 0 ? (
-                <p className="text-sm text-slate-500 py-8 text-center">Tidak ada permohonan klaim penukaran sembako.</p>
+              ) : filteredClaimsList.length === 0 ? (
+                <div className="py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <Ticket className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                  <p className="text-sm font-semibold text-slate-700">Tidak ada klaim sembako pada filter periode ini.</p>
+                  <p className="text-xs text-slate-400 mt-1">Ubah filter waktu ke "Semua Waktu" untuk melihat pengajuan sebelumnya.</p>
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
@@ -1010,7 +1088,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-100">
-                      {claimsList.map((claim) => {
+                      {filteredClaimsList.map((claim) => {
                         const isPending = claim.status_klaim === 'MENUNGGU_VERIFIKASI';
                         const isReady = claim.status_klaim === 'DISETUJUI_SIAP_AMBIL';
                         const isDone = claim.status_klaim === 'SELESAI_DISERAHKAN';
@@ -1369,7 +1447,44 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                  <div className="relative flex-1 sm:w-60">
+                  {/* Time Range Filter Buttons */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setReportTimeFilter('ALL')}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        reportTimeFilter === 'ALL'
+                          ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Semua Waktu
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReportTimeFilter('THIS_MONTH')}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        reportTimeFilter === 'THIS_MONTH'
+                          ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Bulan Ini
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setReportTimeFilter('THIS_WEEK')}
+                      className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                        reportTimeFilter === 'THIS_WEEK'
+                          ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      7 Hari Terakhir
+                    </button>
+                  </div>
+
+                  <div className="relative flex-1 sm:w-52">
                     <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                     <input
                       type="text"

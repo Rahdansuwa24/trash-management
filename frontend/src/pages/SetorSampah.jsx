@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -8,7 +8,7 @@ import DigitalReceiptModal from '../components/DigitalReceiptModal';
 import { 
   Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, 
   LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2, Wheat, ShoppingBasket,
-  Building2, QrCode, Sparkles, UserCheck, Phone, Printer, Ticket
+  Building2, QrCode, Sparkles, UserCheck, Phone, Printer, Ticket, Filter, Clock, Calendar
 } from 'lucide-react';
 
 export default function SetorSampah() {
@@ -53,6 +53,49 @@ export default function SetorSampah() {
   const [myClaims, setMyClaims] = useState([]);
   const [pointsData, setPointsData] = useState({ total_poin: 0, history: [] });
   const [selectedReceiptTrx, setSelectedReceiptTrx] = useState(null);
+
+  // Filter state untuk tab Riwayat Setoran & Klaim Warga (Mencegah tampilan menumpuk tanpa menghapus data)
+  const [historyTimeFilter, setHistoryTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
+  const [historyStatusFilter, setHistoryStatusFilter] = useState('ALL'); // 'ALL' | 'MENUNGGU_VERIFIKASI' | 'DIKONFIRMASI_MITRA' | 'SELESAI'
+  const [claimStatusFilter, setClaimStatusFilter] = useState('ALL'); // 'ALL' | 'MENUNGGU_VERIFIKASI' | 'DISETUJUI_SIAP_AMBIL' | 'SELESAI_DISERAHKAN'
+  const [claimTimeFilter, setClaimTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
+
+  const isWithinTimeRange = (dateStr, range) => {
+    if (range === 'ALL' || !dateStr) return true;
+    const itemDate = new Date(dateStr);
+    const now = new Date();
+    if (range === 'THIS_WEEK') {
+      const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return itemDate >= oneWeekAgo;
+    }
+    if (range === 'THIS_MONTH') {
+      return itemDate.getMonth() === now.getMonth() && itemDate.getFullYear() === now.getFullYear();
+    }
+    return true;
+  };
+
+  const filteredMyTransactions = useMemo(() => {
+    return myTransactions.filter((t) => {
+      if (historyStatusFilter !== 'ALL' && t.status !== historyStatusFilter) return false;
+      if (!isWithinTimeRange(t.tanggal_transaksi, historyTimeFilter)) return false;
+      return true;
+    });
+  }, [myTransactions, historyStatusFilter, historyTimeFilter]);
+
+  const filteredPointsHistory = useMemo(() => {
+    return pointsData.history.filter((h) => {
+      if (!isWithinTimeRange(h.created_at, historyTimeFilter)) return false;
+      return true;
+    });
+  }, [pointsData.history, historyTimeFilter]);
+
+  const filteredMyClaims = useMemo(() => {
+    return myClaims.filter((c) => {
+      if (claimStatusFilter !== 'ALL' && c.status_klaim !== claimStatusFilter) return false;
+      if (!isWithinTimeRange(c.tanggal_pengajuan, claimTimeFilter)) return false;
+      return true;
+    });
+  }, [myClaims, claimStatusFilter, claimTimeFilter]);
 
   const ICON_MAP = {
     Receipt,
@@ -791,7 +834,7 @@ export default function SetorSampah() {
       {activeTab === 'klaim' && (
         <div className="space-y-6">
           <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
               <div>
                 <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
                   <Ticket className="w-6 h-6 text-civic-700" />
@@ -801,12 +844,67 @@ export default function SetorSampah() {
                   Pantau verifikasi pengurus dan gunakan kode voucher digital untuk serah terima barang di Balai RT.
                 </p>
               </div>
-              <button
-                onClick={fetchInitialData}
-                className="text-xs text-civic-700 font-semibold hover:underline cursor-pointer"
-              >
-                Segarkan
-              </button>
+
+              {/* Filter Bar: Waktu & Status Klaim */}
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                {/* Time filter buttons */}
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setClaimTimeFilter('ALL')}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                      claimTimeFilter === 'ALL'
+                        ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Semua Waktu
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClaimTimeFilter('THIS_MONTH')}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                      claimTimeFilter === 'THIS_MONTH'
+                        ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    Bulan Ini
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClaimTimeFilter('THIS_WEEK')}
+                    className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                      claimTimeFilter === 'THIS_WEEK'
+                        ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    7 Hari Terakhir
+                  </button>
+                </div>
+
+                {/* Status dropdown */}
+                <select
+                  value={claimStatusFilter}
+                  onChange={(e) => setClaimStatusFilter(e.target.value)}
+                  className="text-xs py-1.5 px-3 border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
+                >
+                  <option value="ALL">Semua Status</option>
+                  <option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option>
+                  <option value="DISETUJUI_SIAP_AMBIL">Siap Diambil di Balai RT</option>
+                  <option value="SELESAI_DISERAHKAN">Selesai Diserahkan</option>
+                  <option value="DITOLAK_BATAL">Dibatalkan</option>
+                </select>
+
+                <button
+                  type="button"
+                  onClick={fetchInitialData}
+                  className="text-xs text-civic-700 font-semibold hover:underline cursor-pointer px-2"
+                >
+                  Segarkan
+                </button>
+              </div>
             </div>
 
             {myClaims.length === 0 ? (
@@ -815,9 +913,15 @@ export default function SetorSampah() {
                 <p className="text-sm font-semibold text-slate-700">Belum ada pengajuan klaim penukaran sembako.</p>
                 <p className="text-xs text-slate-400">Pilih sembako di tab "Tukar Sembako" untuk menukarkan poin tabungan Anda.</p>
               </div>
+            ) : filteredMyClaims.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-2xl space-y-2">
+                <Clock className="w-10 h-10 text-slate-300 mx-auto" />
+                <p className="text-sm font-semibold text-slate-700">Tidak ada voucher klaim pada filter terpilih.</p>
+                <p className="text-xs text-slate-400">Ubah filter waktu ke "Semua Waktu" untuk melihat riwayat sebelumnya.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {myClaims.map((claim) => {
+                {filteredMyClaims.map((claim) => {
                   const isReady = claim.status_klaim === 'DISETUJUI_SIAP_AMBIL';
                   const isDone = claim.status_klaim === 'SELESAI_DISERAHKAN';
                   const isPending = claim.status_klaim === 'MENUNGGU_VERIFIKASI';
@@ -947,21 +1051,89 @@ export default function SetorSampah() {
             <>
               {/* Transactions list */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-base font-bold text-slate-900">Daftar Transaksi Penyetoran Sampah</h3>
-                  <button
-                    onClick={fetchInitialData}
-                    className="text-xs text-civic-700 font-semibold hover:underline cursor-pointer"
-                  >
-                    Segarkan
-                  </button>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-3 border-b border-slate-100">
+                  <div>
+                    <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                      <History className="w-5 h-5 text-civic-700" />
+                      Daftar Transaksi Penyetoran Sampah ({filteredMyTransactions.length})
+                    </h3>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Riwayat penjemputan sampah anorganik dan struk digital resmi penimbangan.
+                    </p>
+                  </div>
+
+                  {/* Filter Toolbar: Waktu & Status */}
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    {/* Time filter buttons */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setHistoryTimeFilter('ALL')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                          historyTimeFilter === 'ALL'
+                            ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Semua Waktu
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryTimeFilter('THIS_MONTH')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                          historyTimeFilter === 'THIS_MONTH'
+                            ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Bulan Ini
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryTimeFilter('THIS_WEEK')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                          historyTimeFilter === 'THIS_WEEK'
+                            ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        7 Hari Terakhir
+                      </button>
+                    </div>
+
+                    {/* Status dropdown */}
+                    <select
+                      value={historyStatusFilter}
+                      onChange={(e) => setHistoryStatusFilter(e.target.value)}
+                      className="text-xs py-1.5 px-3 border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
+                    >
+                      <option value="ALL">Semua Status</option>
+                      <option value="MENUNGGU_VERIFIKASI">Menunggu Petugas</option>
+                      <option value="DIKONFIRMASI_MITRA">Dalam Penjemputan</option>
+                      <option value="SELESAI">Selesai Ditimbang</option>
+                    </select>
+
+                    <button
+                      type="button"
+                      onClick={fetchInitialData}
+                      className="text-xs text-civic-700 font-semibold hover:underline cursor-pointer px-2"
+                    >
+                      Segarkan
+                    </button>
+                  </div>
                 </div>
 
                 {myTransactions.length === 0 ? (
                   <p className="text-sm text-slate-500 py-6 text-center">Belum ada riwayat transaksi penyetoran sampah.</p>
+                ) : filteredMyTransactions.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 border border-dashed border-slate-200 rounded-xl space-y-1">
+                    <Clock className="w-8 h-8 text-slate-300 mx-auto" />
+                    <p className="text-sm font-semibold text-slate-700">Tidak ada transaksi pada filter periode ini.</p>
+                    <p className="text-xs text-slate-400">Pilih "Semua Waktu" untuk melihat transaksi dari bulan-bulan sebelumnya.</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
-                    {myTransactions.map((t) => {
+                    {filteredMyTransactions.map((t) => {
                       const isConfirmed = t.status === 'DIKONFIRMASI_MITRA';
                       const isDone = t.status === 'SELESAI';
 
@@ -1033,9 +1205,18 @@ export default function SetorSampah() {
 
               {/* Point Ledger History */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-slate-900">Buku Besar Mutasi Poin</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-base font-bold text-slate-900">Buku Besar Mutasi Poin</h3>
+                  {historyTimeFilter !== 'ALL' && (
+                    <span className="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">
+                      Filter: {historyTimeFilter === 'THIS_MONTH' ? 'Bulan Ini' : '7 Hari Terakhir'}
+                    </span>
+                  )}
+                </div>
                 {pointsData.history.length === 0 ? (
                   <p className="text-sm text-slate-500 py-6 text-center">Belum ada catatan mutasi poin.</p>
+                ) : filteredPointsHistory.length === 0 ? (
+                  <p className="text-xs text-slate-400 py-4 text-center">Tidak ada mutasi poin pada filter waktu terpilih.</p>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left text-xs">
@@ -1048,7 +1229,7 @@ export default function SetorSampah() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100">
-                        {pointsData.history.map((h) => (
+                        {filteredPointsHistory.map((h) => (
                           <tr key={h.id_riwayat} className="hover:bg-slate-50/50">
                             <td className="py-3 px-3 text-slate-400 whitespace-nowrap">
                               {new Date(h.created_at).toLocaleDateString('id-ID', { dateStyle: 'short' })}
