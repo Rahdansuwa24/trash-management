@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
 import { useAuth } from '../context/AuthContext';
-import { Building2, Truck, Scale, MapPin, Calendar, CheckCircle, AlertTriangle, ArrowRight, Loader2, Image as ImageIcon, UserCheck, Phone, Check } from 'lucide-react';
+import { Building2, Truck, Scale, MapPin, Calendar, CheckCircle, AlertTriangle, ArrowRight, Loader2, Image as ImageIcon, UserCheck, Phone, Check, Search, ExternalLink } from 'lucide-react';
 
 export default function PortalMitra() {
   const { user } = useAuth();
   const isSatgas = user?.email?.includes('petugas') || user?.nama?.toLowerCase().includes('satgas');
   const [partnerType, setPartnerType] = useState(isSatgas ? 'lapangan' : 'banksampah'); // default to 'lapangan' for satgas, or 'banksampah'
   const [pickupFilter, setPickupFilter] = useState('ALL'); // 'ALL', 'OPEN', 'MY_TASKS'
+  const [reportSearch, setReportSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [reports, setReports] = useState([]);
   const [pickups, setPickups] = useState([]);
@@ -129,6 +131,18 @@ export default function PortalMitra() {
     return true;
   });
 
+  // Filter reports
+  const filteredReports = reports.filter(r => {
+    if (!reportSearch.trim()) return true;
+    const q = reportSearch.toLowerCase();
+    return (
+      r.kode_tiket?.toLowerCase().includes(q) ||
+      r.alamat_lokasi?.toLowerCase().includes(q) ||
+      r.deskripsi_kejadian?.toLowerCase().includes(q) ||
+      r.nama_pelapor?.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
@@ -196,27 +210,48 @@ export default function PortalMitra() {
       {/* VIEW 1: FIELD CLEANUP REPORTS */}
       {!loading && partnerType === 'lapangan' && (
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h2 className="text-lg font-bold text-slate-900">
-              Daftar Aduan Sampah Liar Perlu Penanganan ({reports.length})
-            </h2>
-            <button
-              onClick={fetchData}
-              className="text-xs text-civic-700 font-semibold hover:underline"
-            >
-              Segarkan Data
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900">
+                Daftar Aduan Sampah Liar Perlu Penanganan ({filteredReports.length})
+              </h2>
+              <p className="text-xs text-slate-500">
+                Petugas dapat langsung memproses atau mengklik kode tiket untuk memantau tampilan publik.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={reportSearch}
+                  onChange={(e) => setReportSearch(e.target.value)}
+                  placeholder="Cari kode tiket / lokasi..."
+                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs w-48 sm:w-64 focus:outline-hidden focus:border-civic-600"
+                />
+              </div>
+              <button
+                onClick={fetchData}
+                className="text-xs text-civic-700 font-semibold hover:underline px-2 py-1"
+              >
+                Segarkan
+              </button>
+            </div>
           </div>
 
-          {reports.length === 0 ? (
+          {filteredReports.length === 0 ? (
             <div className="p-12 bg-white rounded-2xl border border-slate-200 text-center text-slate-500">
               <CheckCircle className="w-10 h-10 text-emerald-600 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-700">Tidak ada aduan sampah liar yang tertunda.</p>
-              <p className="text-xs text-slate-500 mt-1">Seluruh titik aduan lingkungan telah bersih atau tertangani.</p>
+              <p className="text-sm font-semibold text-slate-700">
+                {reportSearch ? 'Tidak ada aduan yang cocok dengan pencarian.' : 'Tidak ada aduan sampah liar yang tertunda.'}
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                {reportSearch ? 'Coba periksa kembali kata kunci atau nomor tiket Anda.' : 'Seluruh titik aduan lingkungan telah bersih atau tertangani.'}
+              </p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {reports.map((item) => (
+              {filteredReports.map((item) => (
                 <div key={item.id_laporan} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm flex flex-col justify-between hover:border-slate-300 transition-colors">
                   <div>
                     <div className="h-44 bg-slate-100 relative">
@@ -238,7 +273,19 @@ export default function PortalMitra() {
 
                     <div className="p-5 space-y-3">
                       <div>
-                        <span className="text-xs font-mono font-bold text-civic-700 block">{item.kode_tiket}</span>
+                        <div className="flex items-center justify-between">
+                          <Link
+                            to={`/lacak?code=${item.kode_tiket}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-mono font-bold text-civic-700 hover:text-civic-800 hover:underline flex items-center gap-1 group/link"
+                            title="Buka tampilan lacak publik (tab baru)"
+                          >
+                            {item.kode_tiket}
+                            <ExternalLink className="w-3 h-3 text-slate-400 group-hover/link:text-civic-700" />
+                          </Link>
+                          <span className="text-[11px] text-slate-400">{item.nama_pelapor || 'Anonim'}</span>
+                        </div>
                         <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mt-1">{item.deskripsi_kejadian}</h3>
                       </div>
 
