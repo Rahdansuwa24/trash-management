@@ -70,7 +70,6 @@ export default function PortalMitra() {
       formData.append('keterangan_tindakan', keteranganAction);
       if (fotoBuktiFile) {
         formData.append('file_foto_tindakan', fotoBuktiFile);
-        formData.append('file_foto_bukti', fotoBuktiFile);
       }
 
       await api.submitCleanupAction(selectedReport.id_laporan, formData);

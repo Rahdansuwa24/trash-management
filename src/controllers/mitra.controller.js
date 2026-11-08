@@ -46,7 +46,10 @@ exports.submitCleanupAction = async (req, res, next) => {
     // Fallback to default DLH Surabaya
     if (!idMitra) idMitra = 1;
 
-    const fotoFile = req.file || (req.files && (req.files.file_foto_tindakan?.[0] || req.files.file_foto_bukti?.[0])) || null;
+    const fotoFile = req.file ||
+      (Array.isArray(req.files)
+        ? (req.files.find(f => f.fieldname === 'file_foto_tindakan' || f.fieldname === 'file_foto_bukti') || req.files[0])
+        : (req.files?.file_foto_tindakan?.[0] || req.files?.file_foto_bukti?.[0])) || null;
     const fotoUrl = fotoFile ? await uploadToR2(fotoFile, 'cleanup-actions') : null;
 
     await connection.beginTransaction();

@@ -54,5 +54,6 @@ function handleUploadError(middleware) {
 
 module.exports = {
   uploadSingle: (fieldName) => handleUploadError(upload.single(fieldName)),
-  uploadFields: (fieldsArray) => handleUploadError(upload.fields(fieldsArray))
+  uploadFields: (fieldsArray) => handleUploadError(upload.fields(fieldsArray)),
+  uploadAny: () => handleUploadError(upload.any())
 };
