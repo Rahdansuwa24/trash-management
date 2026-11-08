@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('../../database/pool');
 const env = require('../config/env');
+const { UserModel, WargaModel, MitraModel } = require('../models');
 
 function signToken(user) {
   return jwt.sign(
@@ -26,17 +27,15 @@ exports.login = async (req, res, next) => {
       });
     }
 
-    const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
-    if (users.length === 0) {
+    const user = await UserModel.findByEmail(email);
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Kombinasi email atau password salah.'
       });
     }
 
-    const user = users[0];
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(401).json({
         success: false,
@@ -53,11 +52,9 @@ exports.login = async (req, res, next) => {
 
     let profile = null;
     if (user.role === 'warga') {
-      const [wRows] = await pool.query('SELECT * FROM profiles_warga WHERE id_user = ?', [user.id_user]);
-      if (wRows.length > 0) profile = wRows[0];
+      profile = await WargaModel.findByUserId(user.id_user);
     } else if (user.role === 'mitra') {
-      const [mRows] = await pool.query('SELECT * FROM profiles_mitra WHERE id_user = ?', [user.id_user]);
-      if (mRows.length > 0) profile = mRows[0];
+      profile = await MitraModel.findByUserId(user.id_user);
     }
 
     const token = signToken(user);
@@ -108,8 +105,8 @@ exports.register = async (req, res, next) => {
       });
     }
 
-    const [existing] = await connection.query('SELECT id_user FROM users WHERE email = ?', [email]);
-    if (existing.length > 0) {
+    const existing = await UserModel.findByEmail(email, connection);
+    if (existing) {
       return res.status(409).json({
         success: false,
         message: 'Email sudah terdaftar. Gunakan email lain.'
@@ -120,23 +117,39 @@ exports.register = async (req, res, next) => {
 
     await connection.beginTransaction();
 
-    const [userResult] = await connection.query(
-      'INSERT INTO users (nama, email, password, role, status) VALUES (?, ?, ?, ?, "active")',
-      [nama, email, hashedPassword, role]
-    );
+    const createdUser = await UserModel.create({
+      nama,
+      email,
+      password: hashedPassword,
+      role,
+      status: 'active'
+    }, connection);
 
-    const newUserId = userResult.insertId;
+    const newUserId = createdUser.id_user;
 
     if (role === 'warga') {
-      await connection.query(
-        'INSERT INTO profiles_warga (id_user, no_telp, alamat, rt, rw, kelurahan, kecamatan, kota, total_poin) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)',
-        [newUserId, no_telp || null, alamat || null, rt, rw, kelurahan, kecamatan, kota]
-      );
+      await WargaModel.createProfile({
+        id_user: newUserId,
+        no_telp,
+        alamat,
+        rt,
+        rw,
+        kelurahan,
+        kecamatan,
+        kota
+      }, connection);
     } else if (role === 'mitra') {
-      await connection.query(
-        'INSERT INTO profiles_mitra (id_user, jenis_mitra, instansi_nama, wilayah_tugas, no_telp, alamat, kelurahan, kecamatan, kota) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-        [newUserId, jenis_mitra, instansi_nama || nama, wilayah_tugas, no_telp || null, alamat || null, kelurahan, kecamatan, kota]
-      );
+      await MitraModel.createProfile({
+        id_user: newUserId,
+        jenis_mitra,
+        instansi_nama: instansi_nama || nama,
+        wilayah_tugas,
+        no_telp,
+        alamat,
+        kelurahan,
+        kecamatan,
+        kota
+      }, connection);
     }
 
     await connection.commit();
@@ -170,11 +183,9 @@ exports.me = async (req, res, next) => {
     let profile = null;
 
     if (user.role === 'warga') {
-      const [wRows] = await pool.query('SELECT * FROM profiles_warga WHERE id_user = ?', [user.id_user]);
-      if (wRows.length > 0) profile = wRows[0];
+      profile = await WargaModel.findByUserId(user.id_user);
     } else if (user.role === 'mitra') {
-      const [mRows] = await pool.query('SELECT * FROM profiles_mitra WHERE id_user = ?', [user.id_user]);
-      if (mRows.length > 0) profile = mRows[0];
+      profile = await MitraModel.findByUserId(user.id_user);
     }
 
     res.json({

@@ -1,6 +1,6 @@
-const pool = require('../../database/pool');
 const { uploadToR2 } = require('../config/s3');
 const crypto = require('crypto');
+const { LaporanModel, MitraModel } = require('../models');
 
 /**
  * Generate unique public ticket code, e.g. LAPOR-2611-9A4B
@@ -61,12 +61,7 @@ exports.createIllegalReport = async (req, res, next) => {
     // Check if Satgas partner exists to auto-assign
     let mitraId = null;
     try {
-      const [mitraRows] = await pool.query(
-        'SELECT id_mitra FROM profiles_mitra WHERE (jenis_mitra = "satgas_lapangan" OR jenis_mitra = "pemerintah") LIMIT 1'
-      );
-      if (mitraRows.length > 0) {
-        mitraId = mitraRows[0].id_mitra;
-      }
+      mitraId = await MitraModel.findFirstByRole(['satgas_lapangan', 'pemerintah']);
     } catch (e) {
       // Non-blocking lookup
     }
@@ -77,8 +72,8 @@ exports.createIllegalReport = async (req, res, next) => {
 
     // Guarantee uniqueness
     while (!isUnique && attempts < 5) {
-      const [existing] = await pool.query('SELECT id_laporan FROM laporan_sampah_ilegal WHERE kode_tiket = ?', [kodeTiket]);
-      if (existing.length === 0) {
+      const exists = await LaporanModel.ticketExists(kodeTiket);
+      if (!exists) {
         isUnique = true;
       } else {
         kodeTiket = generateTicketCode();
@@ -86,45 +81,34 @@ exports.createIllegalReport = async (req, res, next) => {
       }
     }
 
-    const insertSql = `
-      INSERT INTO laporan_sampah_ilegal 
-      (kode_tiket, id_user, id_mitra_penangan, nama_pelapor, nomor_kontak, client_device_id, deskripsi_kejadian, foto_bukti_url, video_bukti_url, alamat_lokasi, rt, rw, kota, kecamatan, kelurahan, latitude, longitude, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MENUNGGU_VERIFIKASI')
-    `;
-
     const userId = req.user ? req.user.id_user : null;
 
-    const [result] = await pool.query(insertSql, [
-      kodeTiket,
-      userId,
-      mitraId,
+    const createdReport = await LaporanModel.create({
+      kode_tiket: kodeTiket,
+      id_user: userId,
+      id_mitra_penangan: mitraId,
       nama_pelapor,
       nomor_kontak,
-      client_device_id || null,
+      client_device_id: client_device_id || null,
       deskripsi_kejadian,
-      fotoUrl,
-      videoUrl,
+      foto_bukti_url: fotoUrl,
+      video_bukti_url: videoUrl,
       alamat_lokasi,
       rt,
       rw,
       kota,
       kecamatan,
       kelurahan,
-      parseFloat(latitude),
-      parseFloat(longitude)
-    ]);
+      latitude,
+      longitude,
+      status: 'MENUNGGU_VERIFIKASI'
+    });
 
     res.status(201).json({
       success: true,
       message: 'Laporan sampah liar berhasil dikirim. Simpan kode tiket Anda untuk memantau status penanganan.',
       kode_tiket: kodeTiket,
-      data: {
-        id_laporan: result.insertId,
-        kode_tiket: kodeTiket,
-        status: 'MENUNGGU_VERIFIKASI',
-        foto_bukti_url: fotoUrl,
-        created_at: new Date()
-      }
+      data: createdReport
     });
 
   } catch (error) {
@@ -144,57 +128,16 @@ exports.lookupTicket = async (req, res, next) => {
       });
     }
 
-    const reportSql = `
-      SELECT 
-        l.id_laporan,
-        l.kode_tiket,
-        l.nama_pelapor,
-        l.nomor_kontak,
-        l.deskripsi_kejadian,
-        l.foto_bukti_url,
-        l.video_bukti_url,
-        l.alamat_lokasi,
-        l.kota,
-        l.kecamatan,
-        l.kelurahan,
-        l.latitude,
-        l.longitude,
-        l.status,
-        l.created_at,
-        l.updated_at,
-        m.instansi_nama AS penanggung_jawab_dlh,
-        m.no_telp AS kontak_dlh
-      FROM laporan_sampah_ilegal l
-      LEFT JOIN profiles_mitra m ON l.id_mitra_penangan = m.id_mitra
-      WHERE l.kode_tiket = ?
-    `;
+    const report = await LaporanModel.findByTicketCode(kodeTiket);
 
-    const [reports] = await pool.query(reportSql, [kodeTiket]);
-
-    if (reports.length === 0) {
+    if (!report) {
       return res.status(404).json({
         success: false,
         message: `Tiket "${kodeTiket}" tidak ditemukan. Pastikan format penulisan sesuai (contoh: LAPOR-2611-8921).`
       });
     }
 
-    const report = reports[0];
-
-    // Fetch timeline updates (tindak lanjut by DLH)
-    const timelineSql = `
-      SELECT 
-        t.id_tindak_lanjut,
-        t.keterangan_tindakan,
-        t.foto_bukti_penanganan_url,
-        t.created_at,
-        m.instansi_nama AS dilakukan_oleh
-      FROM tindak_lanjut_aduan t
-      JOIN profiles_mitra m ON t.id_mitra = m.id_mitra
-      WHERE t.id_laporan = ?
-      ORDER BY t.created_at ASC
-    `;
-
-    const [timeline] = await pool.query(timelineSql, [report.id_laporan]);
+    const timeline = await MitraModel.getTimelineByReportId(report.id_laporan);
 
     res.json({
       success: true,
@@ -212,31 +155,7 @@ exports.lookupTicket = async (req, res, next) => {
 exports.getMapReports = async (req, res, next) => {
   try {
     const { kota } = req.query;
-    let sql = `
-      SELECT 
-        id_laporan,
-        kode_tiket,
-        deskripsi_kejadian,
-        foto_bukti_url,
-        alamat_lokasi,
-        kota,
-        kecamatan,
-        latitude,
-        longitude,
-        status,
-        created_at
-      FROM laporan_sampah_ilegal
-    `;
-    const params = [];
-
-    if (kota) {
-      sql += ' WHERE LOWER(kota) = LOWER(?)';
-      params.push(kota);
-    }
-
-    sql += ' ORDER BY created_at DESC LIMIT 50';
-
-    const [rows] = await pool.query(sql, params);
+    const rows = await LaporanModel.getMapReports({ kota, limit: 50 });
 
     res.json({
       success: true,

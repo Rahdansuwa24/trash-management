@@ -1,6 +1,7 @@
 const pool = require('../../database/pool');
 const { uploadToR2 } = require('../config/s3');
 const crypto = require('crypto');
+const { KatalogModel, TransaksiModel, WargaModel } = require('../models');
 
 function generateTransactionCode() {
   const now = new Date();
@@ -12,9 +13,7 @@ function generateTransactionCode() {
 
 exports.getCategories = async (req, res, next) => {
   try {
-    const [rows] = await pool.query(
-      'SELECT id_kategori, nama_kategori, poin_per_kg, estimasi_harga_per_kg, deskripsi FROM kategori_sampah WHERE is_active = 1 ORDER BY id_kategori ASC'
-    );
+    const rows = await TransaksiModel.getCategories();
     res.json({
       success: true,
       total: rows.length,
@@ -57,14 +56,13 @@ exports.createTransaction = async (req, res, next) => {
     }
 
     // Verify category exists
-    const [catRows] = await pool.query('SELECT poin_per_kg, nama_kategori FROM kategori_sampah WHERE id_kategori = ? AND is_active = 1', [id_kategori]);
-    if (catRows.length === 0) {
+    const category = await TransaksiModel.findCategoryById(id_kategori);
+    if (!category) {
       return res.status(404).json({
         success: false,
         message: 'Kategori sampah tidak ditemukan atau tidak aktif.'
       });
     }
-    const category = catRows[0];
     const estimatedPoints = Math.floor(berat * category.poin_per_kg);
 
     // Identify citizen profile from authenticated user
@@ -77,9 +75,9 @@ exports.createTransaction = async (req, res, next) => {
 
     let idWarga = null;
     if (req.user && req.user.id_user) {
-      const [wargaRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);
-      if (wargaRows.length > 0) {
-        idWarga = wargaRows[0].id_warga;
+      const wargaProfile = await WargaModel.findByUserId(req.user.id_user);
+      if (wargaProfile) {
+        idWarga = wargaProfile.id_warga;
       }
     }
 
@@ -98,8 +96,8 @@ exports.createTransaction = async (req, res, next) => {
     let attempts = 0;
 
     while (!isUnique && attempts < 5) {
-      const [existing] = await pool.query('SELECT id_transaksi FROM transaksi_sampah_komersil WHERE kode_transaksi = ?', [kodeTrx]);
-      if (existing.length === 0) {
+      const exists = await TransaksiModel.transactionCodeExists(kodeTrx);
+      if (!exists) {
         isUnique = true;
       } else {
         kodeTrx = generateTransactionCode();
@@ -107,36 +105,31 @@ exports.createTransaction = async (req, res, next) => {
       }
     }
 
-    const insertSql = `
-      INSERT INTO transaksi_sampah_komersil 
-      (kode_transaksi, id_warga, id_mitra, id_kategori, estimasi_berat_kg, total_poin_diperoleh, foto_sampah_url, alamat_jemput, rt, rw, kota, kecamatan, latitude, longitude, catatan_warga, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'MENUNGGU_PENJEMPUTAN')
-    `;
-
-    const [result] = await pool.query(insertSql, [
-      kodeTrx,
-      idWarga,
-      id_mitra || null,
+    const createdTrx = await TransaksiModel.create({
+      kode_transaksi: kodeTrx,
+      id_warga: idWarga,
+      id_mitra: id_mitra || null,
       id_kategori,
-      berat,
-      estimatedPoints,
-      fotoUrl,
+      estimasi_berat_kg: berat,
+      total_poin_diperoleh: estimatedPoints,
+      foto_sampah_url: fotoUrl,
       alamat_jemput,
       rt,
       rw,
       kota,
       kecamatan,
-      latitude ? parseFloat(latitude) : null,
-      longitude ? parseFloat(longitude) : null,
-      catatan_warga || null
-    ]);
+      latitude,
+      longitude,
+      catatan_warga,
+      status: 'MENUNGGU_PENJEMPUTAN'
+    });
 
     res.status(201).json({
       success: true,
       message: 'Pengajuan setor sampah berhasil dibuat. Petugas bank sampah unit akan menjadwalkan penimbangan.',
       kode_transaksi: kodeTrx,
       data: {
-        id_transaksi: result.insertId,
+        id_transaksi: createdTrx.id_transaksi,
         kode_transaksi: kodeTrx,
         kategori: category.nama_kategori,
         estimasi_berat_kg: berat,
@@ -155,8 +148,8 @@ exports.getMyTransactions = async (req, res, next) => {
     let idWarga = null;
 
     if (req.user && req.user.id_user) {
-      const [wRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);
-      if (wRows.length > 0) idWarga = wRows[0].id_warga;
+      const profile = await WargaModel.findByUserId(req.user.id_user);
+      if (profile) idWarga = profile.id_warga;
     }
 
     if (!idWarga) {
@@ -167,28 +160,7 @@ exports.getMyTransactions = async (req, res, next) => {
       });
     }
 
-    const sql = `
-      SELECT 
-        t.id_transaksi,
-        t.kode_transaksi,
-        k.nama_kategori,
-        t.estimasi_berat_kg,
-        t.berat_aktual_kg,
-        t.total_poin_diperoleh,
-        t.foto_sampah_url,
-        t.alamat_jemput,
-        t.status,
-        t.tanggal_transaksi,
-        t.tanggal_selesai,
-        m.instansi_nama AS nama_mitra
-      FROM transaksi_sampah_komersil t
-      JOIN kategori_sampah k ON t.id_kategori = k.id_kategori
-      LEFT JOIN profiles_mitra m ON t.id_mitra = m.id_mitra
-      WHERE t.id_warga = ?
-      ORDER BY t.tanggal_transaksi DESC
-    `;
-
-    const [rows] = await pool.query(sql, [idWarga]);
+    const rows = await TransaksiModel.findByCitizen(idWarga);
 
     res.json({
       success: true,
@@ -205,8 +177,8 @@ exports.getPointsAndHistory = async (req, res, next) => {
   try {
     let idWarga = null;
     if (req.user && req.user.id_user) {
-      const [wRows] = await pool.query('SELECT id_warga FROM profiles_warga WHERE id_user = ?', [req.user.id_user]);
-      if (wRows.length > 0) idWarga = wRows[0].id_warga;
+      const profile = await WargaModel.findByUserId(req.user.id_user);
+      if (profile) idWarga = profile.id_warga;
     }
 
     if (!idWarga) {
@@ -219,13 +191,8 @@ exports.getPointsAndHistory = async (req, res, next) => {
       });
     }
 
-    const [profileRows] = await pool.query('SELECT total_poin FROM profiles_warga WHERE id_warga = ?', [idWarga]);
-    const totalPoin = profileRows.length > 0 ? profileRows[0].total_poin : 0;
-
-    const [historyRows] = await pool.query(
-      'SELECT id_riwayat, perubahan_poin, tipe, keterangan, created_at FROM riwayat_poin WHERE id_warga = ? ORDER BY created_at DESC LIMIT 20',
-      [idWarga]
-    );
+    const totalPoin = await WargaModel.getPoints(idWarga);
+    const historyRows = await WargaModel.getPointsHistory(idWarga, 20);
 
     res.json({
       success: true,
@@ -242,9 +209,7 @@ exports.getPointsAndHistory = async (req, res, next) => {
 
 exports.getKatalog = async (req, res, next) => {
   try {
-    const [rows] = await pool.query(
-      'SELECT id_katalog, kode_item, judul, biaya_poin, nilai_rupiah, kategori_badge, icon_name, deskripsi, stok FROM katalog_penukaran WHERE is_active = 1 ORDER BY biaya_poin ASC'
-    );
+    const rows = await KatalogModel.getActive();
     res.json({
       success: true,
       total: rows.length,
@@ -276,12 +241,9 @@ exports.redeemReward = async (req, res, next) => {
     await connection.beginTransaction();
 
     // 1. Ambil profil warga dengan row-level lock
-    const [wargaRows] = await connection.query(
-      'SELECT id_warga, total_poin FROM profiles_warga WHERE id_user = ? FOR UPDATE',
-      [req.user.id_user]
-    );
+    const warga = await WargaModel.findByUserIdWithLock(req.user.id_user, connection);
 
-    if (wargaRows.length === 0) {
+    if (!warga) {
       await connection.rollback();
       return res.status(404).json({
         success: false,
@@ -289,23 +251,16 @@ exports.redeemReward = async (req, res, next) => {
       });
     }
 
-    const warga = wargaRows[0];
-
     // 2. Ambil item katalog dengan lock
-    const [itemRows] = await connection.query(
-      'SELECT id_katalog, judul, biaya_poin, nilai_rupiah, stok, is_active FROM katalog_penukaran WHERE id_katalog = ? FOR UPDATE',
-      [id_katalog]
-    );
+    const item = await KatalogModel.findByIdWithLock(id_katalog, connection);
 
-    if (itemRows.length === 0 || !itemRows[0].is_active) {
+    if (!item || !item.is_active) {
       await connection.rollback();
       return res.status(404).json({
         success: false,
         message: 'Item penukaran tidak ditemukan atau sedang tidak aktif.'
       });
     }
-
-    const item = itemRows[0];
 
     if (item.stok <= 0) {
       await connection.rollback();
@@ -325,22 +280,18 @@ exports.redeemReward = async (req, res, next) => {
 
     // 3. Potong saldo poin warga dan kurangi stok
     const newTotalPoin = warga.total_poin - item.biaya_poin;
-    await connection.query(
-      'UPDATE profiles_warga SET total_poin = ? WHERE id_warga = ?',
-      [newTotalPoin, warga.id_warga]
-    );
-
-    await connection.query(
-      'UPDATE katalog_penukaran SET stok = GREATEST(0, stok - 1) WHERE id_katalog = ?',
-      [item.id_katalog]
-    );
+    await WargaModel.updatePoints(warga.id_warga, newTotalPoin, connection);
+    await KatalogModel.decrementStock(item.id_katalog, 1, connection);
 
     // 4. Catat mutasi penukaran ke buku besar riwayat_poin
     const keterangan = `Klaim Penukaran ${item.judul} (${item.nilai_rupiah})`;
-    const [historyResult] = await connection.query(
-      'INSERT INTO riwayat_poin (id_warga, id_transaksi, perubahan_poin, tipe, keterangan) VALUES (?, NULL, ?, "REDEEM_REWARD", ?)',
-      [warga.id_warga, -item.biaya_poin, keterangan]
-    );
+    const historyResult = await WargaModel.addPointsLedger({
+      id_warga: warga.id_warga,
+      id_transaksi: null,
+      perubahan_poin: -item.biaya_poin,
+      tipe: 'REDEEM_REWARD',
+      keterangan
+    }, connection);
 
     await connection.commit();
 
@@ -348,7 +299,7 @@ exports.redeemReward = async (req, res, next) => {
       success: true,
       message: `Berhasil menukarkan ${item.biaya_poin} Poin dengan ${item.judul}!`,
       data: {
-        id_riwayat: historyResult.insertId,
+        id_riwayat: historyResult.id_riwayat,
         id_katalog: item.id_katalog,
         judul: item.judul,
         biaya_poin: item.biaya_poin,
@@ -364,5 +315,3 @@ exports.redeemReward = async (req, res, next) => {
     connection.release();
   }
 };
-
-
