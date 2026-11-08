@@ -11,6 +11,7 @@ router.get('/reports', mitraController.getAssignedReports);
 router.post('/reports/:id/action', uploadSingle('file_foto_tindakan'), mitraController.submitCleanupAction);
 
 router.get('/pickups', mitraController.getWasteBankPickups);
+router.put('/pickups/:id/claim', mitraController.claimPickup);
 router.put('/transactions/:id/complete', mitraController.completeTransaction);
 
 module.exports = router;

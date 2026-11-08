@@ -41,7 +41,10 @@ export const api = {
   // Waste Bank (Warga)
   getCategories: () => request('/warga/categories'),
   getKatalog: () => request('/warga/katalog'),
-  redeemReward: (id_katalog) => request('/warga/katalog/redeem', { method: 'POST', body: JSON.stringify({ id_katalog }) }),
+  redeemReward: (id_katalog) => request('/warga/katalog/claim', { method: 'POST', body: JSON.stringify({ id_katalog }) }),
+  claimReward: (id_katalog) => request('/warga/katalog/claim', { method: 'POST', body: JSON.stringify({ id_katalog }) }),
+  getMyClaims: () => request('/warga/claims'),
+  simulateAddPoints: (poin = 100) => request('/warga/simulation/add-points', { method: 'POST', body: JSON.stringify({ poin }) }),
   submitWasteTransaction: (formData) => request('/warga/transactions', { method: 'POST', body: formData }),
   getMyTransactions: () => request('/warga/transactions'),
   getPointsHistory: () => request('/warga/points'),
@@ -50,6 +53,7 @@ export const api = {
   getMitraReports: (params = '') => request(`/mitra/reports${params}`),
   submitCleanupAction: (id, formData) => request(`/mitra/reports/${id}/action`, { method: 'POST', body: formData }),
   getWastePickups: (params = '') => request(`/mitra/pickups${params}`),
+  claimPickup: (id) => request(`/mitra/pickups/${id}/claim`, { method: 'PUT' }),
   completePickup: (id, payload) => request(`/mitra/transactions/${id}/complete`, { method: 'PUT', body: JSON.stringify(payload) }),
 
   // Auth
@@ -65,5 +69,7 @@ export const api = {
   createAdminKatalog: (payload) => request('/admin/katalog', { method: 'POST', body: JSON.stringify(payload) }),
   updateAdminKatalog: (id, payload) => request(`/admin/katalog/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
   toggleAdminKatalogStatus: (id) => request(`/admin/katalog/${id}/toggle`, { method: 'PATCH' }),
-  deleteAdminKatalog: (id) => request(`/admin/katalog/${id}`, { method: 'DELETE' })
+  deleteAdminKatalog: (id) => request(`/admin/katalog/${id}`, { method: 'DELETE' }),
+  getAdminClaims: (params = '') => request(`/admin/claims${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
+  verifyAdminClaim: (id, payload) => request(`/admin/claims/${id}/verify`, { method: 'PUT', body: JSON.stringify(payload) })
 };

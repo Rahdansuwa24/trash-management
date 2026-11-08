@@ -118,7 +118,7 @@ CREATE TABLE `riwayat_poin` (
   `id_warga` INT NOT NULL,
   `id_transaksi` INT NULL,
   `perubahan_poin` INT NOT NULL,
-  `tipe` ENUM('EARN_TRANSAKSI', 'REDEEM_REWARD', 'PENYESUAIAN_ADMIN') NOT NULL,
+  `tipe` ENUM('EARN_TRANSAKSI', 'REDEEM_REWARD', 'PENYESUAIAN_ADMIN', 'REFUND_KLAIM') NOT NULL,
   `keterangan` VARCHAR(255) NOT NULL,
   `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_riwayat`),
@@ -210,6 +210,31 @@ CREATE TABLE `katalog_penukaran` (
   INDEX `idx_katalog_active` (`is_active`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- 11. Tabel: klaim_penukaran_poin (Klaim Voucher Sembako / Insentif Warga)
+DROP TABLE IF EXISTS `klaim_penukaran_poin`;
+CREATE TABLE `klaim_penukaran_poin` (
+  `id_klaim` INT NOT NULL AUTO_INCREMENT,
+  `kode_klaim` VARCHAR(30) NOT NULL UNIQUE,
+  `id_warga` INT NOT NULL,
+  `id_katalog` INT NOT NULL,
+  `biaya_poin` INT NOT NULL,
+  `nilai_rupiah` VARCHAR(50) NOT NULL,
+  `status_klaim` ENUM(
+    'MENUNGGU_VERIFIKASI', 
+    'DISETUJUI_SIAP_AMBIL', 
+    'SELESAI_DISERAHKAN', 
+    'DITOLAK_BATAL'
+  ) NOT NULL DEFAULT 'MENUNGGU_VERIFIKASI',
+  `catatan_admin` TEXT NULL,
+  `tanggal_pengajuan` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `tanggal_verifikasi` TIMESTAMP NULL,
+  PRIMARY KEY (`id_klaim`),
+  INDEX `idx_klaim_warga` (`id_warga`),
+  INDEX `idx_klaim_status` (`status_klaim`),
+  CONSTRAINT `fk_klaim_warga` FOREIGN KEY (`id_warga`) REFERENCES `profiles_warga` (`id_warga`) ON DELETE CASCADE,
+  CONSTRAINT `fk_klaim_katalog` FOREIGN KEY (`id_katalog`) REFERENCES `katalog_penukaran` (`id_katalog`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ==============================================================================
@@ -247,7 +272,7 @@ INSERT INTO `profiles_mitra` (`id_mitra`, `id_user`, `jenis_mitra`, `instansi_na
 -- 5. Contoh Transaksi Bank Sampah (Uji Selesai & Uji Baru)
 INSERT INTO `transaksi_sampah_komersil` (`id_transaksi`, `kode_transaksi`, `id_warga`, `id_mitra`, `id_kategori`, `estimasi_berat_kg`, `berat_aktual_kg`, `total_poin_diperoleh`, `foto_sampah_url`, `alamat_jemput`, `rt`, `rw`, `kecamatan`, `kota`, `status`, `tanggal_transaksi`, `tanggal_selesai`) VALUES
 (1, 'TRX-2611-A101', 1, 2, 1, 10.00, 10.00, 150, 'https://placehold.co/600x400/png?text=10+Kg+Botol+Plastik', 'Jl. Kenanga No. 14, RT 03 / RW 05', '03', '05', 'Rungkut', 'Surabaya', 'SELESAI', NOW() - INTERVAL 2 DAY, NOW() - INTERVAL 1 DAY),
-(2, 'TRX-2611-B202', 2, 2, 2, 12.00, NULL, 0, 'https://placehold.co/600x400/png?text=Kardus+Menumpuk', 'Jl. Melati No. 8, RT 02 / RW 05', '02', '05', 'Rungkut', 'Surabaya', 'MENUNGGU_PENJEMPUTAN', NOW() - INTERVAL 3 HOUR, NULL);
+(2, 'TRX-2611-B202', 2, NULL, 2, 12.00, NULL, 0, 'https://placehold.co/600x400/png?text=Kardus+Menumpuk', 'Jl. Melati No. 8, RT 02 / RW 05', '02', '05', 'Rungkut', 'Surabaya', 'MENUNGGU_PENJEMPUTAN', NOW() - INTERVAL 3 HOUR, NULL);
 
 -- 6. Riwayat Mutasi Poin Warga (Ledger)
 INSERT INTO `riwayat_poin` (`id_warga`, `id_transaksi`, `perubahan_poin`, `tipe`, `keterangan`) VALUES
@@ -279,4 +304,9 @@ INSERT INTO `katalog_penukaran` (`id_katalog`, `kode_item`, `judul`, `biaya_poin
 (3, 'beras_warga', 'Beras Premium 2.5 Kg di Balai RT', 175, 'Rp 35.000', 'Beras Warga', 'Wheat', 'Beras putih premium kemasan 2.5 kg bersertifikat, disubsidi dari kas hasil daur ulang bank sampah.', 35, 1),
 (4, 'paket_sembako_berkah', 'Paket Sembako Lengkap (Beras + Minyak + Gula)', 250, 'Rp 50.000', 'Paket Berkah', 'ShoppingBasket', 'Paket komplit: Beras Premium 2.5 kg, Minyak Goreng 1L, dan Gula Pasir 1 kg. Diambil saat penimbangan bulanan.', 20, 1),
 (5, 'kas_tunai', 'Pencairan Kas Tabungan Tunai', 50, 'Rp 10.000 (Kelipatan)', 'Kas Tunai', 'Wallet', 'Pencairan saldo tabungan daur ulang dalam bentuk uang tunai langsung saat rapat RT bulanan.', 999, 1);
+
+-- 10. Klaim Penukaran Poin Warga (Pending Verification Demo)
+INSERT INTO `klaim_penukaran_poin` (`id_klaim`, `kode_klaim`, `id_warga`, `id_katalog`, `biaya_poin`, `nilai_rupiah`, `status_klaim`, `catatan_admin`, `tanggal_pengajuan`) VALUES
+(1, 'KLAIM-2611-B901', 1, 2, 100, 'Rp 20.000', 'MENUNGGU_VERIFIKASI', NULL, NOW() - INTERVAL 2 HOUR);
+
 

@@ -18,4 +18,8 @@ router.put('/katalog/:id', adminController.updateKatalog);
 router.patch('/katalog/:id/toggle', adminController.toggleKatalogStatus);
 router.delete('/katalog/:id', adminController.deleteKatalog);
 
+// Klaim Penukaran Sembako Warga
+router.get('/claims', adminController.getClaims);
+router.put('/claims/:id/verify', adminController.verifyClaim);
+
 module.exports = router;

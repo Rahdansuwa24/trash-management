@@ -1,7 +1,7 @@
 const pool = require('../../database/pool');
 const { uploadToR2 } = require('../config/s3');
 const crypto = require('crypto');
-const { KatalogModel, TransaksiModel, WargaModel } = require('../models');
+const { KatalogModel, TransaksiModel, WargaModel, KlaimModel } = require('../models');
 
 function generateTransactionCode() {
   const now = new Date();
@@ -9,6 +9,14 @@ function generateTransactionCode() {
   const month = String(now.getMonth() + 1).padStart(2, '0');
   const randomChars = crypto.randomBytes(2).toString('hex').toUpperCase();
   return `TRX-${year}${month}-${randomChars}`;
+}
+
+function generateClaimCode() {
+  const now = new Date();
+  const year = String(now.getFullYear()).slice(-2);
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const randomChars = crypto.randomBytes(2).toString('hex').toUpperCase();
+  return `KLAIM-${year}${month}-${randomChars}`;
 }
 
 exports.getCategories = async (req, res, next) => {
@@ -220,7 +228,7 @@ exports.getKatalog = async (req, res, next) => {
   }
 };
 
-exports.redeemReward = async (req, res, next) => {
+exports.claimReward = async (req, res, next) => {
   const connection = await pool.getConnection();
   try {
     if (!req.user || req.user.role !== 'warga') {
@@ -278,13 +286,36 @@ exports.redeemReward = async (req, res, next) => {
       });
     }
 
-    // 3. Potong saldo poin warga dan kurangi stok
+    // 3. Potong saldo poin warga (stok fisik dipotong saat serah terima oleh pengurus/admin)
     const newTotalPoin = warga.total_poin - item.biaya_poin;
     await WargaModel.updatePoints(warga.id_warga, newTotalPoin, connection);
-    await KatalogModel.decrementStock(item.id_katalog, 1, connection);
 
-    // 4. Catat mutasi penukaran ke buku besar riwayat_poin
-    const keterangan = `Klaim Penukaran ${item.judul} (${item.nilai_rupiah})`;
+    // 4. Generate unique claim code
+    let kodeKlaim = generateClaimCode();
+    let isUnique = false;
+    let attempts = 0;
+    while (!isUnique && attempts < 5) {
+      const exists = await KlaimModel.claimCodeExists(kodeKlaim, connection);
+      if (!exists) {
+        isUnique = true;
+      } else {
+        kodeKlaim = generateClaimCode();
+        attempts++;
+      }
+    }
+
+    // 5. Catat pengajuan klaim ke tabel klaim_penukaran_poin
+    const createdClaim = await KlaimModel.create({
+      kode_klaim: kodeKlaim,
+      id_warga: warga.id_warga,
+      id_katalog: item.id_katalog,
+      biaya_poin: item.biaya_poin,
+      nilai_rupiah: item.nilai_rupiah,
+      status_klaim: 'MENUNGGU_VERIFIKASI'
+    }, connection);
+
+    // 6. Catat mutasi penukaran ke buku besar riwayat_poin
+    const keterangan = `Klaim Voucher ${item.judul} (${kodeKlaim})`;
     const historyResult = await WargaModel.addPointsLedger({
       id_warga: warga.id_warga,
       id_transaksi: null,
@@ -297,13 +328,16 @@ exports.redeemReward = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: `Berhasil menukarkan ${item.biaya_poin} Poin dengan ${item.judul}!`,
+      message: `Berhasil mengajukan penukaran ${item.biaya_poin} Poin dengan ${item.judul}! Tunjukkan kode klaim ke pengurus Balai RT saat pengambilan.`,
       data: {
+        id_klaim: createdClaim.id_klaim,
+        kode_klaim: kodeKlaim,
         id_riwayat: historyResult.id_riwayat,
         id_katalog: item.id_katalog,
         judul: item.judul,
         biaya_poin: item.biaya_poin,
         nilai_rupiah: item.nilai_rupiah,
+        status_klaim: 'MENUNGGU_VERIFIKASI',
         sisa_poin: newTotalPoin,
         keterangan
       }
@@ -313,5 +347,79 @@ exports.redeemReward = async (req, res, next) => {
     next(error);
   } finally {
     connection.release();
+  }
+};
+
+// Aliased for backward compatibility
+exports.redeemReward = exports.claimReward;
+
+exports.getMyClaims = async (req, res, next) => {
+  try {
+    let idWarga = null;
+    if (req.user && req.user.id_user) {
+      const profile = await WargaModel.findByUserId(req.user.id_user);
+      if (profile) idWarga = profile.id_warga;
+    }
+
+    if (!idWarga) {
+      return res.json({
+        success: true,
+        total: 0,
+        data: []
+      });
+    }
+
+    const claims = await KlaimModel.findByCitizen(idWarga);
+    res.json({
+      success: true,
+      total: claims.length,
+      data: claims
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.simulationAddPoints = async (req, res, next) => {
+  try {
+    if (!req.user || req.user.role !== 'warga') {
+      return res.status(403).json({
+        success: false,
+        message: 'Simulasi suntik poin hanya untuk pengujian akun warga.'
+      });
+    }
+
+    const profile = await WargaModel.findByUserId(req.user.id_user);
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil warga tidak ditemukan.'
+      });
+    }
+
+    const { poin = 100 } = req.body;
+    const poinToAdd = parseInt(poin, 10) || 100;
+
+    await WargaModel.addPoints(profile.id_warga, poinToAdd);
+    await WargaModel.addPointsLedger({
+      id_warga: profile.id_warga,
+      id_transaksi: null,
+      perubahan_poin: poinToAdd,
+      tipe: 'EARN_TRANSAKSI',
+      keterangan: `Simulasi Sandbox Pengujian (+${poinToAdd} Poin Uji Coba)`
+    });
+
+    const newTotal = await WargaModel.getPoints(profile.id_warga);
+
+    res.json({
+      success: true,
+      message: `Berhasil menambahkan +${poinToAdd} poin simulasi pengujian untuk demo fitur.`,
+      data: {
+        total_poin: newTotal,
+        added_poin: poinToAdd
+      }
+    });
+  } catch (error) {
+    next(error);
   }
 };

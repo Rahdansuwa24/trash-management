@@ -77,18 +77,27 @@ class TransaksiModel {
         t.id_transaksi,
         t.kode_transaksi,
         k.nama_kategori,
+        k.poin_per_kg,
         t.estimasi_berat_kg,
         t.berat_aktual_kg,
         t.total_poin_diperoleh,
         t.foto_sampah_url,
         t.alamat_jemput,
+        t.rt,
+        t.rw,
         t.status,
         t.tanggal_transaksi,
         t.tanggal_selesai,
-        m.instansi_nama AS nama_mitra
+        t.catatan_warga,
+        t.catatan_mitra,
+        t.id_mitra,
+        m.instansi_nama AS nama_mitra,
+        m.no_telp AS kontak_mitra,
+        u_mitra.nama AS nama_petugas
       FROM transaksi_sampah_komersil t
       JOIN kategori_sampah k ON t.id_kategori = k.id_kategori
       LEFT JOIN profiles_mitra m ON t.id_mitra = m.id_mitra
+      LEFT JOIN users u_mitra ON m.id_user = u_mitra.id_user
       WHERE t.id_warga = ?
       ORDER BY t.tanggal_transaksi DESC
     `;
@@ -105,19 +114,30 @@ class TransaksiModel {
         u.nama AS nama_warga,
         w.no_telp AS kontak_warga,
         k.nama_kategori,
+        k.poin_per_kg,
         t.estimasi_berat_kg,
         t.berat_aktual_kg,
         t.total_poin_diperoleh,
         t.alamat_jemput,
+        t.rt,
+        t.rw,
         t.kota,
         t.kecamatan,
         t.status,
         t.foto_sampah_url,
-        t.tanggal_transaksi
+        t.tanggal_transaksi,
+        t.catatan_warga,
+        t.catatan_mitra,
+        t.id_mitra,
+        m.instansi_nama AS nama_mitra,
+        m.no_telp AS kontak_mitra,
+        u_mitra.nama AS nama_petugas
       FROM transaksi_sampah_komersil t
       JOIN profiles_warga w ON t.id_warga = w.id_warga
       JOIN users u ON w.id_user = u.id_user
       JOIN kategori_sampah k ON t.id_kategori = k.id_kategori
+      LEFT JOIN profiles_mitra m ON t.id_mitra = m.id_mitra
+      LEFT JOIN users u_mitra ON m.id_user = u_mitra.id_user
       WHERE 1=1
     `;
     const params = [];
@@ -132,6 +152,16 @@ class TransaksiModel {
 
     const [rows] = await db.query(sql, params);
     return rows;
+  }
+
+  static async claimPickup(idTransaksi, idMitra, db = pool) {
+    const [result] = await db.query(
+      `UPDATE transaksi_sampah_komersil 
+       SET id_mitra = ?, status = 'DIKONFIRMASI_MITRA' 
+       WHERE id_transaksi = ? AND status = 'MENUNGGU_PENJEMPUTAN'`,
+      [idMitra, idTransaksi]
+    );
+    return result.affectedRows > 0;
   }
 
   static async findWithCategoryAndWarga(idTransaksi, db = pool) {

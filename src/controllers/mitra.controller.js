@@ -98,6 +98,60 @@ exports.getWasteBankPickups = async (req, res, next) => {
   }
 };
 
+exports.claimPickup = async (req, res, next) => {
+  try {
+    const idTransaksi = req.params.id;
+
+    let idMitra = req.user ? req.user.id_mitra : null;
+    if (!idMitra && req.user && req.user.id_user) {
+      const mitraProfile = await MitraModel.findByUserId(req.user.id_user);
+      if (mitraProfile) idMitra = mitraProfile.id_mitra;
+    }
+
+    if (!idMitra) {
+      return res.status(403).json({
+        success: false,
+        message: 'Akses ditolak. Profil mitra petugas tidak ditemukan.'
+      });
+    }
+
+    const trx = await TransaksiModel.findWithCategoryAndWarga(idTransaksi);
+    if (!trx) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data penjemputan sampah tidak ditemukan.'
+      });
+    }
+
+    if (trx.status !== 'MENUNGGU_PENJEMPUTAN') {
+      return res.status(400).json({
+        success: false,
+        message: `Tugas penjemputan ini tidak dapat diklaim (status: ${trx.status}). Tugas mungkin sudah diambil oleh petugas lain.`
+      });
+    }
+
+    const claimed = await TransaksiModel.claimPickup(idTransaksi, idMitra);
+    if (!claimed) {
+      return res.status(409).json({
+        success: false,
+        message: 'Tugas penjemputan ini baru saja diambil oleh petugas lain.'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Tugas penjemputan berhasil Anda klaim. Warga sekarang dapat melihat identitas penjemput Anda.',
+      data: {
+        id_transaksi: idTransaksi,
+        id_mitra: idMitra,
+        status: 'DIKONFIRMASI_MITRA'
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.completeTransaction = async (req, res, next) => {
   const connection = await pool.getConnection();
   try {

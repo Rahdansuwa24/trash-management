@@ -1,0 +1,159 @@
+import React from 'react';
+import { X, Printer, CheckCircle, Scale, Building2, QrCode } from 'lucide-react';
+
+export default function DigitalReceiptModal({ transaction, onClose }) {
+  if (!transaction) return null;
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }) + ' WIB';
+  };
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(
+    `TRASHMANAGE-VERIFIED:${transaction.kode_transaksi}:${transaction.berat_aktual_kg || transaction.estimasi_berat_kg}KG:${transaction.total_poin_diperoleh}PTS`
+  )}`;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl border border-slate-200 my-8">
+        {/* Top Control Bar (Hidden during print) */}
+        <div className="bg-slate-900 text-white px-6 py-3 flex justify-between items-center print:hidden">
+          <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
+            <Scale className="w-4 h-4 text-emerald-400" />
+            <span>Struk Bukti Penimbangan Digital Resmi</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handlePrint}
+              className="px-3 py-1.5 bg-civic-700 hover:bg-civic-600 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Cetak / PDF
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1 text-slate-400 hover:text-white rounded-lg transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Printable Receipt Paper Container */}
+        <div className="p-6 sm:p-8 space-y-6 text-slate-800 font-sans print:p-0">
+          {/* Header Lembaga */}
+          <div className="text-center border-b-2 border-slate-900 pb-4 space-y-1">
+            <div className="inline-flex items-center justify-center gap-1.5 text-xs font-bold text-civic-800 tracking-wider uppercase">
+              <Building2 className="w-4 h-4 text-civic-700" />
+              Sistem Pengelolaan Sampah Mandiri RW 05
+            </div>
+            <h2 className="text-xl font-extrabold text-slate-900 tracking-tight">
+              BANK SAMPAH UNIT KOMUNITAS
+            </h2>
+            <p className="text-xs text-slate-500">
+              Kelurahan Kalirungkut, Kecamatan Rungkut, Kota Surabaya
+            </p>
+            <p className="text-[11px] font-mono text-slate-400 pt-1">
+              Surat Tanda Terima & Nota Kredit Poin Tabungan Lingkungan
+            </p>
+          </div>
+
+          {/* Meta Transaksi */}
+          <div className="flex justify-between items-start text-xs border-b border-slate-200 pb-3">
+            <div className="space-y-1">
+              <p className="text-slate-500">Nomor Transaksi:</p>
+              <p className="font-mono font-bold text-sm text-slate-900">{transaction.kode_transaksi}</p>
+              <p className="text-slate-500 pt-1">Tanggal & Waktu:</p>
+              <p className="font-medium text-slate-800">{formatDate(transaction.tanggal_selesai || transaction.tanggal_transaksi)}</p>
+            </div>
+            <div className="text-right space-y-1">
+              <p className="text-slate-500">Petugas Penimbang:</p>
+              <p className="font-bold text-slate-900">{transaction.nama_mitra || 'Bank Sampah Unit RT 03'}</p>
+              <p className="text-slate-500 pt-1">Armada / Kontak:</p>
+              <p className="font-medium text-slate-800">{transaction.kontak_mitra || '0856-7890-1234'}</p>
+            </div>
+          </div>
+
+          {/* Rincian Penimbangan */}
+          <div className="space-y-2">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Rincian Penyetoran Sampah</h4>
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 space-y-2 text-xs">
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="font-semibold text-slate-700">Kategori Sampah Anorganik:</span>
+                <strong className="text-slate-900">{transaction.nama_kategori}</strong>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="text-slate-600">Estimasi Pengajuan Warga:</span>
+                <span className="text-slate-800">{transaction.estimasi_berat_kg} Kg</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-slate-200">
+                <span className="font-bold text-slate-900">Berat Timbangan Aktual (Sertifikasi):</span>
+                <span className="font-extrabold text-base text-slate-900">{transaction.berat_aktual_kg || transaction.estimasi_berat_kg} Kg</span>
+              </div>
+              <div className="flex justify-between py-1 pt-2">
+                <span className="font-semibold text-civic-800">Total Poin Tabungan Diperoleh:</span>
+                <span className="font-extrabold text-base text-emerald-600">+{transaction.total_poin_diperoleh} Poin</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lokasi Penjemputan & Catatan */}
+          <div className="text-xs text-slate-600 space-y-1 bg-slate-50 p-3 rounded-lg border border-slate-100">
+            <p className="font-semibold text-slate-800">Alamat Penyetor:</p>
+            <p>{transaction.alamat_jemput} (RT {transaction.rt || '03'} / RW {transaction.rw || '05'})</p>
+            {transaction.catatan_mitra && (
+              <p className="text-[11px] text-slate-500 italic pt-1 border-t border-slate-200 mt-1">
+                Catatan: {transaction.catatan_mitra}
+              </p>
+            )}
+          </div>
+
+          {/* QR Code & Tanda Tangan */}
+          <div className="flex items-center justify-between pt-2 border-t border-slate-200">
+            <div className="flex items-center gap-3">
+              <img
+                src={qrUrl}
+                alt="QR Code Verifikasi"
+                className="w-18 h-18 rounded-lg border border-slate-200 p-1 bg-white"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+              <div className="text-[11px] text-slate-500 leading-tight">
+                <p className="font-bold text-slate-800 flex items-center gap-1">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                  Terverifikasi Sah
+                </p>
+                <p>Poin telah tercatat di</p>
+                <p>Buku Besar Komunitas RW 05</p>
+              </div>
+            </div>
+
+            <div className="text-center text-[11px] text-slate-500 space-y-8 pr-2">
+              <p>Petugas Penimbang</p>
+              <p className="font-semibold text-slate-900 border-t border-slate-400 pt-0.5">
+                {transaction.nama_mitra || 'Pengurus Bank Sampah'}
+              </p>
+            </div>
+          </div>
+
+          <p className="text-[10px] text-center text-slate-400 pt-2 border-t border-slate-100">
+            Struk ini sah dan diterbitkan secara digital oleh Sistem Manajemen Sampah RW 05 Kalirungkut.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}

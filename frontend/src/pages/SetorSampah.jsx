@@ -2,18 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { compressImage } from '../utils/imageCompressor';
+import { compressAndWatermarkImage } from '../utils/imageCompressor';
 import TicketBadge from '../components/TicketBadge';
+import DigitalReceiptModal from '../components/DigitalReceiptModal';
 import { 
   Coins, PlusCircle, History, Package, ArrowRight, Loader2, CheckCircle, Scale, 
   LogIn, AlertCircle, Gift, Wallet, Receipt, ShoppingBag, CheckCircle2, Wheat, ShoppingBasket,
-  Building2
+  Building2, QrCode, Sparkles, UserCheck, Phone, Printer, Ticket
 } from 'lucide-react';
 
 export default function SetorSampah() {
   const { user, setLoginModalOpen } = useAuth();
 
-  const [activeTab, setActiveTab] = useState('setor'); // 'setor', 'tukar', or 'riwayat'
+  const [activeTab, setActiveTab] = useState('setor'); // 'setor', 'tukar', 'klaim', 'riwayat'
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState(null);
   const [weight, setWeight] = useState('');
@@ -28,12 +29,16 @@ export default function SetorSampah() {
   const [loading, setLoading] = useState(false);
   const [compressing, setCompressing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [simulating, setSimulating] = useState(false);
   const [successTrx, setSuccessTrx] = useState(null);
   const [redeemSuccess, setRedeemSuccess] = useState(null);
   const [errorMsg, setErrorMsg] = useState('');
+  const [simulationMsg, setSimulationMsg] = useState('');
 
   const [myTransactions, setMyTransactions] = useState([]);
+  const [myClaims, setMyClaims] = useState([]);
   const [pointsData, setPointsData] = useState({ total_poin: 0, history: [] });
+  const [selectedReceiptTrx, setSelectedReceiptTrx] = useState(null);
 
   const ICON_MAP = {
     Receipt,
@@ -46,7 +51,6 @@ export default function SetorSampah() {
     Package
   };
 
-  // Fallback awal katalog penukaran jika offline/sebelum API terhubung
   const defaultRedemptionCatalog = [
     {
       id: 'iuran_rt',
@@ -110,7 +114,6 @@ export default function SetorSampah() {
         setSelectedCat(catRes.data[0]);
       }
 
-      // Ambil katalog penukaran dinamis dari backend (yang dikelola admin)
       const katalogRes = await api.getKatalog().catch(() => null);
       if (katalogRes && katalogRes.data && katalogRes.data.length > 0) {
         const dynamicItems = katalogRes.data.map((item) => ({
@@ -132,9 +135,13 @@ export default function SetorSampah() {
 
         const ptRes = await api.getPointsHistory().catch(() => ({ data: { total_poin: 0, history: [] } }));
         setPointsData(ptRes.data || { total_poin: 0, history: [] });
+
+        const claimsRes = await api.getMyClaims().catch(() => ({ data: [] }));
+        setMyClaims(claimsRes.data || []);
       } else {
         setMyTransactions([]);
         setPointsData({ total_poin: 0, history: [] });
+        setMyClaims([]);
       }
     } catch (err) {
       console.warn('Initial data warning:', err.message);
@@ -143,12 +150,36 @@ export default function SetorSampah() {
     }
   };
 
+  const handleSimulationAddPoints = async () => {
+    if (!user) {
+      setLoginModalOpen(true);
+      return;
+    }
+    try {
+      setSimulating(true);
+      const res = await api.simulateAddPoints(100);
+      setSimulationMsg(res.message || 'Berhasil menambahkan +100 poin simulasi pengujian!');
+      setTimeout(() => setSimulationMsg(''), 4000);
+      await fetchInitialData();
+    } catch (err) {
+      alert(`Gagal simulasi poin: ${err.message}`);
+    } finally {
+      setSimulating(false);
+    }
+  };
+
   const handleFileChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       try {
         setCompressing(true);
-        const compressed = await compressImage(file, { maxWidth: 1280, quality: 0.8 });
+        // Watermark GPS & Timestamp langsung pada foto bukti setor
+        const compressed = await compressAndWatermarkImage(file, {
+          latitude: -7.318210,
+          longitude: 112.784530,
+          tag: 'SETOR SAMPAH WARGA',
+          wilayah: `RT ${user?.profile?.rt || '03'} / RW ${user?.profile?.rw || '05'} Kalirungkut`
+        }, { maxWidth: 1280, quality: 0.82 });
         setFotoFile(compressed);
         setPreviewUrl(URL.createObjectURL(compressed));
       } catch (err) {
@@ -220,23 +251,22 @@ export default function SetorSampah() {
       return;
     }
 
-    if (!window.confirm(`Konfirmasi penukaran ${item.cost} Poin untuk "${item.title}"? Saldo tabungan Anda akan langsung terpotong.`)) {
+    if (!window.confirm(`Konfirmasi penukaran ${item.cost} Poin untuk voucher "${item.title}"? Saldo Anda akan dipotong dan voucher digital akan diterbitkan untuk ditunjukkan ke Balai RT.`)) {
       return;
     }
 
     try {
       setRedeemingId(item.id);
-      await api.redeemReward(item.id);
-      setRedeemSuccess(item);
+      const res = await api.claimReward(item.id);
+      setRedeemSuccess(res.data || item);
       await fetchInitialData();
     } catch (err) {
-      alert(`Gagal menukarkan poin: ${err.message}`);
+      alert(`Gagal mengajukan penukaran poin: ${err.message}`);
     } finally {
       setRedeemingId(null);
     }
   };
 
-  // Mitra dialihkan ke Portal Petugas, dan Admin dialihkan ke Dashboard Admin (form setor sampah ditiadakan untuk non-warga)
   if (user?.role === 'mitra') {
     return <Navigate to="/mitra" replace />;
   }
@@ -246,7 +276,7 @@ export default function SetorSampah() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Header with Balance */}
+      {/* Header with Balance and Sandbox Helper */}
       <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
@@ -254,25 +284,53 @@ export default function SetorSampah() {
             Bank Sampah Unit RT/RW
           </h1>
           <p className="text-sm text-slate-600">
-            Setorkan sampah anorganik terpilah dari rumah dan tukarkan menjadi poin tabungan bernilai ekonomis.
+            Setorkan sampah anorganik terpilah dari rumah dan tukarkan menjadi poin tabungan sembako & iuran lingkungan.
           </p>
         </div>
 
-        <div className="p-4 bg-civic-50 border border-civic-200 rounded-xl flex items-center gap-3 self-stretch sm:self-auto">
-          <div className="w-10 h-10 rounded-lg bg-civic-700 text-white flex items-center justify-center font-bold">
-            <Coins className="w-5 h-5" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 self-stretch sm:self-auto">
+          {/* Point Balance */}
+          <div className="p-4 bg-civic-50 border border-civic-200 rounded-xl flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-civic-700 text-white flex items-center justify-center font-bold">
+              <Coins className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="text-[11px] font-semibold text-civic-800 uppercase tracking-wider block">
+                {user ? 'Saldo Poin Anda' : 'Saldo (Belum Masuk)'}
+              </span>
+              <span className="text-2xl font-extrabold text-civic-900 font-mono">
+                {user ? pointsData.total_poin.toLocaleString('id-ID') : '0'}{' '}
+                <span className="text-sm font-semibold">Poin</span>
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-[11px] font-semibold text-civic-800 uppercase tracking-wider block">
-              {user ? 'Saldo Poin Anda' : 'Saldo (Belum Masuk)'}
-            </span>
-            <span className="text-2xl font-extrabold text-civic-900 font-mono">
-              {user ? pointsData.total_poin.toLocaleString('id-ID') : '0'}{' '}
-              <span className="text-sm font-semibold">Poin</span>
-            </span>
-          </div>
+
+          {/* Sandbox Demo Button */}
+          {user && (
+            <button
+              type="button"
+              disabled={simulating}
+              onClick={handleSimulationAddPoints}
+              className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[44px]"
+              title="Suntik 100 poin simulasi pengujian cepat tanpa menunggu penimbangan fisik"
+            >
+              {simulating ? (
+                <Loader2 className="w-4 h-4 animate-spin text-amber-700" />
+              ) : (
+                <Sparkles className="w-4 h-4 text-amber-600" />
+              )}
+              +100 Poin Simulasi Demo
+            </button>
+          )}
         </div>
       </div>
+
+      {simulationMsg && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-900 text-xs sm:text-sm flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+          {simulationMsg}
+        </div>
+      )}
 
       {/* Auth Banner if not logged in */}
       {!user && (
@@ -294,33 +352,12 @@ export default function SetorSampah() {
         </div>
       )}
 
-      {/* Role Guidance Banner if logged in as Mitra */}
-      {user?.role === 'mitra' && (
-        <div className="p-5 bg-sky-50 border border-sky-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <Building2 className="w-6 h-6 text-sky-700 shrink-0 mt-0.5" />
-            <div>
-              <h4 className="text-sm font-bold text-sky-950">Anda Masuk Sebagai Akun Petugas ({user.nama})</h4>
-              <p className="text-xs text-sky-800 mt-0.5">
-                Akun petugas/mitra bertugas <strong>menerima dan memverifikasi timbangan</strong> setoran warga, bukan mengajukan setor sampah. Silakan gunakan Portal Petugas untuk memproses antrean penimbangan warga.
-              </p>
-            </div>
-          </div>
-          <Link
-            to="/mitra"
-            className="px-4 py-2.5 bg-sky-700 hover:bg-sky-800 text-white rounded-xl text-xs font-semibold shrink-0 min-h-[44px] flex items-center gap-1.5 transition-colors shadow-xs"
-          >
-            Buka Portal Petugas &rarr;
-          </Link>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="flex border-b border-slate-200 overflow-x-auto">
         <button
           type="button"
           onClick={() => setActiveTab('setor')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap ${
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
             activeTab === 'setor'
               ? 'border-civic-700 text-civic-800'
               : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -333,27 +370,40 @@ export default function SetorSampah() {
         <button
           type="button"
           onClick={() => setActiveTab('tukar')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap ${
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
             activeTab === 'tukar'
               ? 'border-civic-700 text-civic-800'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <Gift className="w-4 h-4" />
-          Tukar Poin Tabungan ({catalogItems.length} Pilihan)
+          Tukar Sembako ({catalogItems.length})
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('klaim')}
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
+            activeTab === 'klaim'
+              ? 'border-civic-700 text-civic-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <Ticket className="w-4 h-4" />
+          Voucher Klaim Saya ({myClaims.length})
         </button>
 
         <button
           type="button"
           onClick={() => setActiveTab('riwayat')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap ${
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
             activeTab === 'riwayat'
               ? 'border-civic-700 text-civic-800'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <History className="w-4 h-4" />
-          Buku Besar Mutasi ({myTransactions.length})
+          Riwayat Setoran ({myTransactions.length})
         </button>
       </div>
 
@@ -370,7 +420,7 @@ export default function SetorSampah() {
                   <strong className="font-mono text-sm underline">{successTrx.kode_transaksi}</strong>
                 </p>
                 <p className="text-xs text-emerald-700 mt-2">
-                  Petugas unit bank sampah akan menjadwalkan penimbangan di alamat Anda.
+                  Petugas unit bank sampah akan segera mengonfirmasi dan menjadwalkan penjemputan di alamat Anda.
                 </p>
               </div>
               <button
@@ -382,7 +432,7 @@ export default function SetorSampah() {
                   setFotoFile(null);
                   setPreviewUrl(null);
                 }}
-                className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold hover:bg-emerald-800 min-h-[40px]"
+                className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold hover:bg-emerald-800 min-h-[40px] cursor-pointer"
               >
                 Buat Pengajuan Baru
               </button>
@@ -395,29 +445,7 @@ export default function SetorSampah() {
             </div>
           )}
 
-          {user?.role === 'mitra' ? (
-            <div className="bg-white p-8 sm:p-12 rounded-2xl border border-slate-200 shadow-sm text-center space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-sky-50 text-sky-700 flex items-center justify-center mx-auto">
-                <Scale className="w-7 h-7" />
-              </div>
-              <div className="space-y-1">
-                <h3 className="text-lg font-bold text-slate-900">Formulir Setor Ini Khusus Nasabah / Warga Lingkungan</h3>
-                <p className="text-xs sm:text-sm text-slate-600 max-w-lg mx-auto">
-                  Akun Anda terdaftar sebagai <strong>{user.nama} (Peran: Petugas / Mitra)</strong>. Peran Anda dalam ekosistem ini adalah sebagai <strong>penerima</strong> yang bertugas menimbang berat sampah fisik dan menerbitkan poin tabungan bagi warga.
-                </p>
-              </div>
-              <div className="pt-2">
-                <Link
-                  to="/mitra"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-bold transition-colors min-h-[44px]"
-                >
-                  Buka Antrean Penimbangan di Portal Petugas
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <form onSubmit={handleSubmit} className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
             {/* Step 1: Kategori Sampah */}
             <div className="space-y-3">
               <label className="block text-sm font-bold text-slate-900">
@@ -431,7 +459,7 @@ export default function SetorSampah() {
                       key={cat.id_kategori}
                       type="button"
                       onClick={() => setSelectedCat(cat)}
-                      className={`p-4 rounded-xl border text-left transition-all min-h-[44px] ${
+                      className={`p-4 rounded-xl border text-left transition-all min-h-[44px] cursor-pointer ${
                         isSelected
                           ? 'border-civic-700 bg-civic-50/70 ring-2 ring-civic-600/20'
                           : 'border-slate-200 hover:border-slate-300 bg-white'
@@ -536,10 +564,10 @@ export default function SetorSampah() {
               </div>
             </div>
 
-            {/* Step 4: Foto Sampah Terpilah (dengan kompresi otomatis) */}
+            {/* Step 4: Foto Sampah Terpilah (dengan kompresi & watermark GPS otomatis) */}
             <div className="space-y-2 pt-4 border-t border-slate-100">
               <label className="block text-sm font-bold text-slate-900">
-                4. Foto Sampah Terpilah (Opsional tapi dianjurkan)
+                4. Foto Sampah Terpilah (Otomatis Watermark GPS Lapangan)
               </label>
               <input
                 type="file"
@@ -549,12 +577,12 @@ export default function SetorSampah() {
               />
               {compressing && (
                 <p className="text-[11px] text-civic-700 flex items-center gap-1.5">
-                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Mengompresi foto sebelum upload...
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Mengompresi dan membubuhkan watermark koordinat...
                 </p>
               )}
               {previewUrl && (
-                <div className="mt-2 w-32 h-32 rounded-lg overflow-hidden border border-slate-200">
-                  <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                <div className="mt-2 w-48 h-36 rounded-lg overflow-hidden border border-slate-200">
+                  <img src={previewUrl} alt="Preview Foto Bukti" className="w-full h-full object-cover" />
                 </div>
               )}
             </div>
@@ -568,7 +596,7 @@ export default function SetorSampah() {
                 rows={2}
                 value={catatan}
                 onChange={(e) => setCatatan(e.target.value)}
-                placeholder="Contoh: Sampah diletakkan di teras depan, bisa diambil setelah pukul 15.00..."
+                placeholder="Contoh: Sampah diletakkan di teras depan, siap ditimbang sore hari..."
                 className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-sm"
               ></textarea>
             </div>
@@ -576,7 +604,7 @@ export default function SetorSampah() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-3 bg-civic-700 hover:bg-civic-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 min-h-[44px]"
+              className="w-full py-3 bg-civic-700 hover:bg-civic-800 text-white rounded-xl font-bold text-sm transition-colors flex items-center justify-center gap-2 min-h-[44px] cursor-pointer"
             >
               {submitting ? (
                 <>
@@ -591,7 +619,6 @@ export default function SetorSampah() {
               )}
             </button>
           </form>
-          )}
         </div>
       )}
 
@@ -601,20 +628,32 @@ export default function SetorSampah() {
           {redeemSuccess && (
             <div className="p-6 bg-emerald-50 border border-emerald-200 rounded-2xl text-center space-y-3">
               <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-              <h3 className="text-lg font-bold text-emerald-950">Pengajuan Klaim Penukaran Berhasil!</h3>
+              <h3 className="text-lg font-bold text-emerald-950">Voucher Penukaran Berhasil Diterbitkan!</h3>
               <p className="text-xs text-emerald-800 max-w-md mx-auto">
-                Pengajuan klaim untuk <strong>{redeemSuccess.title}</strong> senilai <strong>{redeemSuccess.cost} Poin</strong> telah tercatat.
+                Kode Klaim: <strong className="font-mono text-sm underline">{redeemSuccess.kode_klaim}</strong> untuk <strong>{redeemSuccess.judul || redeemSuccess.title}</strong> senilai <strong>{redeemSuccess.biaya_poin || redeemSuccess.cost} Poin</strong>.
               </p>
               <p className="text-xs text-emerald-700">
-                Silakan konfirmasi ke Bendahara RT / Pengurus Bank Sampah saat jadwal pertemuan warga atau penarikan iuran.
+                Buka tab <strong>"Voucher Klaim Saya"</strong> untuk melihat QR Code bukti klaim siap tunjuk di Balai RT 03.
               </p>
-              <button
-                type="button"
-                onClick={() => setRedeemSuccess(null)}
-                className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold"
-              >
-                Tutup Pemberitahuan
-              </button>
+              <div className="flex justify-center gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRedeemSuccess(null);
+                    setActiveTab('klaim');
+                  }}
+                  className="px-4 py-2 bg-emerald-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Lihat Voucher Saya &rarr;
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRedeemSuccess(null)}
+                  className="px-4 py-2 bg-white border border-emerald-300 text-emerald-800 rounded-lg text-xs font-semibold cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
           )}
 
@@ -625,7 +664,7 @@ export default function SetorSampah() {
                 Katalog Penukaran Tabungan Daur Ulang RT/RW
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                Gunakan akumulasi saldo poin dari pemilahan sampah Anda untuk manfaat riil di lingkungan perumahan.
+                Gunakan akumulasi saldo poin dari pemilahan sampah Anda untuk sembako dan subsidi iuran lingkungan warga.
               </p>
             </div>
 
@@ -674,7 +713,7 @@ export default function SetorSampah() {
                         type="button"
                         disabled={redeemingId === item.id}
                         onClick={() => handleRedeemClick(item)}
-                        className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px] ${
+                        className={`w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer ${
                           isAffordable
                             ? 'bg-civic-700 hover:bg-civic-800 text-white shadow-sm'
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
@@ -683,10 +722,10 @@ export default function SetorSampah() {
                         {redeemingId === item.id ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin" />
-                            Memproses Penukaran...
+                            Memproses Klaim...
                           </>
                         ) : isAffordable ? (
-                          'Klaim Penukaran Sekarang'
+                          'Klaim Voucher Sekarang'
                         ) : user ? (
                           'Poin Belum Cukup'
                         ) : (
@@ -700,16 +739,152 @@ export default function SetorSampah() {
             </div>
 
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 space-y-1">
-              <span className="font-bold text-slate-800">Tata Cara Penukaran Komunitas:</span>
+              <span className="font-bold text-slate-800">Tata Cara Pengambilan Sembako:</span>
               <p>
-                Seluruh klaim penukaran diselesaikan secara gotong royong oleh Pengurus Bank Sampah Unit dan Bendahara RT setempat saat agenda pertemuan warga atau penarikan iuran lingkungan.
+                Setelah melakukan klaim voucher, tunjukkan kode klaim Anda ke pengurus di Balai RT 03 pada jadwal layanan atau pertemuan RT untuk serah terima barang fisik.
               </p>
             </div>
           </div>
         </div>
       )}
 
-      {/* Tab 3: Riwayat Transaksi */}
+      {/* Tab 3: STATUS & VOUCHER KLAIM SAYA */}
+      {activeTab === 'klaim' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2">
+                  <Ticket className="w-6 h-6 text-civic-700" />
+                  Voucher & Status Klaim Sembako Anda ({myClaims.length})
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                  Pantau verifikasi pengurus dan gunakan kode voucher digital untuk serah terima barang di Balai RT.
+                </p>
+              </div>
+              <button
+                onClick={fetchInitialData}
+                className="text-xs text-civic-700 font-semibold hover:underline cursor-pointer"
+              >
+                Segarkan
+              </button>
+            </div>
+
+            {myClaims.length === 0 ? (
+              <div className="p-12 text-center text-slate-500 border border-dashed border-slate-200 rounded-2xl space-y-2">
+                <Gift className="w-10 h-10 text-slate-300 mx-auto" />
+                <p className="text-sm font-semibold text-slate-700">Belum ada pengajuan klaim penukaran sembako.</p>
+                <p className="text-xs text-slate-400">Pilih sembako di tab "Tukar Sembako" untuk menukarkan poin tabungan Anda.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {myClaims.map((claim) => {
+                  const isReady = claim.status_klaim === 'DISETUJUI_SIAP_AMBIL';
+                  const isDone = claim.status_klaim === 'SELESAI_DISERAHKAN';
+                  const isPending = claim.status_klaim === 'MENUNGGU_VERIFIKASI';
+                  const isCancelled = claim.status_klaim === 'DITOLAK_BATAL';
+
+                  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(
+                    `TRASHMANAGE-KLAIM:${claim.kode_klaim}:${claim.nama_item}:${claim.biaya_poin}PTS`
+                  )}`;
+
+                  return (
+                    <div
+                      key={claim.id_klaim}
+                      className={`p-5 rounded-2xl border transition-all flex flex-col justify-between space-y-4 ${
+                        isReady
+                          ? 'border-emerald-300 bg-emerald-50/30 ring-2 ring-emerald-500/20'
+                          : isPending
+                          ? 'border-amber-200 bg-amber-50/20'
+                          : isCancelled
+                          ? 'border-rose-200 bg-rose-50/20'
+                          : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-start">
+                          <span className="font-mono font-bold text-xs text-civic-700 bg-civic-50 px-2.5 py-1 rounded-md border border-civic-200">
+                            {claim.kode_klaim}
+                          </span>
+                          <span
+                            className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
+                              isReady
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : isPending
+                                ? 'bg-amber-100 text-amber-800'
+                                : isDone
+                                ? 'bg-slate-100 text-slate-700'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}
+                          >
+                            {isReady
+                              ? 'SIAP DIAMBIL DI BALAI RT'
+                              : isPending
+                              ? 'MENUNGGU VERIFIKASI'
+                              : isDone
+                              ? 'SELESAI DISERAHKAN'
+                              : 'DITOLAK / DIBATALKAN'}
+                          </span>
+                        </div>
+
+                        <div className="flex items-start gap-3">
+                          <img
+                            src={qrSrc}
+                            alt="QR Code Voucher"
+                            className="w-16 h-16 rounded-lg border border-slate-200 p-1 bg-white shrink-0"
+                            onError={(e) => { e.target.style.display = 'none'; }}
+                          />
+                          <div className="space-y-0.5">
+                            <h3 className="text-sm font-bold text-slate-900">{claim.nama_item}</h3>
+                            <p className="text-xs text-slate-600">
+                              Biaya: <strong className="text-civic-700">{claim.biaya_poin} Poin</strong> ({claim.nilai_rupiah})
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              Diajukan: {new Date(claim.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Catatan Admin / Status Instructions */}
+                        <div className="p-3 bg-white/80 rounded-xl text-xs space-y-1 border border-slate-200/60">
+                          {isReady && (
+                            <p className="text-emerald-800 font-semibold flex items-center gap-1.5">
+                              <CheckCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                              Silakan ambil sembako di Balai RT 03 Kalirungkut. Tunjukkan kode voucher ini kepada pengurus.
+                            </p>
+                          )}
+                          {isPending && (
+                            <p className="text-amber-800">
+                              Klaim sedang diverifikasi oleh Pengurus RW 05 untuk penyiapan stok fisik di Balai RT.
+                            </p>
+                          )}
+                          {isDone && (
+                            <p className="text-slate-600">
+                              Barang sembako telah diserahkan. Terima kasih atas partisipasi aktif Anda memilah sampah!
+                            </p>
+                          )}
+                          {isCancelled && (
+                            <p className="text-rose-700">
+                              {claim.catatan_admin || 'Klaim dibatalkan. Poin tabungan telah otomatis dikembalikan ke saldo Anda.'}
+                            </p>
+                          )}
+                          {claim.catatan_admin && !isCancelled && (
+                            <p className="text-[11px] text-slate-500 italic pt-0.5 border-t border-slate-100">
+                              Catatan Pengurus: {claim.catatan_admin}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Tab 4: Riwayat Transaksi & Struk Digital */}
       {activeTab === 'riwayat' && (
         <div className="space-y-6">
           {!user && (
@@ -722,7 +897,7 @@ export default function SetorSampah() {
               <button
                 type="button"
                 onClick={() => setLoginModalOpen(true)}
-                className="px-4 py-2 bg-civic-700 text-white rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-civic-700 text-white rounded-lg text-xs font-semibold cursor-pointer"
               >
                 Masuk Akun Warga
               </button>
@@ -733,26 +908,86 @@ export default function SetorSampah() {
             <>
               {/* Transactions list */}
               <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="text-base font-bold text-slate-900">Daftar Transaksi Penyetoran Anda</h3>
+                <div className="flex justify-between items-center">
+                  <h3 className="text-base font-bold text-slate-900">Daftar Transaksi Penyetoran Sampah</h3>
+                  <button
+                    onClick={fetchInitialData}
+                    className="text-xs text-civic-700 font-semibold hover:underline cursor-pointer"
+                  >
+                    Segarkan
+                  </button>
+                </div>
+
                 {myTransactions.length === 0 ? (
                   <p className="text-sm text-slate-500 py-6 text-center">Belum ada riwayat transaksi penyetoran sampah.</p>
                 ) : (
-                  <div className="space-y-3">
-                    {myTransactions.map((t) => (
-                      <div key={t.id_transaksi} className="p-4 rounded-xl border border-slate-200 flex justify-between items-center text-xs">
-                        <div>
-                          <span className="font-mono font-bold text-civic-700 block">{t.kode_transaksi}</span>
-                          <span className="font-semibold text-slate-800">{t.nama_kategori}</span>
-                          <span className="text-slate-500 block">Berat: {t.estimasi_berat_kg} Kg</span>
+                  <div className="space-y-4">
+                    {myTransactions.map((t) => {
+                      const isConfirmed = t.status === 'DIKONFIRMASI_MITRA';
+                      const isDone = t.status === 'SELESAI';
+
+                      return (
+                        <div key={t.id_transaksi} className="p-5 rounded-2xl border border-slate-200 space-y-3 bg-white hover:border-slate-300 transition-colors">
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="font-mono font-bold text-sm text-civic-700">{t.kode_transaksi}</span>
+                                <TicketBadge status={t.status} />
+                              </div>
+                              <span className="font-semibold text-xs text-slate-800 block mt-0.5">
+                                Kategori: {t.nama_kategori} • Berat: {t.berat_aktual_kg || t.estimasi_berat_kg} Kg
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              {isDone && (
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedReceiptTrx(t)}
+                                  className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                                >
+                                  <Printer className="w-3.5 h-3.5" />
+                                  Struk Digital Resmi
+                                </button>
+                              )}
+                              <span className="text-sm font-mono font-bold text-emerald-600">
+                                +{t.total_poin_diperoleh} Poin
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Tracking Card: Dispatcher Info */}
+                          {isConfirmed && (
+                            <div className="p-3 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-950 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                              <div className="flex items-center gap-2">
+                                <UserCheck className="w-4 h-4 text-sky-700 shrink-0" />
+                                <div>
+                                  <span className="font-bold">Penjemput Terkonfirmasi:</span>{' '}
+                                  <span>{t.nama_mitra || 'Bank Sampah Unit RT 03'}</span>
+                                  {t.nama_petugas && <span className="text-sky-700"> ({t.nama_petugas})</span>}
+                                </div>
+                              </div>
+                              {t.kontak_mitra && (
+                                <a
+                                  href={`https://wa.me/${t.kontak_mitra.replace(/\D/g, '')}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-white px-2 py-1 rounded-md border border-emerald-300 hover:bg-emerald-50"
+                                >
+                                  <Phone className="w-3 h-3 text-emerald-600" />
+                                  Hubungi Petugas: {t.kontak_mitra}
+                                </a>
+                              )}
+                            </div>
+                          )}
+
+                          <div className="text-[11px] text-slate-500 flex justify-between items-center border-t border-slate-100 pt-2">
+                            <span>Alamat: {t.alamat_jemput}</span>
+                            <span>{new Date(t.tanggal_transaksi).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span>
+                          </div>
                         </div>
-                        <div className="text-right space-y-1">
-                          <TicketBadge status={t.status} />
-                          <span className="text-xs font-mono font-bold text-civic-700 block">
-                            +{t.total_poin_diperoleh} Poin
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
@@ -781,8 +1016,8 @@ export default function SetorSampah() {
                             </td>
                             <td className="py-3 px-3 font-medium text-slate-700">{h.tipe}</td>
                             <td className="py-3 px-3 text-slate-600">{h.keterangan}</td>
-                            <td className="py-3 px-3 text-right font-mono font-bold text-civic-700">
-                              +{h.perubahan_poin}
+                            <td className={`py-3 px-3 text-right font-mono font-bold ${h.perubahan_poin >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                              {h.perubahan_poin >= 0 ? `+${h.perubahan_poin}` : h.perubahan_poin}
                             </td>
                           </tr>
                         ))}
@@ -794,6 +1029,14 @@ export default function SetorSampah() {
             </>
           )}
         </div>
+      )}
+
+      {/* Digital Receipt Modal */}
+      {selectedReceiptTrx && (
+        <DigitalReceiptModal
+          transaction={selectedReceiptTrx}
+          onClose={() => setSelectedReceiptTrx(null)}
+        />
       )}
     </div>
   );

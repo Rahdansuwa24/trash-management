@@ -1,4 +1,5 @@
-const { UserModel, KatalogModel } = require('../models');
+const pool = require('../../database/pool');
+const { UserModel, KatalogModel, KlaimModel, WargaModel } = require('../models');
 
 exports.getUsers = async (req, res, next) => {
   try {
@@ -147,5 +148,101 @@ exports.deleteKatalog = async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  }
+};
+
+exports.getClaims = async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const claims = await KlaimModel.getAllClaims({ status, limit: 100 });
+    res.json({
+      success: true,
+      total: claims.length,
+      data: claims
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyClaim = async (req, res, next) => {
+  const connection = await pool.getConnection();
+  try {
+    const idKlaim = req.params.id;
+    const { status, catatan_admin } = req.body;
+
+    const allowedStatuses = ['DISETUJUI_SIAP_AMBIL', 'SELESAI_DISERAHKAN', 'DITOLAK_BATAL'];
+    if (!allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Status verifikasi tidak valid. Pilihan: ${allowedStatuses.join(', ')}`
+      });
+    }
+
+    await connection.beginTransaction();
+
+    const claim = await KlaimModel.findByIdWithLock(idKlaim, connection);
+    if (!claim) {
+      await connection.rollback();
+      return res.status(404).json({
+        success: false,
+        message: 'Data klaim penukaran tidak ditemukan.'
+      });
+    }
+
+    if (claim.status_klaim === 'SELESAI_DISERAHKAN' || claim.status_klaim === 'DITOLAK_BATAL') {
+      await connection.rollback();
+      return res.status(400).json({
+        success: false,
+        message: `Klaim ini sudah berstatus final (${claim.status_klaim}) dan tidak dapat diubah lagi.`
+      });
+    }
+
+    if (status === 'SELESAI_DISERAHKAN') {
+      // Potong stok fisik barang di inventaris katalog
+      await KatalogModel.decrementStock(claim.id_katalog, 1, connection);
+      await KlaimModel.updateStatus({
+        id_klaim: idKlaim,
+        status_klaim: status,
+        catatan_admin: catatan_admin || 'Barang telah diserahkan di Balai RT dan stok fisik telah dipotong.'
+      }, connection);
+    } else if (status === 'DITOLAK_BATAL') {
+      // Kembalikan poin ke saldo warga secara otomatis
+      await WargaModel.addPoints(claim.id_warga, claim.biaya_poin, connection);
+      await WargaModel.addPointsLedger({
+        id_warga: claim.id_warga,
+        id_transaksi: null,
+        perubahan_poin: claim.biaya_poin,
+        tipe: 'REFUND_KLAIM',
+        keterangan: `Pengembalian ${claim.biaya_poin} Poin: Klaim ${claim.kode_klaim} Dibatalkan/Ditolak Admin (${catatan_admin || 'Stok tidak tersedia'})`
+      }, connection);
+
+      await KlaimModel.updateStatus({
+        id_klaim: idKlaim,
+        status_klaim: status,
+        catatan_admin: catatan_admin || 'Klaim dibatalkan oleh admin, saldo poin telah dikembalikan ke warga.'
+      }, connection);
+    } else if (status === 'DISETUJUI_SIAP_AMBIL') {
+      await KlaimModel.updateStatus({
+        id_klaim: idKlaim,
+        status_klaim: status,
+        catatan_admin: catatan_admin || 'Klaim disetujui. Sembako siap diambil di Balai RT pada jam layanan.'
+      }, connection);
+    }
+
+    await connection.commit();
+
+    const updatedClaim = await KlaimModel.findById(idKlaim);
+
+    res.json({
+      success: true,
+      message: `Status klaim penukaran berhasil diperbarui menjadi ${status}.`,
+      data: updatedClaim
+    });
+  } catch (error) {
+    await connection.rollback();
+    next(error);
+  } finally {
+    connection.release();
   }
 };
