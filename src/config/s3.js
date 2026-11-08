@@ -1,5 +1,6 @@
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const env = require('./env');
 
@@ -7,7 +8,8 @@ const isR2Configured = Boolean(
   env.R2.accountId &&
   env.R2.accessKeyId &&
   env.R2.secretAccessKey &&
-  env.R2.bucketName
+  env.R2.bucketName &&
+  env.R2.publicUrl
 );
 
 let s3Client = null;
@@ -24,18 +26,32 @@ if (isR2Configured) {
 }
 
 /**
- * Upload buffer to Cloudflare R2, or fallback to mock placeholder in local development
+ * Upload buffer to Cloudflare R2, or save to local disk storage in development
  */
 async function uploadToR2(file, folder = 'reports') {
   if (!file) return null;
 
-  const ext = path.extname(file.originalname).toLowerCase();
+  const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
   const randomSuffix = crypto.randomBytes(8).toString('hex');
-  const filename = `${folder}/${Date.now()}-${randomSuffix}${ext}`;
+  const baseFilename = `${Date.now()}-${randomSuffix}${ext}`;
+  const filename = `${folder}/${baseFilename}`;
 
+  // If Cloudflare R2 is not configured, save the real uploaded binary to local disk
   if (!isR2Configured) {
-    console.log(`[R2 Dev Fallback] Simulating upload for ${file.originalname} -> ${filename}`);
-    // Clean mock image URL for zero-friction local testing
+    if (file.buffer) {
+      try {
+        const uploadDir = path.join(__dirname, '../../public/uploads', folder);
+        fs.mkdirSync(uploadDir, { recursive: true });
+        const targetPath = path.join(uploadDir, baseFilename);
+        fs.writeFileSync(targetPath, file.buffer);
+        console.log(`[Local Upload Storage] Stored real file at: ${targetPath}`);
+        return `http://localhost:${env.PORT}/uploads/${filename}`;
+      } catch (err) {
+        console.error('[Local Upload Storage Error]', err);
+      }
+    }
+
+    // Fallback placeholder only if buffer is somehow empty
     return `https://placehold.co/600x400/10B981/ffffff.png?text=${encodeURIComponent(path.basename(file.originalname, ext))}`;
   }
 

@@ -25,6 +25,7 @@ app.use(cookieParser());
 
 // Static folder (if any fallback assets)
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // Root & Healthcheck
 app.get('/', (req, res) => {
