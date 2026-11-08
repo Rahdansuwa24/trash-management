@@ -24,8 +24,8 @@ export default function Navbar() {
     navLinks.push({ name: 'Admin RW', path: '/admin', icon: ShieldCheck });
   }
 
-  // Portal Petugas untuk petugas lapangan/bank sampah & pengawasan admin
-  if (user?.role === 'mitra' || user?.role === 'admin') {
+  // Portal Petugas khusus untuk operasional mitra (Satgas Lapangan & Bank Sampah Unit)
+  if (user?.role === 'mitra') {
     navLinks.push({ name: 'Portal Petugas', path: '/mitra', icon: Building2 });
   }
 

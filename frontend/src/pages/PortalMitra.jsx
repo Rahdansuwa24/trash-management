@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
 import { useAuth } from '../context/AuthContext';
@@ -30,6 +30,12 @@ const STATUS_TEMPLATES = {
 
 export default function PortalMitra() {
   const { user } = useAuth();
+
+  // Admin berfokus pada pengawasan manajerial di /admin, bukan eksekusi operasional mitra
+  if (user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
   const isSatgas = user?.email?.includes('petugas') || user?.nama?.toLowerCase().includes('satgas');
   const [partnerType, setPartnerType] = useState(isSatgas ? 'lapangan' : 'banksampah'); // default to 'lapangan' for satgas, or 'banksampah'
   const [pickupFilter, setPickupFilter] = useState('ALL'); // 'ALL', 'OPEN', 'MY_TASKS'

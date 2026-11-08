@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { api } from '../api/client';
+import TicketBadge from '../components/TicketBadge';
 import { calculateEcoImpact } from '../utils/ecoCalculator';
 import { 
   Shield, Users, CheckCircle, Trash2, Coins, Loader2, AlertTriangle, 
   Gift, Plus, Pencil, Eye, EyeOff, Package, ShoppingBag, Wheat, 
-  ShoppingBasket, Receipt, Wallet, X, CheckCircle2, Ticket, Leaf, Droplets, TreePine, Sparkles
+  ShoppingBasket, Receipt, Wallet, X, CheckCircle2, Ticket, Leaf, Droplets, TreePine, Sparkles, ShieldAlert, MapPin, ExternalLink, Calendar, Search, Truck, Image as ImageIcon
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -41,6 +43,24 @@ export default function AdminDashboard() {
   const [formSubmitting, setFormSubmitting] = useState(false);
 
   // Form State untuk Tambah / Edit Katalog
+  // State Pengawasan Sampah Liar (Read-Only Supervision)
+  const [reportsList, setReportsList] = useState([]);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportSearch, setReportSearch] = useState('');
+  const [reportStatusFilter, setReportStatusFilter] = useState('');
+
+  const fetchReportsData = async () => {
+    try {
+      setReportsLoading(true);
+      const query = reportStatusFilter ? `?status=${encodeURIComponent(reportStatusFilter)}` : '';
+      const res = await api.getAdminReports(query);
+      setReportsList(res.data || []);
+    } catch (err) {
+      console.warn('Gagal memuat aduan sampah liar:', err.message);
+    } finally {
+      setReportsLoading(false);
+    }
+  };
   const [formData, setFormData] = useState({
     judul: '',
     biaya_poin: '',
@@ -61,8 +81,10 @@ export default function AdminDashboard() {
       fetchKatalogData();
     } else if (activeTab === 'claims') {
       fetchClaimsData();
+    } else if (activeTab === 'reports') {
+      fetchReportsData();
     }
-  }, [activeTab]);
+  }, [activeTab, reportStatusFilter]);
 
   const fetchAdminData = async () => {
     try {
@@ -231,6 +253,17 @@ export default function AdminDashboard() {
   // Kalkulasi Dampak Lingkungan KLHK
   const ecoMetrics = calculateEcoImpact(stats?.total_waste_recycled_kg || 0);
 
+  const filteredAdminReports = reportsList.filter((item) => {
+    if (!reportSearch.trim()) return true;
+    const q = reportSearch.toLowerCase();
+    return (
+      item.kode_tiket?.toLowerCase().includes(q) ||
+      item.alamat_lokasi?.toLowerCase().includes(q) ||
+      item.nama_pelapor?.toLowerCase().includes(q) ||
+      item.deskripsi_kejadian?.toLowerCase().includes(q)
+    );
+  });
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
       {/* Header */}
@@ -393,6 +426,18 @@ export default function AdminDashboard() {
         >
           <Gift className="w-4 h-4" />
           Katalog Penukaran Poin & Sembako ({katalogList.length})
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab('reports')}
+          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
+            activeTab === 'reports'
+              ? 'border-civic-700 text-civic-800'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          <ShieldAlert className="w-4 h-4" />
+          Pengawasan Aduan Sampah Liar ({reportsList.length})
         </button>
       </div>
 
@@ -771,6 +816,142 @@ export default function AdminDashboard() {
                   })}
                 </tbody>
               </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 4: PENGAWASAN ADUAN SAMPAH LIAR (READ-ONLY) */}
+      {activeTab === 'reports' && (
+        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <ShieldAlert className="w-5 h-5 text-civic-700" />
+                  Pengawasan & Rekapitulasi Aduan Sampah Liar RW 05
+                </h2>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">
+                  Supervisi (Read-Only)
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 mt-1">
+                Memantau progres penanganan dan bukti pembersihan armada Satgas Lapangan secara transparan tanpa intervensi fisik.
+              </p>
+            </div>
+
+            {/* Filter & Search Bar */}
+            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+              <div className="relative flex-1 sm:w-60">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={reportSearch}
+                  onChange={(e) => setReportSearch(e.target.value)}
+                  placeholder="Cari kode tiket / lokasi..."
+                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full focus:outline-hidden focus:border-civic-600"
+                />
+              </div>
+
+              <select
+                value={reportStatusFilter}
+                onChange={(e) => setReportStatusFilter(e.target.value)}
+                className="text-xs py-1.5 px-3 border border-slate-300 rounded-lg bg-white text-slate-700"
+              >
+                <option value="">Semua Status Aduan</option>
+                <option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option>
+                <option value="INVESTIGASI">Tahap Investigasi</option>
+                <option value="DALAM_PENANGANAN">Dalam Penanganan Armada</option>
+                <option value="SELESAI_DIBERSIHKAN">Selesai Dibersihkan</option>
+                <option value="DITOLAK">Ditolak</option>
+              </select>
+
+              <button
+                type="button"
+                onClick={fetchReportsData}
+                className="text-xs text-civic-700 font-semibold hover:underline px-2 py-1"
+              >
+                Segarkan
+              </button>
+            </div>
+          </div>
+
+          {reportsLoading ? (
+            <div className="p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-civic-700" />
+              <p className="text-sm font-medium">Memuat data pengawasan aduan warga...</p>
+            </div>
+          ) : filteredAdminReports.length === 0 ? (
+            <div className="p-12 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-100">
+              <CheckCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+              <p className="text-sm font-semibold text-slate-600">Tidak ada aduan yang sesuai filter pengawasan.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredAdminReports.map((item) => (
+                <div key={item.id_laporan} className="bg-slate-50/50 rounded-2xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+                  <div>
+                    <div className="h-40 bg-slate-100 relative">
+                      {item.foto_bukti_url ? (
+                        <img
+                          src={item.foto_bukti_url}
+                          alt="Bukti sampah liar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
+                          <ImageIcon className="w-8 h-8 opacity-40" />
+                        </div>
+                      )}
+                      <div className="absolute top-3 left-3">
+                        <TicketBadge status={item.status} />
+                      </div>
+                    </div>
+
+                    <div className="p-5 space-y-3">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <Link
+                            to={`/lacak?code=${item.kode_tiket}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-xs font-mono font-bold text-civic-700 hover:text-civic-800 hover:underline flex items-center gap-1 group/link"
+                            title="Buka tampilan lacak publik (tab baru)"
+                          >
+                            {item.kode_tiket}
+                            <ExternalLink className="w-3 h-3 text-slate-400 group-hover/link:text-civic-700" />
+                          </Link>
+                          <span className="text-[11px] text-slate-400">{item.nama_pelapor || 'Anonim'}</span>
+                        </div>
+                        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mt-1">{item.deskripsi_kejadian}</h3>
+                      </div>
+
+                      <div className="text-xs text-slate-600 space-y-1.5 pt-2 border-t border-slate-200/80">
+                        <div className="flex items-start gap-1.5">
+                          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                          <span className="line-clamp-2">{item.alamat_lokasi}, {item.kecamatan}, {item.kota}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-slate-500">
+                          <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
+                          <span>{new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 pt-0">
+                    <Link
+                      to={`/lacak?code=${item.kode_tiket}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[38px]"
+                    >
+                      Buka Detail Lacak Publik
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                    </Link>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </div>

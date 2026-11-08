@@ -71,5 +71,6 @@ export const api = {
   toggleAdminKatalogStatus: (id) => request(`/admin/katalog/${id}/toggle`, { method: 'PATCH' }),
   deleteAdminKatalog: (id) => request(`/admin/katalog/${id}`, { method: 'DELETE' }),
   getAdminClaims: (params = '') => request(`/admin/claims${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
-  verifyAdminClaim: (id, payload) => request(`/admin/claims/${id}/verify`, { method: 'PUT', body: JSON.stringify(payload) })
+  verifyAdminClaim: (id, payload) => request(`/admin/claims/${id}/verify`, { method: 'PUT', body: JSON.stringify(payload) }),
+  getAdminReports: (params = '') => request(`/admin/reports${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`)
 };

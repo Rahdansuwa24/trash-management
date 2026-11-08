@@ -1,5 +1,5 @@
 const pool = require('../../database/pool');
-const { UserModel, KatalogModel, KlaimModel, WargaModel } = require('../models');
+const { UserModel, KatalogModel, KlaimModel, WargaModel, LaporanModel } = require('../models');
 
 exports.getUsers = async (req, res, next) => {
   try {
@@ -244,5 +244,22 @@ exports.verifyClaim = async (req, res, next) => {
     next(error);
   } finally {
     connection.release();
+  }
+};
+
+/**
+ * Read-Only Oversight: Mengambil seluruh aduan sampah liar untuk supervisi manajerial RW
+ */
+exports.getReports = async (req, res, next) => {
+  try {
+    const { status, kota } = req.query;
+    const rows = await LaporanModel.getAssignedReports({ status, kota, limit: 100 });
+    res.json({
+      success: true,
+      total: rows.length,
+      data: rows
+    });
+  } catch (error) {
+    next(error);
   }
 };

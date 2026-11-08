@@ -4,8 +4,8 @@ const mitraController = require('../controllers/mitra.controller');
 const { uploadAny } = require('../middleware/upload.middleware');
 const { authenticate, authorize } = require('../middleware/auth.middleware');
 
-// Proteksi backend ketat: Hanya petugas 'mitra' dan 'admin' yang dapat mengakses operasional lapangan & bank sampah
-router.use(authenticate, authorize('mitra', 'admin'));
+// Proteksi backend ketat: Hanya mitra operasional (Satgas Lapangan & Bank Sampah Unit) yang dapat mengakses
+router.use(authenticate, authorize('mitra'));
 
 router.get('/reports', mitraController.getAssignedReports);
 router.post('/reports/:id/action', uploadAny(), mitraController.submitCleanupAction);

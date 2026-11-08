@@ -22,4 +22,7 @@ router.delete('/katalog/:id', adminController.deleteKatalog);
 router.get('/claims', adminController.getClaims);
 router.put('/claims/:id/verify', adminController.verifyClaim);
 
+// Pengawasan & Supervisi Aduan Sampah Liar (Read-Only)
+router.get('/reports', adminController.getReports);
+
 module.exports = router;
