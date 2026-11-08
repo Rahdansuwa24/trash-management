@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
-import { Search, MapPin, Calendar, User, FileText, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Sparkles, ExternalLink } from 'lucide-react';
+import { Search, MapPin, Calendar, User, FileText, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Sparkles, ExternalLink, Truck } from 'lucide-react';
 
 export default function LacakAduan() {
   const [searchParams, setSearchParams] = useSearchParams();
