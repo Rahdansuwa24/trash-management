@@ -25,4 +25,7 @@ router.put('/claims/:id/verify', adminController.verifyClaim);
 // Pengawasan & Supervisi Aduan Sampah Liar (Read-Only)
 router.get('/reports', adminController.getReports);
 
+// Monitoring Sirkular Ekonomi & Transaksi Bank Sampah
+router.get('/pickups', adminController.getWasteBankPickups);
+
 module.exports = router;

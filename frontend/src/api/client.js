@@ -72,5 +72,6 @@ export const api = {
   deleteAdminKatalog: (id) => request(`/admin/katalog/${id}`, { method: 'DELETE' }),
   getAdminClaims: (params = '') => request(`/admin/claims${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
   verifyAdminClaim: (id, payload) => request(`/admin/claims/${id}/verify`, { method: 'PUT', body: JSON.stringify(payload) }),
-  getAdminReports: (params = '') => request(`/admin/reports${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`)
+  getAdminReports: (params = '') => request(`/admin/reports${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
+  getAdminPickups: (params = '') => request(`/admin/pickups${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`)
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
@@ -6,7 +6,8 @@ import { calculateEcoImpact } from '../utils/ecoCalculator';
 import { 
   Shield, Users, CheckCircle, Trash2, Coins, Loader2, AlertTriangle, 
   Gift, Plus, Pencil, Eye, EyeOff, Package, ShoppingBag, Wheat, 
-  ShoppingBasket, Receipt, Wallet, X, CheckCircle2, Ticket, Leaf, Droplets, TreePine, Sparkles, ShieldAlert, MapPin, ExternalLink, Calendar, Search, Truck, Image as ImageIcon
+  ShoppingBasket, Receipt, Wallet, X, CheckCircle2, Ticket, Leaf, Droplets, TreePine, Sparkles, ShieldAlert, MapPin, ExternalLink, Calendar, Search, Truck, Image as ImageIcon,
+  Scale, LayoutDashboard, BarChart3, Filter, Clock, ChevronRight, RefreshCw, ArrowUpRight
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -21,13 +22,20 @@ const ICON_MAP = {
 };
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('claims'); // 'claims' | 'users' | 'katalog'
+  const [activeTab, setActiveTab] = useState('bank_sampah'); // 'bank_sampah' | 'overview' | 'claims' | 'katalog' | 'users' | 'reports'
   const [stats, setStats] = useState(null);
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
+
+  // State Monitoring Bank Sampah (Ekonomi Sirkular & Transaksi Warga)
+  const [pickupsList, setPickupsList] = useState([]);
+  const [pickupsLoading, setPickupsLoading] = useState(false);
+  const [pickupStatusFilter, setPickupStatusFilter] = useState('');
+  const [pickupTimeFilter, setPickupTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
+  const [pickupSearch, setPickupSearch] = useState('');
 
   // State Klaim Sembako Warga
   const [claimsList, setClaimsList] = useState([]);
@@ -42,12 +50,22 @@ export default function AdminDashboard() {
   const [editingItem, setEditingItem] = useState(null);
   const [formSubmitting, setFormSubmitting] = useState(false);
 
-  // Form State untuk Tambah / Edit Katalog
   // State Pengawasan Sampah Liar (Read-Only Supervision)
   const [reportsList, setReportsList] = useState([]);
   const [reportsLoading, setReportsLoading] = useState(false);
   const [reportSearch, setReportSearch] = useState('');
   const [reportStatusFilter, setReportStatusFilter] = useState('');
+
+  // Form State untuk Tambah / Edit Katalog
+  const [formData, setFormData] = useState({
+    judul: '',
+    biaya_poin: '',
+    nilai_rupiah: '',
+    kategori_badge: 'Sembako Satuan',
+    icon_name: 'ShoppingBag',
+    deskripsi: '',
+    stok: 50
+  });
 
   const fetchReportsData = async () => {
     try {
@@ -61,19 +79,24 @@ export default function AdminDashboard() {
       setReportsLoading(false);
     }
   };
-  const [formData, setFormData] = useState({
-    judul: '',
-    biaya_poin: '',
-    nilai_rupiah: '',
-    kategori_badge: 'Sembako Satuan',
-    icon_name: 'ShoppingBag',
-    deskripsi: '',
-    stok: 50
-  });
+
+  const fetchPickupsData = async () => {
+    try {
+      setPickupsLoading(true);
+      const query = pickupStatusFilter ? `?status=${encodeURIComponent(pickupStatusFilter)}` : '';
+      const res = await api.getAdminPickups(query);
+      setPickupsList(res.data || []);
+    } catch (err) {
+      console.warn('Gagal memuat data transaksi bank sampah:', err.message);
+    } finally {
+      setPickupsLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchAdminData();
     fetchClaimsData();
+    fetchPickupsData();
   }, [selectedRole, claimStatusFilter]);
 
   useEffect(() => {
@@ -83,8 +106,10 @@ export default function AdminDashboard() {
       fetchClaimsData();
     } else if (activeTab === 'reports') {
       fetchReportsData();
+    } else if (activeTab === 'bank_sampah') {
+      fetchPickupsData();
     }
-  }, [activeTab, reportStatusFilter]);
+  }, [activeTab, reportStatusFilter, pickupStatusFilter]);
 
   const fetchAdminData = async () => {
     try {
@@ -143,7 +168,7 @@ export default function AdminDashboard() {
 
     if (nextStatus === 'DITOLAK_BATAL') {
       const input = window.prompt(`Alasan pembatalan/penolakan klaim ${claim.kode_klaim} (poin akan dikembalikan otomatis ke warga):`, 'Stok sembako di Balai RT sedang habis');
-      if (input === null) return; // user cancelled prompt
+      if (input === null) return;
       catatanAdmin = input.trim();
     } else if (nextStatus === 'DISETUJUI_SIAP_AMBIL') {
       const input = window.prompt(`Catatan petunjuk pengambilan untuk warga (opsional):`, 'Silakan ambil di Balai RT 03 pada jam kerja / jadwal timbang');
@@ -253,6 +278,73 @@ export default function AdminDashboard() {
   // Kalkulasi Dampak Lingkungan KLHK
   const ecoMetrics = calculateEcoImpact(stats?.total_waste_recycled_kg || 0);
 
+  // Filter & Search Bank Sampah
+  const filteredPickups = useMemo(() => {
+    return pickupsList.filter((item) => {
+      if (pickupSearch.trim()) {
+        const q = pickupSearch.toLowerCase();
+        const matchSearch =
+          item.kode_transaksi?.toLowerCase().includes(q) ||
+          item.nama_warga?.toLowerCase().includes(q) ||
+          item.alamat_jemput?.toLowerCase().includes(q) ||
+          item.nama_kategori?.toLowerCase().includes(q) ||
+          item.nama_petugas?.toLowerCase().includes(q);
+        if (!matchSearch) return false;
+      }
+
+      if (pickupTimeFilter !== 'ALL' && item.tanggal_transaksi) {
+        const itemDate = new Date(item.tanggal_transaksi);
+        const now = new Date();
+        if (pickupTimeFilter === 'THIS_WEEK') {
+          const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          if (itemDate < oneWeekAgo) return false;
+        } else if (pickupTimeFilter === 'THIS_MONTH') {
+          if (itemDate.getMonth() !== now.getMonth() || itemDate.getFullYear() !== now.getFullYear()) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+  }, [pickupsList, pickupSearch, pickupTimeFilter]);
+
+  // Statistik Agregat Bank Sampah
+  const bankSampahStats = useMemo(() => {
+    let totalKg = 0;
+    let totalPoints = 0;
+    let totalSelesai = 0;
+    let totalMenunggu = 0;
+    const categoryBreakdown = {};
+
+    pickupsList.forEach((item) => {
+      const kg = parseFloat(item.berat_aktual_kg || item.estimasi_berat_kg || 0);
+      const poin = parseInt(item.total_poin_diperoleh || (kg * (item.poin_per_kg || 15)), 10);
+      
+      if (item.status === 'SELESAI') {
+        totalKg += kg;
+        totalPoints += poin;
+        totalSelesai += 1;
+      } else if (item.status === 'MENUNGGU_VERIFIKASI') {
+        totalMenunggu += 1;
+      }
+
+      const cat = item.nama_kategori || 'Lainnya';
+      if (!categoryBreakdown[cat]) categoryBreakdown[cat] = { kg: 0, count: 0 };
+      categoryBreakdown[cat].kg += kg;
+      categoryBreakdown[cat].count += 1;
+    });
+
+    return {
+      totalKg: totalKg.toFixed(1),
+      totalPoints,
+      totalRupiah: (totalPoints * 100).toLocaleString('id-ID'),
+      totalSelesai,
+      totalMenunggu,
+      categoryBreakdown
+    };
+  }, [pickupsList]);
+
   const filteredAdminReports = reportsList.filter((item) => {
     if (!reportSearch.trim()) return true;
     const q = reportSearch.toLowerCase();
@@ -264,17 +356,41 @@ export default function AdminDashboard() {
     );
   });
 
+  const pendingClaimsCount = claimsList.filter((c) => c.status_klaim === 'MENUNGGU_VERIFIKASI').length;
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
-      {/* Header */}
-      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-1">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
-          <Shield className="w-7 h-7 text-civic-700" />
-          Dashboard Administrator Paguyuban RW 05
-        </h1>
-        <p className="text-sm text-slate-600">
-          Pusat validasi klaim sembako, pemantauan metrik dampak lingkungan KLHK, serta tata kelola akun warga dan mitra.
-        </p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      {/* Top Header Card */}
+      <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-civic-50 text-civic-800 border border-civic-200">
+            <Shield className="w-3.5 h-3.5 text-civic-700" />
+            Panel Administrator RW 05 Kalirungkut
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Pusat Pengawasan & Tata Kelola Sirkular
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-600 max-w-2xl">
+            Monitoring perputaran nilai jual Bank Sampah, validasi sembako warga, supervisi armada, dan pemantauan reduksi emisi karbon KLHK.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => {
+              fetchAdminData();
+              fetchClaimsData();
+              fetchPickupsData();
+              if (activeTab === 'reports') fetchReportsData();
+            }}
+            className="px-4 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors cursor-pointer"
+            title="Muat ulang seluruh data"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+            Segarkan Data
+          </button>
+        </div>
       </div>
 
       {errorMsg && (
@@ -290,672 +406,1058 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Primary Metrics Grid */}
-      {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-1">
-            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Aduan Masuk</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono">
-              {stats.total_reports}
-            </span>
+      {/* Main Container with Sidebar + Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Sidebar Menu */}
+        <aside className="lg:col-span-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs space-y-2 sticky top-20">
+          <div className="px-3 py-2 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+            Menu Administrasi
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-1">
-            <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider block">Selesai Dibersihkan</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-mono">
-              {stats.resolved_reports}
-            </span>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-1">
-            <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block">Sampah Terdaur Ulang</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-blue-700 font-mono">
-              {stats.total_waste_recycled_kg} <span className="text-sm font-semibold">Kg</span>
-            </span>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-slate-200 space-y-1">
-            <span className="text-xs font-semibold text-civic-600 uppercase tracking-wider block">Total Poin Beredar</span>
-            <span className="text-2xl sm:text-3xl font-extrabold text-civic-800 font-mono">
-              {stats.total_points_distributed.toLocaleString('id-ID')}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* KLHK ECOLOGICAL IMPACT METRICS PANEL */}
-      <div className="bg-gradient-to-br from-emerald-900 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-md space-y-4">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-emerald-700/50 pb-4">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider">
-              <Leaf className="w-4 h-4" />
-              Kalkulator Dampak Ekologis KLHK (Permen LHK No. 14/2021)
-            </div>
-            <h3 className="text-lg font-extrabold text-white tracking-tight mt-0.5">
-              Capaian Reduksi Emisi & Sirkular Komunitas RW 05
-            </h3>
-          </div>
-          <span className="text-[11px] font-mono bg-emerald-800/60 text-emerald-200 px-3 py-1 rounded-full border border-emerald-600/40">
-            Kawasan Kalirungkut
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
-          <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
-            <div className="flex items-center gap-1.5 text-emerald-300 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Emisi Tercegah</span>
-            </div>
-            <p className="text-2xl font-extrabold font-mono text-white">
-              {ecoMetrics.co2AvoidedKg} <span className="text-xs font-sans text-emerald-300">kg CO₂e</span>
-            </p>
-            <p className="text-[11px] text-slate-300">Setara {ecoMetrics.co2AvoidedTons} ton karbon gas buang</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
-            <div className="flex items-center gap-1.5 text-sky-300 text-xs font-semibold">
-              <Droplets className="w-3.5 h-3.5" />
-              <span>Air Bersih Terlindungi</span>
-            </div>
-            <p className="text-2xl font-extrabold font-mono text-white">
-              {ecoMetrics.waterSavedLiters} <span className="text-xs font-sans text-sky-300">Liter</span>
-            </p>
-            <p className="text-[11px] text-slate-300">Dari pencemaran minyak & limbah</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
-            <div className="flex items-center gap-1.5 text-emerald-300 text-xs font-semibold">
-              <TreePine className="w-3.5 h-3.5" />
-              <span>Pohon Produktif</span>
-            </div>
-            <p className="text-2xl font-extrabold font-mono text-white">
-              {ecoMetrics.treesSaved} <span className="text-xs font-sans text-emerald-300">Pohon</span>
-            </p>
-            <p className="text-[11px] text-slate-300">Kapasitas serapan CO₂ setara 1 tahun</p>
-          </div>
-
-          <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
-            <div className="flex items-center gap-1.5 text-amber-300 text-xs font-semibold">
-              <Leaf className="w-3.5 h-3.5" />
-              <span>Diversi TPA</span>
-            </div>
-            <p className="text-2xl font-extrabold font-mono text-white">
-              {ecoMetrics.diversionRate}%
-            </p>
-            <p className="text-[11px] text-slate-300">Sampah lolos dari TPA Benowo</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Sub Tabs Navigation */}
-      <div className="flex border-b border-slate-200 overflow-x-auto">
-        <button
-          type="button"
-          onClick={() => setActiveTab('claims')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
-            activeTab === 'claims'
-              ? 'border-civic-700 text-civic-800'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Ticket className="w-4 h-4" />
-          Validasi Klaim Sembako Warga ({claimsList.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('users')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
-            activeTab === 'users'
-              ? 'border-civic-700 text-civic-800'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Users className="w-4 h-4" />
-          Moderasi Akun Pengguna ({users.length})
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveTab('katalog')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
-            activeTab === 'katalog'
-              ? 'border-civic-700 text-civic-800'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <Gift className="w-4 h-4" />
-          Katalog Penukaran Poin & Sembako ({katalogList.length})
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab('reports')}
-          className={`py-3 px-6 text-sm font-semibold border-b-2 -mb-px flex items-center gap-2 transition-colors min-h-[44px] whitespace-nowrap cursor-pointer ${
-            activeTab === 'reports'
-              ? 'border-civic-700 text-civic-800'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4" />
-          Pengawasan Aduan Sampah Liar ({reportsList.length})
-        </button>
-      </div>
-
-      {/* TAB 1: VALIDASI KLAIM SEMBAKO WARGA */}
-      {activeTab === 'claims' && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Ticket className="w-5 h-5 text-civic-700" />
-                Antrean Klaim Penukaran Sembako Warga ({claimsList.length})
-              </h2>
-              <p className="text-xs text-slate-500">
-                Verifikasi ketersediaan barang di Balai RT dan potong stok fisik saat serah terima.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500 font-medium">Filter Status:</span>
-              <select
-                value={claimStatusFilter}
-                onChange={(e) => setClaimStatusFilter(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-700"
-              >
-                <option value="">Semua Status</option>
-                <option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option>
-                <option value="DISETUJUI_SIAP_AMBIL">Siap Diambil</option>
-                <option value="SELESAI_DISERAHKAN">Selesai Diserahkan</option>
-                <option value="DITOLAK_BATAL">Ditolak / Batal</option>
-              </select>
-            </div>
-          </div>
-
-          {claimsLoading ? (
-            <div className="py-8 text-center">
-              <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
-            </div>
-          ) : claimsList.length === 0 ? (
-            <p className="text-sm text-slate-500 py-8 text-center">Tidak ada permohonan klaim penukaran sembako.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Kode & Tanggal</th>
-                    <th className="py-3 px-4 font-semibold">Warga Penukar</th>
-                    <th className="py-3 px-4 font-semibold">Item & Poin</th>
-                    <th className="py-3 px-4 font-semibold">Status Klaim</th>
-                    <th className="py-3 px-4 font-semibold text-right">Aksi Verifikasi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {claimsList.map((claim) => {
-                    const isPending = claim.status_klaim === 'MENUNGGU_VERIFIKASI';
-                    const isReady = claim.status_klaim === 'DISETUJUI_SIAP_AMBIL';
-                    const isDone = claim.status_klaim === 'SELESAI_DISERAHKAN';
-                    const isCancelled = claim.status_klaim === 'DITOLAK_BATAL';
-
-                    return (
-                      <tr key={claim.id_klaim} className="hover:bg-slate-50/50">
-                        <td className="py-3.5 px-4">
-                          <span className="font-mono font-bold text-civic-700 block">{claim.kode_klaim}</span>
-                          <span className="text-[11px] text-slate-400">
-                            {new Date(claim.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
-                          </span>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <span className="font-bold text-slate-900 block">{claim.nama_warga}</span>
-                          <span className="text-slate-500">RT {claim.rt || '03'} / RW {claim.rw || '05'} • {claim.kontak_warga || '-'}</span>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <span className="font-bold text-slate-900 block">{claim.nama_item}</span>
-                          <span className="font-mono font-semibold text-civic-700">
-                            {claim.biaya_poin} Poin ({claim.nilai_rupiah})
-                          </span>
-                          {claim.sisa_stok_item !== undefined && (
-                            <span className="text-[11px] text-slate-400 block">Stok gudang: {claim.sisa_stok_item} pcs</span>
-                          )}
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <span
-                            className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                              isReady
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : isPending
-                                ? 'bg-amber-100 text-amber-800'
-                                : isDone
-                                ? 'bg-slate-100 text-slate-700'
-                                : 'bg-rose-100 text-rose-800'
-                            }`}
-                          >
-                            {isReady
-                              ? 'SIAP DIAMBIL'
-                              : isPending
-                              ? 'MENUNGGU VERIFIKASI'
-                              : isDone
-                              ? 'SELESAI DISERAHKAN'
-                              : 'DITOLAK / BATAL'}
-                          </span>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            {actionClaimLoading === claim.id_klaim ? (
-                              <Loader2 className="w-4 h-4 animate-spin text-civic-700" />
-                            ) : (
-                              <>
-                                {isPending && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleVerifyClaim(claim, 'DISETUJUI_SIAP_AMBIL')}
-                                      className="px-2.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                                      title="Setujui dan siapkan barang di Balai RT"
-                                    >
-                                      Setujui (Siap Ambil)
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleVerifyClaim(claim, 'DITOLAK_BATAL')}
-                                      className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-semibold text-xs transition-colors cursor-pointer"
-                                      title="Tolak dan kembalikan poin ke saldo warga"
-                                    >
-                                      Tolak & Refund
-                                    </button>
-                                  </>
-                                )}
-
-                                {isReady && (
-                                  <>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleVerifyClaim(claim, 'SELESAI_DISERAHKAN')}
-                                      className="px-2.5 py-1.5 bg-civic-700 hover:bg-civic-800 text-white rounded-lg font-bold text-xs transition-colors cursor-pointer"
-                                      title="Serahkan barang fisik di Balai RT dan potong stok"
-                                    >
-                                      Serahkan (Potong Stok)
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleVerifyClaim(claim, 'DITOLAK_BATAL')}
-                                      className="px-2 py-1.5 text-slate-400 hover:text-rose-600 rounded-lg text-xs transition-colors cursor-pointer"
-                                      title="Batal dan kembalikan poin"
-                                    >
-                                      Batal
-                                    </button>
-                                  </>
-                                )}
-
-                                {(isDone || isCancelled) && (
-                                  <span className="text-[11px] text-slate-400 italic">Selesai Diproses</span>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 2: User Moderation Directory */}
-      {activeTab === 'users' && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-civic-700" />
-                Direktori Akun Pengguna ({users.length})
-              </h2>
-              <p className="text-xs text-slate-500">Moderasi hak akses dan status operasional akun warga serta petugas</p>
-            </div>
-
-            <div className="flex items-center gap-2 text-xs">
-              <span className="text-slate-500 font-medium">Filter Peran:</span>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value)}
-                className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white font-medium text-slate-700"
-              >
-                <option value="">Semua Peran</option>
-                <option value="warga">Warga</option>
-                <option value="mitra">Mitra / Satgas</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-          </div>
-
-          {loading ? (
-            <div className="py-8 text-center">
-              <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
-            </div>
-          ) : users.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center">Tidak ada data pengguna.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Nama & Email</th>
-                    <th className="py-3 px-4 font-semibold">Peran</th>
-                    <th className="py-3 px-4 font-semibold">Status</th>
-                    <th className="py-3 px-4 font-semibold text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {users.map((u) => (
-                    <tr key={u.id_user} className="hover:bg-slate-50/50">
-                      <td className="py-3.5 px-4">
-                        <span className="font-bold text-slate-900 block">{u.nama}</span>
-                        <span className="text-slate-400">{u.email}</span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-slate-100 text-slate-700">
-                          {u.role}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full font-semibold text-[10px] ${
-                            u.status === 'active'
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                              : 'bg-rose-50 text-rose-700 border border-rose-200'
-                          }`}
-                        >
-                          {u.status}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right">
-                        {u.role !== 'admin' && (
-                          <button
-                            type="button"
-                            onClick={() => handleToggleStatus(u)}
-                            className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors min-h-[36px] cursor-pointer ${
-                              u.status === 'active'
-                                ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
-                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                            }`}
-                          >
-                            {u.status === 'active' ? 'Bekukan Akun' : 'Aktifkan'}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 3: Kelola Katalog Penukaran Poin & Sembako */}
-      {activeTab === 'katalog' && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Gift className="w-5 h-5 text-civic-700" />
-                Daftar Pilihan Penukaran Sembako & Reward
-              </h2>
-              <p className="text-xs text-slate-500">
-                Item yang berstatus aktif akan langsung tampil di halaman Setor & Tukar Poin warga.
-              </p>
-            </div>
-
+          <nav className="space-y-1">
+            {/* Menu 1: Monitoring Bank Sampah */}
             <button
               type="button"
-              onClick={handleOpenAddModal}
-              className="px-4 py-2.5 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-semibold flex items-center gap-2 min-h-[44px] transition-colors shadow-sm cursor-pointer"
+              onClick={() => setActiveTab('bank_sampah')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-colors min-h-[44px] cursor-pointer ${
+                activeTab === 'bank_sampah'
+                  ? 'bg-civic-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              Tambah Opsi Penukaran Baru
-            </button>
-          </div>
-
-          {katalogLoading ? (
-            <div className="py-12 text-center">
-              <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
-            </div>
-          ) : katalogList.length === 0 ? (
-            <p className="text-sm text-slate-500 py-6 text-center">Belum ada item katalog.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
-                  <tr>
-                    <th className="py-3 px-4 font-semibold">Item & Deskripsi</th>
-                    <th className="py-3 px-4 font-semibold">Kategori Badge</th>
-                    <th className="py-3 px-4 font-semibold">Biaya Poin & Rupiah</th>
-                    <th className="py-3 px-4 font-semibold text-center">Stok</th>
-                    <th className="py-3 px-4 font-semibold text-center">Status Tayang</th>
-                    <th className="py-3 px-4 font-semibold text-right">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {katalogList.map((item) => {
-                    const IconComp = ICON_MAP[item.icon_name] || Gift;
-                    const isActive = Boolean(item.is_active);
-
-                    return (
-                      <tr key={item.id_katalog} className="hover:bg-slate-50/50">
-                        <td className="py-3.5 px-4 max-w-xs">
-                          <div className="flex items-start gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-civic-50 text-civic-700 flex items-center justify-center shrink-0 mt-0.5">
-                              <IconComp className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <span className="font-bold text-slate-900 block">{item.judul}</span>
-                              <p className="text-[11px] text-slate-500 line-clamp-2 mt-0.5">{item.deskripsi}</p>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <span className="inline-block px-2.5 py-1 rounded-md font-bold uppercase text-[10px] bg-civic-100 text-civic-800">
-                            {item.kategori_badge}
-                          </span>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div className="font-mono font-bold text-civic-700 text-sm">{item.biaya_poin} Poin</div>
-                          <div className="text-[11px] text-slate-500">{item.nilai_rupiah}</div>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-center font-mono font-semibold text-slate-700">
-                          {item.stok} pcs
-                        </td>
-
-                        <td className="py-3.5 px-4 text-center">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleKatalog(item)}
-                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-colors min-h-[30px] cursor-pointer ${
-                              isActive
-                                ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
-                                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'
-                            }`}
-                            title="Klik untuk mengubah status tayang"
-                          >
-                            {isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
-                            {isActive ? 'Aktif Tayang' : 'Disembunyikan'}
-                          </button>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditModal(item)}
-                              className="p-2 text-slate-600 hover:text-civic-700 hover:bg-slate-100 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
-                              title="Edit Item"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteKatalog(item)}
-                              className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
-                              title="Hapus Item"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* TAB 4: PENGAWASAN ADUAN SAMPAH LIAR (READ-ONLY) */}
-      {activeTab === 'reports' && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                  <ShieldAlert className="w-5 h-5 text-civic-700" />
-                  Pengawasan & Rekapitulasi Aduan Sampah Liar RW 05
-                </h2>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">
-                  Supervisi (Read-Only)
+              <div className="flex items-center gap-2.5">
+                <Coins className="w-4 h-4 shrink-0" />
+                <span>Monitoring Bank Sampah</span>
+              </div>
+              {bankSampahStats.totalMenunggu > 0 ? (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === 'bank_sampah' ? 'bg-white text-civic-800' : 'bg-amber-100 text-amber-800'
+                }`}>
+                  {bankSampahStats.totalMenunggu} jemput
                 </span>
+              ) : (
+                <span className={`text-[10px] ${activeTab === 'bank_sampah' ? 'text-white/80' : 'text-slate-400'}`}>
+                  {pickupsList.length}
+                </span>
+              )}
+            </button>
+
+            {/* Menu 2: Ringkasan & Dampak KLHK */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('overview')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-colors min-h-[44px] cursor-pointer ${
+                activeTab === 'overview'
+                  ? 'bg-civic-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Leaf className="w-4 h-4 shrink-0" />
+                <span>Ringkasan & Metrik KLHK</span>
               </div>
-              <p className="text-xs text-slate-500 mt-1">
-                Memantau progres penanganan dan bukti pembersihan armada Satgas Lapangan secara transparan tanpa intervensi fisik.
-              </p>
-            </div>
+              <span className={`text-[10px] ${activeTab === 'overview' ? 'text-white/80' : 'text-emerald-600 font-semibold'}`}>
+                {ecoMetrics.co2AvoidedKg} kg CO₂
+              </span>
+            </button>
 
-            {/* Filter & Search Bar */}
-            <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:w-60">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={reportSearch}
-                  onChange={(e) => setReportSearch(e.target.value)}
-                  placeholder="Cari kode tiket / lokasi..."
-                  className="pl-8 pr-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full focus:outline-hidden focus:border-civic-600"
-                />
+            {/* Menu 3: Validasi Klaim Sembako */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('claims')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-colors min-h-[44px] cursor-pointer ${
+                activeTab === 'claims'
+                  ? 'bg-civic-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Ticket className="w-4 h-4 shrink-0" />
+                <span>Validasi Klaim Sembako</span>
               </div>
+              {pendingClaimsCount > 0 ? (
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                  activeTab === 'claims' ? 'bg-white text-civic-800' : 'bg-rose-100 text-rose-800'
+                }`}>
+                  {pendingClaimsCount} baru
+                </span>
+              ) : (
+                <span className={`text-[10px] ${activeTab === 'claims' ? 'text-white/80' : 'text-slate-400'}`}>
+                  {claimsList.length}
+                </span>
+              )}
+            </button>
 
-              <select
-                value={reportStatusFilter}
-                onChange={(e) => setReportStatusFilter(e.target.value)}
-                className="text-xs py-1.5 px-3 border border-slate-300 rounded-lg bg-white text-slate-700"
-              >
-                <option value="">Semua Status Aduan</option>
-                <option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option>
-                <option value="INVESTIGASI">Tahap Investigasi</option>
-                <option value="DALAM_PENANGANAN">Dalam Penanganan Armada</option>
-                <option value="SELESAI_DIBERSIHKAN">Selesai Dibersihkan</option>
-                <option value="DITOLAK">Ditolak</option>
-              </select>
+            {/* Menu 4: Katalog Reward & Sembako */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('katalog')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-colors min-h-[44px] cursor-pointer ${
+                activeTab === 'katalog'
+                  ? 'bg-civic-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Gift className="w-4 h-4 shrink-0" />
+                <span>Katalog Poin & Sembako</span>
+              </div>
+              <span className={`text-[10px] ${activeTab === 'katalog' ? 'text-white/80' : 'text-slate-400'}`}>
+                {katalogList.length} item
+              </span>
+            </button>
 
-              <button
-                type="button"
-                onClick={fetchReportsData}
-                className="text-xs text-civic-700 font-semibold hover:underline px-2 py-1"
-              >
-                Segarkan
-              </button>
+            {/* Menu 5: Moderasi Pengguna */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('users')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-colors min-h-[44px] cursor-pointer ${
+                activeTab === 'users'
+                  ? 'bg-civic-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <Users className="w-4 h-4 shrink-0" />
+                <span>Moderasi Akun Pengguna</span>
+              </div>
+              <span className={`text-[10px] ${activeTab === 'users' ? 'text-white/80' : 'text-slate-400'}`}>
+                {users.length} akun
+              </span>
+            </button>
+
+            {/* Menu 6: Arsip Aduan Sampah Liar */}
+            <button
+              type="button"
+              onClick={() => setActiveTab('reports')}
+              className={`w-full text-left px-3.5 py-3 rounded-xl text-xs font-bold flex items-center justify-between transition-colors min-h-[44px] cursor-pointer ${
+                activeTab === 'reports'
+                  ? 'bg-civic-700 text-white shadow-xs'
+                  : 'text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <div className="flex items-center gap-2.5">
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                <span>Arsip Aduan Sampah Liar</span>
+              </div>
+              <span className={`text-[10px] ${activeTab === 'reports' ? 'text-white/80' : 'text-slate-400'}`}>
+                {reportsList.length}
+              </span>
+            </button>
+          </nav>
+
+          {/* Quick System Note */}
+          <div className="mt-6 pt-4 border-t border-slate-100 text-[11px] text-slate-500 space-y-2">
+            <div className="flex items-center justify-between font-semibold text-slate-700">
+              <span>Status Operasional</span>
+              <span className="flex items-center gap-1 text-emerald-600">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                Aktif
+              </span>
             </div>
+            <p className="text-[10px] leading-relaxed text-slate-400">
+              Unit Bank Sampah terhubung dengan 5 RT di lingkungan RW 05 Kalirungkut, Surabaya.
+            </p>
           </div>
+        </aside>
 
-          {reportsLoading ? (
-            <div className="p-12 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-8 h-8 animate-spin text-civic-700" />
-              <p className="text-sm font-medium">Memuat data pengawasan aduan warga...</p>
-            </div>
-          ) : filteredAdminReports.length === 0 ? (
-            <div className="p-12 text-center text-slate-400 bg-slate-50 rounded-xl border border-slate-100">
-              <CheckCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-600">Tidak ada aduan yang sesuai filter pengawasan.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredAdminReports.map((item) => (
-                <div key={item.id_laporan} className="bg-slate-50/50 rounded-2xl border border-slate-200 overflow-hidden shadow-xs flex flex-col justify-between hover:border-slate-300 transition-colors">
+        {/* Right Main Content Area */}
+        <main className="lg:col-span-9 space-y-6 min-w-0">
+          
+          {/* ======================================================== */}
+          {/* TAB: MONITORING BANK SAMPAH (Wadah Nilai Jual & Transaksi) */}
+          {/* ======================================================== */}
+          {activeTab === 'bank_sampah' && (
+            <div className="space-y-6">
+              {/* Summary Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <Scale className="w-3.5 h-3.5 text-civic-600" />
+                    <span>Total Ditimbang</span>
+                  </div>
+                  <span className="text-xl sm:text-2xl font-extrabold text-slate-900 font-mono block">
+                    {bankSampahStats.totalKg} <span className="text-xs font-sans text-slate-500">Kg</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500">Sampah anorganik terpilah</span>
+                </div>
+
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-600 uppercase tracking-wider">
+                    <Coins className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Poin Terdistribusi</span>
+                  </div>
+                  <span className="text-xl sm:text-2xl font-extrabold text-emerald-700 font-mono block">
+                    {bankSampahStats.totalPoints.toLocaleString('id-ID')}
+                  </span>
+                  <span className="text-[11px] text-emerald-600 font-medium">Masuk ke saldo warga</span>
+                </div>
+
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 uppercase tracking-wider">
+                    <Wallet className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Perputaran Nilai</span>
+                  </div>
+                  <span className="text-xl sm:text-2xl font-extrabold text-blue-700 font-mono block">
+                    Rp {bankSampahStats.totalRupiah}
+                  </span>
+                  <span className="text-[11px] text-slate-500">Estimasi nilai ekonomi sembako</span>
+                </div>
+
+                <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 uppercase tracking-wider">
+                    <Truck className="w-3.5 h-3.5 text-amber-600" />
+                    <span>Antrean Jemput</span>
+                  </div>
+                  <span className="text-xl sm:text-2xl font-extrabold text-amber-700 font-mono block">
+                    {bankSampahStats.totalMenunggu} <span className="text-xs font-sans text-slate-500">Warga</span>
+                  </span>
+                  <span className="text-[11px] text-slate-500">Perlu penjemputan mitra</span>
+                </div>
+              </div>
+
+              {/* Kategori Komoditas Breakdown */}
+              <div className="bg-slate-50 p-4 sm:p-5 rounded-2xl border border-slate-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-2">
+                    <BarChart3 className="w-4 h-4 text-civic-700" />
+                    Distribusi Komoditas Sampah Terkumpul
+                  </h3>
+                  <span className="text-[11px] text-slate-500">Akumulasi seluruh transaksi</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  {Object.entries(bankSampahStats.categoryBreakdown).length === 0 ? (
+                    <p className="text-xs text-slate-400 col-span-4 py-2">Belum ada data komoditas.</p>
+                  ) : (
+                    Object.entries(bankSampahStats.categoryBreakdown).map(([category, val]) => (
+                      <div key={category} className="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+                        <span className="text-xs font-bold text-slate-800 block truncate">{category}</span>
+                        <div className="flex items-baseline justify-between mt-1">
+                          <span className="text-base font-extrabold text-civic-800 font-mono">
+                            {val.kg.toFixed(1)} <span className="text-[10px] font-sans text-slate-500">Kg</span>
+                          </span>
+                          <span className="text-[10px] font-medium text-slate-400 font-mono">
+                            {val.count}x setor
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {/* Table / List Container */}
+              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 pb-4 border-b border-slate-100">
                   <div>
-                    <div className="h-40 bg-slate-100 relative">
-                      {item.foto_bukti_url ? (
-                        <img
-                          src={item.foto_bukti_url}
-                          alt="Bukti sampah liar"
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
-                          <ImageIcon className="w-8 h-8 opacity-40" />
-                        </div>
-                      )}
-                      <div className="absolute top-3 left-3">
-                        <TicketBadge status={item.status} />
-                      </div>
-                    </div>
-
-                    <div className="p-5 space-y-3">
-                      <div>
-                        <div className="flex items-center justify-between">
-                          <Link
-                            to={`/lacak?code=${item.kode_tiket}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-xs font-mono font-bold text-civic-700 hover:text-civic-800 hover:underline flex items-center gap-1 group/link"
-                            title="Buka tampilan lacak publik (tab baru)"
-                          >
-                            {item.kode_tiket}
-                            <ExternalLink className="w-3 h-3 text-slate-400 group-hover/link:text-civic-700" />
-                          </Link>
-                          <span className="text-[11px] text-slate-400">{item.nama_pelapor || 'Anonim'}</span>
-                        </div>
-                        <h3 className="text-sm font-bold text-slate-900 line-clamp-2 mt-1">{item.deskripsi_kejadian}</h3>
-                      </div>
-
-                      <div className="text-xs text-slate-600 space-y-1.5 pt-2 border-t border-slate-200/80">
-                        <div className="flex items-start gap-1.5">
-                          <MapPin className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                          <span className="line-clamp-2">{item.alamat_lokasi}, {item.kecamatan}, {item.kota}</span>
-                        </div>
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                          <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
-                          <span>{new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-                        </div>
-                      </div>
-                    </div>
+                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-civic-700" />
+                      Audit Transaksi & Riwayat Bank Sampah ({filteredPickups.length})
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Catatan pembukuan digital setoran warga, verifikasi timbangan mitra, dan perolehan poin sembako.
+                    </p>
                   </div>
 
-                  <div className="p-4 pt-0">
-                    <Link
-                      to={`/lacak?code=${item.kode_tiket}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="w-full py-2 px-3 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 min-h-[38px]"
+                  {/* Filter Group: Search, Status, Time Range */}
+                  <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                    {/* Time Range Filter (Menjawab kebutuhan agar riwayat tidak menumpuk tanpa menghapus data) */}
+                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setPickupTimeFilter('ALL')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                          pickupTimeFilter === 'ALL'
+                            ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Semua Waktu
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPickupTimeFilter('THIS_MONTH')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                          pickupTimeFilter === 'THIS_MONTH'
+                            ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        Bulan Ini
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPickupTimeFilter('THIS_WEEK')}
+                        className={`px-2.5 py-1 rounded-lg font-medium transition-colors cursor-pointer ${
+                          pickupTimeFilter === 'THIS_WEEK'
+                            ? 'bg-white text-civic-800 font-bold shadow-2xs'
+                            : 'text-slate-600 hover:text-slate-900'
+                        }`}
+                      >
+                        7 Hari Terakhir
+                      </button>
+                    </div>
+
+                    {/* Status Filter */}
+                    <select
+                      value={pickupStatusFilter}
+                      onChange={(e) => setPickupStatusFilter(e.target.value)}
+                      className="text-xs py-1.5 px-3 border border-slate-300 rounded-xl bg-white font-medium text-slate-700"
                     >
-                      Buka Detail Lacak Publik
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
-                    </Link>
+                      <option value="">Semua Status</option>
+                      <option value="MENUNGGU_VERIFIKASI">Menunggu Penjemputan</option>
+                      <option value="DIKONFIRMASI_MITRA">Dalam Penjemputan</option>
+                      <option value="SELESAI">Selesai & Poin Diberikan</option>
+                    </select>
+
+                    {/* Search Input */}
+                    <div className="relative flex-1 sm:w-48">
+                      <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                      <input
+                        type="text"
+                        value={pickupSearch}
+                        onChange={(e) => setPickupSearch(e.target.value)}
+                        placeholder="Cari transaksi..."
+                        className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs w-full focus:outline-hidden focus:border-civic-600"
+                      />
+                    </div>
                   </div>
                 </div>
-              ))}
+
+                {pickupsLoading ? (
+                  <div className="py-12 text-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
+                    <p className="text-xs text-slate-400 mt-2">Memuat buku transaksi bank sampah...</p>
+                  </div>
+                ) : filteredPickups.length === 0 ? (
+                  <div className="py-12 text-center bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                    <Coins className="w-8 h-8 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-semibold text-slate-700">Tidak ada transaksi bank sampah yang cocok.</p>
+                    <p className="text-xs text-slate-400 mt-1">Coba sesuaikan filter waktu atau kata kunci pencarian.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                        <tr>
+                          <th className="py-3 px-4 font-semibold">Kode & Tanggal</th>
+                          <th className="py-3 px-4 font-semibold">Warga & Lokasi Jemput</th>
+                          <th className="py-3 px-4 font-semibold">Kategori & Berat</th>
+                          <th className="py-3 px-4 font-semibold">Nilai Poin & Rupiah</th>
+                          <th className="py-3 px-4 font-semibold">Mitra Penjemput</th>
+                          <th className="py-3 px-4 font-semibold text-right">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {filteredPickups.map((item) => {
+                          const isDone = item.status === 'SELESAI';
+                          const isClaimed = item.status === 'DIKONFIRMASI_MITRA';
+                          const berat = isDone ? item.berat_aktual_kg : item.estimasi_berat_kg;
+                          const poin = item.total_poin_diperoleh || Math.round(berat * (item.poin_per_kg || 15));
+                          const nilaiRp = (poin * 100).toLocaleString('id-ID');
+
+                          return (
+                            <tr key={item.id_transaksi} className="hover:bg-slate-50/60 transition-colors">
+                              <td className="py-3.5 px-4">
+                                <span className="font-mono font-bold text-civic-700 block">{item.kode_transaksi}</span>
+                                <span className="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                                  <Clock className="w-3 h-3" />
+                                  {new Date(item.tanggal_transaksi).toLocaleDateString('id-ID', {
+                                    day: 'numeric',
+                                    month: 'short',
+                                    year: 'numeric'
+                                  })}
+                                </span>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <span className="font-bold text-slate-900 block">{item.nama_warga}</span>
+                                <span className="text-[11px] text-slate-500 flex items-center gap-1">
+                                  <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                                  RT {item.rt || '03'} / RW {item.rw || '05'} • {item.alamat_jemput}
+                                </span>
+                                {item.kontak_warga && (
+                                  <span className="text-[10px] text-slate-400 block mt-0.5">
+                                    Telp: {item.kontak_warga}
+                                  </span>
+                                )}
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <span className="font-semibold text-slate-800 block">{item.nama_kategori}</span>
+                                <span className="text-[11px] font-mono text-slate-600">
+                                  {berat} Kg {isDone ? '(Hasil Timbang Riil)' : '(Estimasi Warga)'}
+                                </span>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <span className="font-mono font-bold text-emerald-700 text-sm block">
+                                  +{poin} Poin
+                                </span>
+                                <span className="text-[11px] text-slate-500 font-medium">
+                                  Setara Rp {nilaiRp}
+                                </span>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                {item.nama_petugas || item.nama_mitra ? (
+                                  <div>
+                                    <span className="font-semibold text-slate-800 block text-[11px]">
+                                      {item.nama_petugas || item.nama_mitra}
+                                    </span>
+                                    <span className="text-[10px] text-slate-400">
+                                      {item.nama_mitra ? `Unit: ${item.nama_mitra}` : 'Petugas Armada'}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <span className="text-[11px] italic text-amber-600">Belum di-klaim armada</span>
+                                )}
+                              </td>
+
+                              <td className="py-3.5 px-4 text-right">
+                                {isDone ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                    <CheckCircle className="w-3 h-3" />
+                                    Selesai Ditimbang
+                                  </span>
+                                ) : isClaimed ? (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                                    <Truck className="w-3 h-3" />
+                                    Dalam Penjemputan
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                    <Clock className="w-3 h-3" />
+                                    Menunggu Petugas
+                                  </span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             </div>
           )}
-        </div>
-      )}
+
+          {/* ======================================================== */}
+          {/* TAB: RINGKASAN & METRIK KLHK */}
+          {/* ======================================================== */}
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Primary Metrics Grid */}
+              {stats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Total Aduan Sampah</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-slate-900 font-mono">
+                      {stats.total_reports}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block">Titik lokasi teridentifikasi</span>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                    <span className="text-xs font-semibold text-emerald-600 uppercase tracking-wider block">Selesai Dibersihkan</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-emerald-700 font-mono">
+                      {stats.resolved_reports}
+                    </span>
+                    <span className="text-[11px] text-emerald-600 block">Dibersihkan satgas lapangan</span>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                    <span className="text-xs font-semibold text-blue-600 uppercase tracking-wider block">Sampah Terdaur Ulang</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-blue-700 font-mono">
+                      {stats.total_waste_recycled_kg} <span className="text-sm font-semibold">Kg</span>
+                    </span>
+                    <span className="text-[11px] text-blue-600 block">Unit Bank Sampah RT/RW</span>
+                  </div>
+
+                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs space-y-1">
+                    <span className="text-xs font-semibold text-civic-600 uppercase tracking-wider block">Total Poin Beredar</span>
+                    <span className="text-2xl sm:text-3xl font-extrabold text-civic-800 font-mono">
+                      {stats.total_points_distributed?.toLocaleString('id-ID')}
+                    </span>
+                    <span className="text-[11px] text-slate-400 block">Siap ditukar sembako</span>
+                  </div>
+                </div>
+              )}
+
+              {/* KLHK ECOLOGICAL IMPACT METRICS PANEL */}
+              <div className="bg-gradient-to-br from-emerald-900 via-teal-950 to-slate-900 rounded-2xl p-6 sm:p-8 text-white shadow-md space-y-5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-emerald-700/50 pb-4">
+                  <div>
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+                      <Leaf className="w-4 h-4" />
+                      Kalkulator Dampak Ekologis KLHK (Permen LHK No. 14/2021)
+                    </div>
+                    <h3 className="text-lg font-extrabold text-white tracking-tight mt-0.5">
+                      Capaian Reduksi Emisi & Sirkular Komunitas RW 05
+                    </h3>
+                  </div>
+                  <span className="text-[11px] font-mono bg-emerald-800/60 text-emerald-200 px-3 py-1 rounded-full border border-emerald-600/40">
+                    Kawasan Kalirungkut, Surabaya
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+                  <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
+                    <div className="flex items-center gap-1.5 text-emerald-300 text-xs font-semibold">
+                      <Sparkles className="w-3.5 h-3.5" />
+                      <span>Emisi Tercegah</span>
+                    </div>
+                    <p className="text-2xl font-extrabold font-mono text-white">
+                      {ecoMetrics.co2AvoidedKg} <span className="text-xs font-sans text-emerald-300">kg CO₂e</span>
+                    </p>
+                    <p className="text-[11px] text-slate-300">Setara {ecoMetrics.co2AvoidedTons} ton karbon gas buang</p>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
+                    <div className="flex items-center gap-1.5 text-sky-300 text-xs font-semibold">
+                      <Droplets className="w-3.5 h-3.5" />
+                      <span>Air Terlindungi</span>
+                    </div>
+                    <p className="text-2xl font-extrabold font-mono text-white">
+                      {ecoMetrics.waterSavedLiters} <span className="text-xs font-sans text-sky-300">Liter</span>
+                    </p>
+                    <p className="text-[11px] text-slate-300">Dari pencemaran minyak & limbah</p>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
+                    <div className="flex items-center gap-1.5 text-emerald-300 text-xs font-semibold">
+                      <TreePine className="w-3.5 h-3.5" />
+                      <span>Pohon Produktif</span>
+                    </div>
+                    <p className="text-2xl font-extrabold font-mono text-white">
+                      {ecoMetrics.treesSaved} <span className="text-xs font-sans text-emerald-300">Pohon</span>
+                    </p>
+                    <p className="text-[11px] text-slate-300">Kapasitas serapan CO₂ setara 1 tahun</p>
+                  </div>
+
+                  <div className="bg-white/10 backdrop-blur-xs p-4 rounded-xl border border-white/10 space-y-1">
+                    <div className="flex items-center gap-1.5 text-amber-300 text-xs font-semibold">
+                      <Leaf className="w-3.5 h-3.5" />
+                      <span>Diversi TPA</span>
+                    </div>
+                    <p className="text-2xl font-extrabold font-mono text-white">
+                      {ecoMetrics.diversionRate}%
+                    </p>
+                    <p className="text-[11px] text-slate-300">Sampah teralihkan dari TPA Benowo</p>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-black/20 rounded-xl text-xs text-slate-300 flex items-start gap-2 border border-white/5">
+                  <Shield className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+                  <p className="leading-relaxed">
+                    Data di atas dihitung secara riil berdasarkan standar konversi KLHK RI dari seluruh transaksi timbang Bank Sampah yang diselesaikan mitra lapangan. Data ini siap diekspor untuk Laporan Tahunan Adipura & Pengelolaan Lingkungan Hidup Daerah.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB: VALIDASI KLAIM SEMBAKO WARGA */}
+          {/* ======================================================== */}
+          {activeTab === 'claims' && (
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Ticket className="w-5 h-5 text-civic-700" />
+                    Antrean Klaim Penukaran Sembako Warga ({claimsList.length})
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Verifikasi ketersediaan barang di Balai RT dan potong stok fisik saat serah terima.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-500 font-medium">Filter Status:</span>
+                  <select
+                    value={claimStatusFilter}
+                    onChange={(e) => setClaimStatusFilter(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-medium text-slate-700"
+                  >
+                    <option value="">Semua Status</option>
+                    <option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option>
+                    <option value="DISETUJUI_SIAP_AMBIL">Siap Diambil</option>
+                    <option value="SELESAI_DISERAHKAN">Selesai Diserahkan</option>
+                    <option value="DITOLAK_BATAL">Ditolak / Batal</option>
+                  </select>
+                </div>
+              </div>
+
+              {claimsLoading ? (
+                <div className="py-8 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
+                </div>
+              ) : claimsList.length === 0 ? (
+                <p className="text-sm text-slate-500 py-8 text-center">Tidak ada permohonan klaim penukaran sembako.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                      <tr>
+                        <th className="py-3 px-4 font-semibold">Kode & Tanggal</th>
+                        <th className="py-3 px-4 font-semibold">Warga Penukar</th>
+                        <th className="py-3 px-4 font-semibold">Item & Poin</th>
+                        <th className="py-3 px-4 font-semibold">Status Klaim</th>
+                        <th className="py-3 px-4 font-semibold text-right">Aksi Verifikasi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {claimsList.map((claim) => {
+                        const isPending = claim.status_klaim === 'MENUNGGU_VERIFIKASI';
+                        const isReady = claim.status_klaim === 'DISETUJUI_SIAP_AMBIL';
+                        const isDone = claim.status_klaim === 'SELESAI_DISERAHKAN';
+                        const isCancelled = claim.status_klaim === 'DITOLAK_BATAL';
+
+                        return (
+                          <tr key={claim.id_klaim} className="hover:bg-slate-50/50">
+                            <td className="py-3.5 px-4">
+                              <span className="font-mono font-bold text-civic-700 block">{claim.kode_klaim}</span>
+                              <span className="text-[11px] text-slate-400">
+                                {new Date(claim.tanggal_pengajuan).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </span>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <span className="font-bold text-slate-900 block">{claim.nama_warga}</span>
+                              <span className="text-slate-500">RT {claim.rt || '03'} / RW {claim.rw || '05'} • {claim.kontak_warga || '-'}</span>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <span className="font-bold text-slate-900 block">{claim.nama_item}</span>
+                              <span className="font-mono font-semibold text-civic-700">
+                                {claim.biaya_poin} Poin ({claim.nilai_rupiah})
+                              </span>
+                              {claim.sisa_stok_item !== undefined && (
+                                <span className="text-[11px] text-slate-400 block">Stok gudang: {claim.sisa_stok_item} pcs</span>
+                              )}
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              {isPending && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                                  Menunggu Verifikasi Balai RT
+                                </span>
+                              )}
+                              {isReady && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                                  Siap Diambil di Balai RT
+                                </span>
+                              )}
+                              {isDone && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                  Selesai Diserahkan
+                                </span>
+                              )}
+                              {isCancelled && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                                  Dibatalkan / Ditolak (Poin Refund)
+                                </span>
+                              )}
+                              {claim.catatan_admin && (
+                                <span className="text-[11px] text-slate-500 italic block mt-1">
+                                  "{claim.catatan_admin}"
+                                </span>
+                              )}
+                            </td>
+
+                            <td className="py-3.5 px-4 text-right">
+                              {actionClaimLoading === claim.id_klaim ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-civic-700 ml-auto" />
+                              ) : (
+                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                  {isPending && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleVerifyClaim(claim, 'DISETUJUI_SIAP_AMBIL')}
+                                        className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-[11px] transition-colors min-h-[32px] cursor-pointer"
+                                      >
+                                        Setujui Siap Ambil
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleVerifyClaim(claim, 'DITOLAK_BATAL')}
+                                        className="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg font-bold text-[11px] transition-colors min-h-[32px] cursor-pointer"
+                                      >
+                                        Tolak & Refund
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {isReady && (
+                                    <>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleVerifyClaim(claim, 'SELESAI_DISERAHKAN')}
+                                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-[11px] transition-colors min-h-[32px] cursor-pointer"
+                                      >
+                                        Selesai Serahkan Fisik
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleVerifyClaim(claim, 'DITOLAK_BATAL')}
+                                        className="px-2 py-1.5 text-slate-400 hover:text-rose-600 font-semibold text-[11px] min-h-[32px] cursor-pointer"
+                                      >
+                                        Batal
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {(isDone || isCancelled) && (
+                                    <span className="text-[11px] text-slate-400 italic">Arsip final</span>
+                                  )}
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB: KATALOG PENUKARAN POIN & SEMBAKO */}
+          {/* ======================================================== */}
+          {activeTab === 'katalog' && (
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Gift className="w-5 h-5 text-civic-700" />
+                    Daftar Pilihan Penukaran Sembako & Reward
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Item yang berstatus aktif akan langsung tampil di halaman Setor & Tukar Poin warga.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleOpenAddModal}
+                  className="px-4 py-2.5 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-semibold flex items-center gap-2 min-h-[44px] transition-colors shadow-xs cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  Tambah Opsi Penukaran Baru
+                </button>
+              </div>
+
+              {katalogLoading ? (
+                <div className="py-12 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
+                </div>
+              ) : katalogList.length === 0 ? (
+                <p className="text-sm text-slate-500 py-6 text-center">Belum ada item katalog.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                      <tr>
+                        <th className="py-3 px-4 font-semibold">Item & Deskripsi</th>
+                        <th className="py-3 px-4 font-semibold">Kategori Badge</th>
+                        <th className="py-3 px-4 font-semibold">Biaya Poin & Rupiah</th>
+                        <th className="py-3 px-4 font-semibold text-center">Stok</th>
+                        <th className="py-3 px-4 font-semibold text-center">Status Tayang</th>
+                        <th className="py-3 px-4 font-semibold text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {katalogList.map((item) => {
+                        const IconComp = ICON_MAP[item.icon_name] || Gift;
+                        const isActive = Boolean(item.is_active);
+
+                        return (
+                          <tr key={item.id_katalog} className="hover:bg-slate-50/50">
+                            <td className="py-3.5 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+                                  <IconComp className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <span className="font-bold text-slate-900 block">{item.judul}</span>
+                                  {item.deskripsi && (
+                                    <span className="text-[11px] text-slate-400 block max-w-xs truncate">{item.deskripsi}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold text-[10px] bg-slate-100 text-slate-700">
+                                {item.kategori_badge || 'Sembako'}
+                              </span>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <span className="font-mono font-bold text-civic-700 block">{item.biaya_poin} Poin</span>
+                              <span className="text-[11px] text-slate-400">Setara {item.nilai_rupiah}</span>
+                            </td>
+
+                            <td className="py-3.5 px-4 text-center">
+                              <span className="font-mono font-bold text-slate-800">{item.stok ?? 50} unit</span>
+                            </td>
+
+                            <td className="py-3.5 px-4 text-center">
+                              <button
+                                type="button"
+                                onClick={() => handleToggleKatalog(item)}
+                                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-semibold text-[10px] transition-colors min-h-[30px] cursor-pointer ${
+                                  isActive
+                                    ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                    : 'bg-slate-100 text-slate-500 hover:bg-slate-200 border border-slate-200'
+                                }`}
+                                title="Klik untuk mengubah status tayang"
+                              >
+                                {isActive ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                                {isActive ? 'Aktif Tayang' : 'Disembunyikan'}
+                              </button>
+                            </td>
+
+                            <td className="py-3.5 px-4 text-right">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditModal(item)}
+                                  className="p-2 text-slate-600 hover:text-civic-700 hover:bg-slate-100 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+                                  title="Edit Item"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteKatalog(item)}
+                                  className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+                                  title="Hapus Item"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB: MODERASI PENGGUNA */}
+          {/* ======================================================== */}
+          {activeTab === 'users' && (
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-civic-700" />
+                    Daftar Pengguna Terdaftar ({users.length})
+                  </h2>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Kelola status aktif atau bekukan akun warga dan mitra pengelola.
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-xs">
+                  <span className="text-slate-500 font-medium">Filter Peran:</span>
+                  <select
+                    value={selectedRole}
+                    onChange={(e) => setSelectedRole(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-medium text-slate-700"
+                  >
+                    <option value="">Semua Peran</option>
+                    <option value="warga">Warga</option>
+                    <option value="mitra">Mitra / Petugas</option>
+                    <option value="admin">Administrator</option>
+                  </select>
+                </div>
+              </div>
+
+              {loading ? (
+                <div className="py-8 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
+                      <tr>
+                        <th className="py-3 px-4 font-semibold">Nama & Email</th>
+                        <th className="py-3 px-4 font-semibold">Peran</th>
+                        <th className="py-3 px-4 font-semibold">Status</th>
+                        <th className="py-3 px-4 font-semibold text-right">Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {users.map((u) => (
+                        <tr key={u.id_user} className="hover:bg-slate-50/50">
+                          <td className="py-3.5 px-4">
+                            <span className="font-bold text-slate-900 block">{u.nama}</span>
+                            <span className="text-slate-400">{u.email}</span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-slate-100 text-slate-700">
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4">
+                            <span
+                              className={`inline-block px-2.5 py-0.5 rounded-full font-semibold text-[10px] ${
+                                u.status === 'active'
+                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                              }`}
+                            >
+                              {u.status}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            {u.role !== 'admin' && (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleStatus(u)}
+                                className={`px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors min-h-[36px] cursor-pointer ${
+                                  u.status === 'active'
+                                    ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                                    : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+                                }`}
+                              >
+                                {u.status === 'active' ? 'Bekukan Akun' : 'Aktifkan'}
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ======================================================== */}
+          {/* TAB: ARSIP PENGAWASAN SAMPAH LIAR (READ-ONLY) */}
+          {/* ======================================================== */}
+          {activeTab === 'reports' && (
+            <div className="bg-white p-6 sm:p-8 rounded-2xl border border-slate-200 shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-slate-100">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                      <ShieldAlert className="w-5 h-5 text-civic-700" />
+                      Arsip & Pengawasan Aduan Sampah Liar
+                    </h2>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200 uppercase tracking-wider">
+                      Supervisi (Read-Only)
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">
+                    Supervisi penanganan aduan lingkungan oleh armada Satgas Kebersihan Lapangan RT/RW.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                  <div className="relative flex-1 sm:w-60">
+                    <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <input
+                      type="text"
+                      value={reportSearch}
+                      onChange={(e) => setReportSearch(e.target.value)}
+                      placeholder="Cari kode tiket / lokasi..."
+                      className="pl-8 pr-3 py-1.5 rounded-xl border border-slate-300 text-xs w-full focus:outline-hidden focus:border-civic-600"
+                    />
+                  </div>
+
+                  <select
+                    value={reportStatusFilter}
+                    onChange={(e) => setReportStatusFilter(e.target.value)}
+                    className="text-xs py-1.5 px-3 border border-slate-300 rounded-xl bg-white text-slate-700"
+                  >
+                    <option value="">Semua Status Aduan</option>
+                    <option value="MENUNGGU_VERIFIKASI">Menunggu Verifikasi</option>
+                    <option value="INVESTIGASI">Dalam Investigasi</option>
+                    <option value="DALAM_PENANGANAN">Dalam Penanganan Armada</option>
+                    <option value="SELESAI">Selesai Dibersihkan</option>
+                    <option value="DITOLAK">Ditolak / Tidak Valid</option>
+                  </select>
+                </div>
+              </div>
+
+              {reportsLoading ? (
+                <div className="py-12 text-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-civic-700 mx-auto" />
+                </div>
+              ) : filteredAdminReports.length === 0 ? (
+                <p className="text-sm text-slate-500 py-8 text-center">Tidak ada aduan sampah liar yang cocok.</p>
+              ) : (
+                <div className="space-y-4">
+                  {filteredAdminReports.map((item) => (
+                    <div
+                      key={item.id_laporan}
+                      className="bg-slate-50/70 p-4 sm:p-5 rounded-xl border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-start md:items-center"
+                    >
+                      <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2.5 flex-wrap">
+                          <TicketBadge ticketCode={item.kode_tiket} isPublic={true} />
+                          <span className="text-xs font-bold text-slate-900">{item.nama_pelapor || 'Warga Anonim'}</span>
+                          <span className="text-xs text-slate-400">•</span>
+                          <span className="text-xs text-slate-500 flex items-center gap-1">
+                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                            {new Date(item.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                        </div>
+
+                        <div className="flex items-start gap-1.5 text-xs text-slate-700">
+                          <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                          <span>{item.alamat_lokasi} (RT {item.rt || '-'} / RW {item.rw || '-'}, {item.kota || 'Surabaya'})</span>
+                        </div>
+
+                        {item.deskripsi_kejadian && (
+                          <p className="text-xs text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200/80">
+                            "{item.deskripsi_kejadian}"
+                          </p>
+                        )}
+
+                        {item.catatan_tindakan && (
+                          <div className="text-[11px] text-emerald-800 bg-emerald-50/80 p-2 rounded-lg border border-emerald-200 flex items-start gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                            <span><strong>Catatan Armada:</strong> {item.catatan_tindakan}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
+                        <Link
+                          to={`/lacak-aduan?ticket=${encodeURIComponent(item.kode_tiket)}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 min-h-[38px] transition-colors"
+                        >
+                          <span>Lacak Transparansi</span>
+                          <ExternalLink className="w-3.5 h-3.5 text-slate-400" />
+                        </Link>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+        </main>
+      </div>
 
       {/* Modal Form: Tambah / Edit Item Katalog */}
       {modalOpen && (

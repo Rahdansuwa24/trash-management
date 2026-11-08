@@ -1,5 +1,5 @@
 const pool = require('../../database/pool');
-const { UserModel, KatalogModel, KlaimModel, WargaModel, LaporanModel } = require('../models');
+const { UserModel, KatalogModel, KlaimModel, WargaModel, LaporanModel, TransaksiModel } = require('../models');
 
 exports.getUsers = async (req, res, next) => {
   try {
@@ -258,6 +258,23 @@ exports.getReports = async (req, res, next) => {
       success: true,
       total: rows.length,
       data: rows
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Monitoring Bank Sampah: Mengambil seluruh transaksi & penjemputan bank sampah untuk audit ekonomi sirkular
+ */
+exports.getWasteBankPickups = async (req, res, next) => {
+  try {
+    const { status, limit } = req.query;
+    const pickups = await TransaksiModel.getWasteBankPickups({ status, limit: limit ? Number(limit) : 200 });
+    res.json({
+      success: true,
+      total: pickups.length,
+      data: pickups
     });
   } catch (error) {
     next(error);
