@@ -15,6 +15,7 @@ app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
   crossOriginOpenerPolicy: false,
+  originAgentCluster: false,
   hsts: false
 }));
 app.use(cors({
