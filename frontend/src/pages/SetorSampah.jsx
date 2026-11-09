@@ -18,14 +18,27 @@ export default function SetorSampah() {
   const [categories, setCategories] = useState([]);
   const [selectedCat, setSelectedCat] = useState(null);
   const [weight, setWeight] = useState('');
-  const [alamat, setAlamat] = useState(user?.profile?.alamat || 'Jl. Kenanga Blok B4 No. 14, RT 03 / RW 05');
-  const [kota, setKota] = useState('Surabaya');
-  const [kecamatan, setKecamatan] = useState('Rungkut');
+  const [alamat, setAlamat] = useState(user?.profile?.alamat || '');
+  const [kota, setKota] = useState(user?.profile?.kota || '');
+  const [kecamatan, setKecamatan] = useState(user?.profile?.kecamatan || '');
   const [catatan, setCatatan] = useState('');
   
   const fileInputRef = useRef(null);
   const [fotoFile, setFotoFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  // Autofill alamat hanya jika ada data profil resmi warga yang login
+  useEffect(() => {
+    if (user?.profile) {
+      setAlamat(user.profile.alamat || '');
+      setKecamatan(user.profile.kecamatan || '');
+      setKota(user.profile.kota || '');
+    } else {
+      setAlamat('');
+      setKecamatan('');
+      setKota('');
+    }
+  }, [user]);
 
   const resetForm = () => {
     setWeight('');
@@ -38,6 +51,9 @@ export default function SetorSampah() {
     if (categories.length > 0) {
       setSelectedCat(categories[0]);
     }
+    setAlamat(user?.profile?.alamat || '');
+    setKecamatan(user?.profile?.kecamatan || '');
+    setKota(user?.profile?.kota || '');
   };
 
   const [loading, setLoading] = useState(false);
@@ -230,13 +246,38 @@ export default function SetorSampah() {
     if (file) {
       try {
         setCompressing(true);
-        // Watermark GPS & Timestamp langsung pada foto bukti setor
+
+        // Dapatkan koordinat GPS riil perangkat (High Accuracy)
+        let coords = { latitude: -7.318210, longitude: 112.784530 };
+        if (typeof window !== 'undefined' && navigator.geolocation) {
+          try {
+            const pos = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+              });
+            });
+            coords = {
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude
+            };
+          } catch (_) {
+            // Gunakan patokan fallback lingkungan jika GPS dinonaktifkan/ditolak
+          }
+        }
+
+        const rt = user?.profile?.rt || '03';
+        const rw = user?.profile?.rw || '05';
+
+        // Watermark GPS presisi & Timestamp forensik langsung pada kanvas foto bukti setor
         const compressed = await compressAndWatermarkImage(file, {
-          latitude: -7.318210,
-          longitude: 112.784530,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
           tag: 'SETOR SAMPAH WARGA',
-          wilayah: `RT ${user?.profile?.rt || '03'} / RW ${user?.profile?.rw || '05'} Kalirungkut`
+          wilayah: `RT ${rt} / RW ${rw}`
         }, { maxWidth: 1280, quality: 0.82 });
+
         setFotoFile(compressed);
         setPreviewUrl(URL.createObjectURL(compressed));
       } catch (err) {
@@ -363,14 +404,14 @@ export default function SetorSampah() {
             </div>
           </div>
 
-          {/* Sandbox Demo Button */}
-          {user && (
+          {/* Sandbox Demo Button (Hanya tampil khusus pada akun demo Budi Santoso) */}
+          {user && (user.email === 'budi.santoso@warga.id' || user.nama?.toLowerCase().includes('budi santoso')) && (
             <button
               type="button"
               disabled={simulating}
               onClick={handleSimulationAddPoints}
               className="px-3.5 py-2.5 bg-amber-50 hover:bg-amber-100 border border-amber-300 text-amber-900 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs cursor-pointer min-h-[44px]"
-              title="Suntik 100 poin simulasi pengujian cepat tanpa menunggu penimbangan fisik"
+              title="Suntik 100 poin simulasi pengujian cepat (Khusus Akun Demo Budi Santoso)"
             >
               {simulating ? (
                 <Loader2 className="w-4 h-4 animate-spin text-amber-700" />

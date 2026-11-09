@@ -61,7 +61,7 @@ export async function compressImage(file, {
           const lat = watermark.latitude ? Number(watermark.latitude).toFixed(6) : '-7.318210';
           const lng = watermark.longitude ? Number(watermark.longitude).toFixed(6) : '112.784530';
           const tag = watermark.tag || 'BUKTI INSPEKSI LAPANGAN RT/RW';
-          const wilayah = watermark.wilayah || 'RW 05 Kalirungkut, Rungkut';
+          const wilayah = watermark.wilayah || 'RW 05';
           const timeStr = formatTimestampWIB();
 
           const bannerHeight = Math.max(44, Math.round(height * 0.065));

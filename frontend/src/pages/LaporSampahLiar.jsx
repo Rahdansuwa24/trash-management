@@ -88,7 +88,7 @@ export default function LaporSampahLiar() {
         setGeoLoading(false);
         alert('Gagal mendeteksi lokasi otomatis. Menggunakan koordinat default.');
       },
-      { timeout: 10000 }
+      { timeout: 10000, enableHighAccuracy: true }
     );
   };
 
