@@ -12,7 +12,10 @@ const app = express();
 
 // Security and middleware
 app.use(helmet({
+  contentSecurityPolicy: false,
   crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  hsts: false
 }));
 app.use(cors({
   origin: true,
