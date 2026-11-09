@@ -1626,7 +1626,10 @@ export default function AdminDashboard() {
                     >
                       <div className="space-y-2 flex-1">
                         <div className="flex items-center gap-2.5 flex-wrap">
-                          <TicketBadge ticketCode={item.kode_tiket} isPublic={true} />
+                          <span className="font-mono text-xs font-semibold px-2 py-0.5 rounded bg-slate-200/80 text-slate-800">
+                            #{item.kode_tiket}
+                          </span>
+                          <TicketBadge status={item.status} />
                           <span className="text-xs font-bold text-slate-900">{item.nama_pelapor || 'Warga Anonim'}</span>
                           <span className="text-xs text-slate-400">•</span>
                           <span className="text-xs text-slate-500 flex items-center gap-1">
@@ -1656,7 +1659,7 @@ export default function AdminDashboard() {
 
                       <div className="flex items-center gap-2 shrink-0 self-end md:self-center">
                         <Link
-                          to={`/lacak-aduan?ticket=${encodeURIComponent(item.kode_tiket)}`}
+                          to={`/lacak?code=${encodeURIComponent(item.kode_tiket)}`}
                           target="_blank"
                           rel="noreferrer"
                           className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 min-h-[38px] transition-colors"

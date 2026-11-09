@@ -24,6 +24,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/lapor" element={<LaporSampahLiar />} />
             <Route path="/lacak" element={<LacakAduan />} />
+            <Route path="/lacak-aduan" element={<LacakAduan />} />
 
             {/* Rute Warga (Bank Sampah & Tabungan Poin) */}
             <Route path="/setor" element={<SetorSampah />} />

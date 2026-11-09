@@ -14,15 +14,15 @@ function resolveImageUrl(url) {
 
 export default function LacakAduan() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialCode = searchParams.get('code') || '';
+  const codeParam = searchParams.get('code') || searchParams.get('ticket') || '';
 
-  const [inputCode, setInputCode] = useState(initialCode);
+  const [inputCode, setInputCode] = useState(codeParam);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const [ticketData, setTicketData] = useState(null);
 
   const fetchTicket = async (codeToFetch) => {
-    if (!codeToFetch.trim()) return;
+    if (!codeToFetch || !codeToFetch.trim()) return;
 
     try {
       setLoading(true);
@@ -39,10 +39,11 @@ export default function LacakAduan() {
   };
 
   useEffect(() => {
-    if (initialCode) {
-      fetchTicket(initialCode);
+    if (codeParam) {
+      setInputCode(codeParam);
+      fetchTicket(codeParam);
     }
-  }, [initialCode]);
+  }, [codeParam]);
 
   const handleSearch = (e) => {
     e.preventDefault();
