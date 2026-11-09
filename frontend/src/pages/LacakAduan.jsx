@@ -4,6 +4,14 @@ import { api } from '../api/client';
 import TicketBadge from '../components/TicketBadge';
 import { Search, MapPin, Calendar, User, FileText, CheckCircle2, AlertCircle, ArrowLeft, Loader2, Sparkles, ExternalLink, Truck } from 'lucide-react';
 
+function resolveImageUrl(url) {
+  if (!url) return '';
+  if (url.includes('/uploads/')) {
+    return '/uploads/' + url.split('/uploads/')[1];
+  }
+  return url;
+}
+
 export default function LacakAduan() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialCode = searchParams.get('code') || '';
@@ -287,9 +295,13 @@ export default function LacakAduan() {
                 <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video flex items-center justify-center">
                   {ticketData.foto_bukti_url ? (
                     <img
-                      src={ticketData.foto_bukti_url}
+                      src={resolveImageUrl(ticketData.foto_bukti_url)}
                       alt="Kondisi Awal Sampah"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80';
+                      }}
                     />
                   ) : (
                     <span className="text-xs text-slate-400">Tidak ada foto</span>
@@ -305,9 +317,13 @@ export default function LacakAduan() {
                 <div className="rounded-xl overflow-hidden border border-slate-200 bg-slate-100 aspect-video flex items-center justify-center">
                   {ticketData.timeline && ticketData.timeline.find((t) => t.foto_bukti_penanganan_url) ? (
                     <img
-                      src={ticketData.timeline.find((t) => t.foto_bukti_penanganan_url).foto_bukti_penanganan_url}
+                      src={resolveImageUrl(ticketData.timeline.find((t) => t.foto_bukti_penanganan_url).foto_bukti_penanganan_url)}
                       alt="Hasil Pembersihan DLH"
                       className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80';
+                      }}
                     />
                   ) : (
                     <div className="text-center p-4 space-y-1">

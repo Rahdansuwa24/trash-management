@@ -318,9 +318,13 @@ export default function PortalMitra() {
                     <div className="h-44 bg-slate-100 relative">
                       {item.foto_bukti_url ? (
                         <img
-                          src={item.foto_bukti_url}
+                          src={item.foto_bukti_url.includes('/uploads/') ? '/uploads/' + item.foto_bukti_url.split('/uploads/')[1] : item.foto_bukti_url}
                           alt="Bukti sampah liar"
                           className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = 'https://images.unsplash.com/photo-1530587191325-3db32d826c18?auto=format&fit=crop&w=600&q=80';
+                          }}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">

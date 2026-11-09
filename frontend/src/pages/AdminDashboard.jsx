@@ -984,9 +984,6 @@ export default function AdminDashboard() {
                       Capaian Reduksi Emisi & Sirkular Komunitas RW 05
                     </h3>
                   </div>
-                  <span className="text-[11px] font-mono bg-emerald-800/60 text-emerald-200 px-3 py-1 rounded-full border border-emerald-600/40">
-                    Kawasan Kalirungkut, Surabaya
-                  </span>
                 </div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 pt-1">

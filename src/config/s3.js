@@ -45,7 +45,7 @@ async function uploadToR2(file, folder = 'reports') {
         const targetPath = path.join(uploadDir, baseFilename);
         fs.writeFileSync(targetPath, file.buffer);
         console.log(`[Local Upload Storage] Stored real file at: ${targetPath}`);
-        return `http://localhost:${env.PORT}/uploads/${filename}`;
+        return `/uploads/${filename}`;
       } catch (err) {
         console.error('[Local Upload Storage Error]', err);
       }

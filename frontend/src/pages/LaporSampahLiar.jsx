@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Link, Navigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { compressImage } from '../utils/imageCompressor';
+import { compressImage, compressAndWatermarkImage } from '../utils/imageCompressor';
 import { ShieldAlert, Camera, MapPin, CheckCircle, Copy, Check, ArrowRight, Loader2, ExternalLink } from 'lucide-react';
 
 export default function LaporSampahLiar() {
@@ -57,7 +57,12 @@ export default function LaporSampahLiar() {
     const file = e.target.files[0];
     if (file) {
       try {
-        const compressed = await compressImage(file, { maxWidth: 1280, quality: 0.8 });
+        const compressed = await compressAndWatermarkImage(file, {
+          latitude: formData.latitude || '-7.318210',
+          longitude: formData.longitude || '112.784530',
+          tag: 'BUKTI LAPORAN SAMPAH LIAR',
+          wilayah: `RT ${formData.rt || '03'} / RW ${formData.rw || '05'}`
+        }, { maxWidth: 1280, quality: 0.82 });
         setFotoFile(compressed);
         setPreviewUrl(URL.createObjectURL(compressed));
         setErrorMsg('');
@@ -69,27 +74,41 @@ export default function LaporSampahLiar() {
   };
 
   const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      alert('Browser Anda tidak mendukung deteksi lokasi.');
-      return;
-    }
     setGeoLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setFormData((prev) => ({
-          ...prev,
-          latitude: pos.coords.latitude.toFixed(8),
-          longitude: pos.coords.longitude.toFixed(8)
-        }));
-        setGeoLoading(false);
-      },
-      (err) => {
-        console.warn('Geolocation error:', err.message);
-        setGeoLoading(false);
-        alert('Gagal mendeteksi lokasi otomatis. Menggunakan koordinat default.');
-      },
-      { timeout: 10000, enableHighAccuracy: true }
-    );
+
+    const applyCoords = (lat, lng) => {
+      setFormData((prev) => ({
+        ...prev,
+        latitude: Number(lat).toFixed(8),
+        longitude: Number(lng).toFixed(8)
+      }));
+      setGeoLoading(false);
+    };
+
+    // 1. Coba GPS browser jika diizinkan
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          applyCoords(pos.coords.latitude, pos.coords.longitude);
+        },
+        async (err) => {
+          console.warn('GPS hardware dibatasi (pada HTTP IP publik):', err.message);
+          // 2. Fallback via IP Geolocation jika GPS diblokir oleh browser pada HTTP
+          try {
+            const res = await fetch('https://ipwho.is/').then((r) => r.json());
+            if (res && res.latitude && res.longitude) {
+              applyCoords(res.latitude, res.longitude);
+              return;
+            }
+          } catch (_) {}
+          // 3. Fallback default presisi area lingkungan RW 05
+          applyCoords(-7.31820000, 112.78450000);
+        },
+        { timeout: 5000, enableHighAccuracy: true }
+      );
+    } else {
+      applyCoords(-7.31820000, 112.78450000);
+    }
   };
 
   const handleSubmit = async (e) => {
