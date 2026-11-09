@@ -7,7 +7,7 @@ import {
   Shield, Users, CheckCircle, Trash2, Coins, Loader2, AlertTriangle, 
   Gift, Plus, Pencil, Eye, EyeOff, Package, ShoppingBag, Wheat, 
   ShoppingBasket, Receipt, Wallet, X, CheckCircle2, Ticket, Leaf, Droplets, TreePine, Sparkles, ShieldAlert, MapPin, ExternalLink, Calendar, Search, Truck, Image as ImageIcon,
-  Scale, LayoutDashboard, BarChart3, Filter, Clock, ChevronRight, RefreshCw, ArrowUpRight, UserPlus, Building2, ShieldCheck
+  Scale, LayoutDashboard, BarChart3, Filter, Clock, ChevronRight, RefreshCw, ArrowUpRight, UserPlus, Building2, ShieldCheck, UserCheck
 } from 'lucide-react';
 
 const ICON_MAP = {
