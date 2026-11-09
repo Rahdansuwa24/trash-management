@@ -17,10 +17,18 @@ async function up() {
     if (cols.length === 0) {
       await connection.query(`
         ALTER TABLE profiles_mitra 
-        ADD COLUMN rt_tugas VARCHAR(10) NULL DEFAULT 'ALL' AFTER wilayah_tugas,
-        ADD INDEX idx_mitra_rt_tugas (rt_tugas)
+        ADD COLUMN rt_tugas VARCHAR(10) NULL DEFAULT 'ALL' AFTER wilayah_tugas
       `);
       console.log('Column rt_tugas added successfully.');
+
+      try {
+        await connection.query(`
+          ALTER TABLE profiles_mitra 
+          ADD INDEX idx_mitra_rt_tugas (rt_tugas)
+        `);
+      } catch (idxErr) {
+        console.warn('Index notice:', idxErr.message);
+      }
     } else {
       console.log('Column rt_tugas already exists.');
     }
