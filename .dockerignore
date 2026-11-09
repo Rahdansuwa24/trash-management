@@ -6,7 +6,8 @@ docs/
 
 # Local dependencies & builds
 node_modules/
-frontend/
+frontend/node_modules/
+frontend/dist/
 
 # Environment files & secrets
 .env
