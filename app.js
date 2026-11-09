@@ -32,6 +32,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 // Healthcheck endpoint
 app.use('/health', healthRoute);
+app.use('/healthz', healthRoute);
 
 // API router mounted
 const apiRouter = require('./src/routes/index');
