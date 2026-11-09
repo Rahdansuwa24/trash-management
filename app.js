@@ -23,25 +23,40 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
 
+const fs = require('fs');
+const frontendDist = path.join(__dirname, 'frontend', 'dist');
+
 // Static folder (if any fallback assets)
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
-// Root & Healthcheck
-app.get('/', (req, res) => {
-  res.json({
-    service: 'Trash Management API',
-    status: 'online',
-    version: '1.0.0',
-    documentation: '/api'
-  });
-});
-
+// Healthcheck endpoint
 app.use('/health', healthRoute);
 
 // API router mounted
 const apiRouter = require('./src/routes/index');
 app.use('/api', apiRouter);
+
+// Serve frontend static build if available (supports unified single-port deployment)
+if (fs.existsSync(frontendDist)) {
+  app.use(express.static(frontendDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/health') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(frontendDist, 'index.html'));
+  });
+} else {
+  // Root API status fallback when frontend is hosted separately
+  app.get('/', (req, res) => {
+    res.json({
+      service: 'Trash Management API',
+      status: 'online',
+      version: '1.0.0',
+      documentation: '/api'
+    });
+  });
+}
 
 // Catch 404 for undefined routes
 app.use((req, res, next) => {
