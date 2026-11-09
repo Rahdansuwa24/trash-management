@@ -38,6 +38,8 @@ export default function PortalMitra() {
 
   const isSatgas = user?.email?.includes('petugas') || user?.nama?.toLowerCase().includes('satgas');
   const [partnerType, setPartnerType] = useState(isSatgas ? 'lapangan' : 'banksampah'); // default to 'lapangan' for satgas, or 'banksampah'
+  const [mitraProfile, setMitraProfile] = useState(null);
+  const [zoneFilter, setZoneFilter] = useState('MY_ZONE'); // 'MY_ZONE' | 'ALL_ZONES'
   const [pickupFilter, setPickupFilter] = useState('ALL'); // 'ALL', 'OPEN', 'MY_TASKS'
   const [pickupTimeFilter, setPickupTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
   const [reportSearch, setReportSearch] = useState('');
@@ -84,6 +86,12 @@ export default function PortalMitra() {
       } else {
         const res = await api.getWastePickups();
         setPickups(res.data || []);
+        if (res.mitra) {
+          setMitraProfile(res.mitra);
+        } else {
+          const prof = await api.getMitraProfile().catch(() => null);
+          if (prof?.data) setMitraProfile(prof.data);
+        }
       }
     } catch (err) {
       setErrorMsg(err.message || 'Gagal mengambil data tugas operasional.');
@@ -186,6 +194,13 @@ export default function PortalMitra() {
 
   // Filter pickups
   const filteredPickups = pickups.filter(p => {
+    // Filter Zonasi RT (khusus jika mitra memiliki penugasan spesifik RT)
+    if (zoneFilter === 'MY_ZONE' && mitraProfile?.rt_tugas && mitraProfile.rt_tugas !== 'ALL') {
+      const isMyRT = String(p.rt).padStart(2, '0') === String(mitraProfile.rt_tugas).padStart(2, '0');
+      const isMyClaim = Number(p.id_mitra) === Number(mitraProfile.id_mitra);
+      if (!isMyRT && !isMyClaim) return false;
+    }
+
     if (pickupFilter === 'OPEN' && p.status !== 'MENUNGGU_PENJEMPUTAN') return false;
     if (pickupFilter === 'MY_TASKS' && (p.status !== 'DIKONFIRMASI_MITRA' && p.status !== 'SELESAI')) return false;
     if (!isWithinTimeRange(p.tanggal_transaksi, pickupTimeFilter)) return false;
@@ -387,12 +402,67 @@ export default function PortalMitra() {
       {/* VIEW 2: BANK SAMPAH PICKUPS & LOGISTICS DISPATCH */}
       {!loading && partnerType === 'banksampah' && (
         <div className="space-y-4">
+          {/* Zonasi Notice Banner */}
+          <div className="bg-emerald-50/90 border border-emerald-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                {mitraProfile?.rt_tugas === 'ALL' ? 'RW' : `RT ${mitraProfile?.rt_tugas || '03'}`}
+              </div>
+              <div>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="text-sm font-bold text-slate-900">
+                    {mitraProfile?.instansi_nama || 'Bank Sampah Unit Lingkungan'}
+                  </h4>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 uppercase tracking-wider">
+                    {mitraProfile?.rt_tugas === 'ALL' ? 'Satgas Lapangan RW' : `Zona RT ${mitraProfile?.rt_tugas || '03'}`}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5">
+                  {mitraProfile?.rt_tugas === 'ALL'
+                    ? 'Bertanggung jawab atas koordinasi penjemputan sampah dan pembersihan lingkungan di seluruh wilayah RW 05.'
+                    : `Menangani prioritas warga di lingkungan RT ${mitraProfile?.rt_tugas || '03'} agar operasional tertib tanpa tumpang tindih antar-mitra.`}
+                </p>
+              </div>
+            </div>
+            
+            {mitraProfile?.rt_tugas && mitraProfile.rt_tugas !== 'ALL' && (
+              <div className="flex bg-white/90 p-1 rounded-xl border border-emerald-200 text-xs shrink-0 self-stretch sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setZoneFilter('MY_ZONE')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    zoneFilter === 'MY_ZONE'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Prioritas RT {mitraProfile.rt_tugas}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setZoneFilter('ALL_ZONES')}
+                  className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                    zoneFilter === 'ALL_ZONES'
+                      ? 'bg-emerald-700 text-white shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900'
+                  }`}
+                >
+                  Semua RT (Bantuan RW)
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
               <h2 className="text-lg font-bold text-slate-900">
                 Logistik & Penjemputan Sampah Warga ({filteredPickups.length})
               </h2>
-              <p className="text-xs text-slate-500">Klaim tugas penjemputan warga di lingkungan RT Anda sebelum melakukan penimbangan.</p>
+              <p className="text-xs text-slate-500">
+                {zoneFilter === 'MY_ZONE' && mitraProfile?.rt_tugas !== 'ALL'
+                  ? `Menampilkan antrean penjemputan warga khusus lingkungan RT ${mitraProfile?.rt_tugas || '03'}.`
+                  : 'Menampilkan seluruh antrean penjemputan sampah se-RW.'}
+              </p>
             </div>
 
             {/* Sub-Filter Tabs */}
@@ -479,12 +549,26 @@ export default function PortalMitra() {
                 const isWaitingPickup = trx.status === 'MENUNGGU_PENJEMPUTAN';
                 const isConfirmed = trx.status === 'DIKONFIRMASI_MITRA';
                 const isDone = trx.status === 'SELESAI';
+                const isMyRT = mitraProfile?.rt_tugas && mitraProfile.rt_tugas !== 'ALL'
+                  ? String(trx.rt).padStart(2, '0') === String(mitraProfile.rt_tugas).padStart(2, '0')
+                  : true;
 
                 return (
                   <div key={trx.id_transaksi} className={`bg-white rounded-2xl border p-6 shadow-sm flex flex-col justify-between space-y-4 hover:border-slate-300 transition-colors ${isWaitingPickup ? 'border-amber-300 bg-amber-50/20' : 'border-slate-200'}`}>
                     <div className="space-y-3">
-                      <div className="flex justify-between items-start">
-                        <span className="text-xs font-mono font-bold text-civic-700">{trx.kode_transaksi}</span>
+                      <div className="flex justify-between items-start flex-wrap gap-2">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <span className="text-xs font-mono font-bold text-civic-700">{trx.kode_transaksi}</span>
+                          {mitraProfile?.rt_tugas && mitraProfile.rt_tugas !== 'ALL' && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                              isMyRT 
+                                ? 'bg-emerald-50 text-emerald-800 border-emerald-300' 
+                                : 'bg-amber-50 text-amber-800 border-amber-300'
+                            }`}>
+                              {isMyRT ? `✓ RT Anda (RT ${trx.rt || '03'})` : `Bantuan RT ${trx.rt || '-'}`}
+                            </span>
+                          )}
+                        </div>
                         <TicketBadge status={trx.status} />
                       </div>
 
@@ -536,14 +620,18 @@ export default function PortalMitra() {
                           type="button"
                           disabled={claimingId === trx.id_transaksi}
                           onClick={() => handleClaimPickup(trx)}
-                          className="w-full py-2.5 px-4 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 min-h-[44px] shadow-xs"
+                          className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-2 min-h-[44px] shadow-xs text-white ${
+                            isMyRT
+                              ? 'bg-emerald-600 hover:bg-emerald-700'
+                              : 'bg-amber-500 hover:bg-amber-600'
+                          }`}
                         >
                           {claimingId === trx.id_transaksi ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
                             <UserCheck className="w-4 h-4" />
                           )}
-                          Ambil Tugas Penjemputan
+                          {isMyRT ? 'Ambil Tugas Penjemputan (RT Anda)' : `Ambil Tugas (Bantuan RT ${trx.rt})`}
                         </button>
                       ) : isConfirmed ? (
                         <button

@@ -86,13 +86,57 @@ exports.submitCleanupAction = async (req, res, next) => {
   }
 };
 
+exports.getProfile = async (req, res, next) => {
+  try {
+    let profile = null;
+    if (req.user && req.user.id_user) {
+      profile = await MitraModel.findByUserId(req.user.id_user);
+    }
+    if (!profile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil mitra tidak ditemukan.'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id_mitra: profile.id_mitra,
+        jenis_mitra: profile.jenis_mitra,
+        instansi_nama: profile.instansi_nama,
+        wilayah_tugas: profile.wilayah_tugas,
+        rt_tugas: profile.rt_tugas || 'ALL',
+        no_telp: profile.no_telp,
+        kelurahan: profile.kelurahan,
+        kecamatan: profile.kecamatan,
+        kota: profile.kota
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.getWasteBankPickups = async (req, res, next) => {
   try {
-    const { status } = req.query;
-    const rows = await TransaksiModel.getWasteBankPickups({ status, limit: 50 });
+    const { status, rt } = req.query;
+    let mitraProfile = null;
+    if (req.user && req.user.id_user) {
+      mitraProfile = await MitraModel.findByUserId(req.user.id_user);
+    }
+
+    const rows = await TransaksiModel.getWasteBankPickups({ status, rt, limit: 100 });
     res.json({
       success: true,
       total: rows.length,
+      mitra: mitraProfile ? {
+        id_mitra: mitraProfile.id_mitra,
+        jenis_mitra: mitraProfile.jenis_mitra,
+        instansi_nama: mitraProfile.instansi_nama,
+        rt_tugas: mitraProfile.rt_tugas || 'ALL',
+        wilayah_tugas: mitraProfile.wilayah_tugas
+      } : null,
       data: rows
     });
 

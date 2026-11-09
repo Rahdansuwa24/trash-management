@@ -6,9 +6,11 @@ const { authenticate, authorize } = require('../middleware/auth.middleware');
 // Proteksi backend ketat: Hanya pengguna dengan peran 'admin' yang dapat mengakses seluruh endpoint ini
 router.use(authenticate, authorize('admin'));
 
-// Users & Stats
+// Users & Stats & Mitra Management
 router.get('/users', adminController.getUsers);
+router.get('/mitra-list', adminController.getAllMitra);
 router.post('/mitra', adminController.createMitra);
+router.put('/mitra/:id/wilayah', adminController.updateMitraWilayah);
 router.put('/users/:id/status', adminController.updateUserStatus);
 router.get('/stats', adminController.getStats);
 
@@ -26,7 +28,8 @@ router.put('/claims/:id/verify', adminController.verifyClaim);
 // Pengawasan & Supervisi Aduan Sampah Liar (Read-Only)
 router.get('/reports', adminController.getReports);
 
-// Monitoring Sirkular Ekonomi & Transaksi Bank Sampah
+// Monitoring Sirkular Ekonomi & Disposisi Transaksi Bank Sampah
 router.get('/pickups', adminController.getWasteBankPickups);
+router.put('/pickups/:id/assign', adminController.assignPickup);
 
 module.exports = router;

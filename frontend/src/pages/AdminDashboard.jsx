@@ -67,11 +67,20 @@ export default function AdminDashboard() {
     email: '',
     password: '',
     instansi_nama: '',
-    jenis_mitra: 'satgas_lapangan',
-    wilayah_tugas: 'RW 05',
+    jenis_mitra: 'bank_sampah_unit',
+    wilayah_tugas: 'RT 03 / RW 05',
+    rt_tugas: '03',
     no_telp: '',
     alamat: ''
   });
+
+  // State Modal Disposisi Penjemputan Sampah ke Mitra
+  const [assignModalOpen, setAssignModalOpen] = useState(false);
+  const [selectedAssignPickup, setSelectedAssignPickup] = useState(null);
+  const [selectedAssignMitraId, setSelectedAssignMitraId] = useState('');
+  const [assignCatatan, setAssignCatatan] = useState('');
+  const [assignLoading, setAssignLoading] = useState(false);
+  const [adminMitraList, setAdminMitraList] = useState([]);
 
   // Form State untuk Tambah / Edit Katalog
   const [formData, setFormData] = useState({
@@ -209,6 +218,50 @@ export default function AdminDashboard() {
       setMitraError(err.message || 'Gagal mendaftarkan akun mitra.');
     } finally {
       setMitraSubmitting(false);
+    }
+  };
+
+  // Disposisi Tugas Penjemputan Sampah ke Mitra
+  const handleOpenAssignModal = async (pickup) => {
+    setSelectedAssignPickup(pickup);
+    setSelectedAssignMitraId(pickup.id_mitra || '');
+    setAssignCatatan('');
+    setAssignModalOpen(true);
+    try {
+      const res = await api.getAdminMitraList();
+      const list = res.data || [];
+      setAdminMitraList(list);
+      if (!pickup.id_mitra && list.length > 0) {
+        // Otomatis rekomendasikan mitra yang membawahi RT transaksi
+        const matched = list.find((m) => String(m.rt_tugas).padStart(2, '0') === String(pickup.rt).padStart(2, '0'));
+        if (matched) {
+          setSelectedAssignMitraId(matched.id_mitra);
+        } else {
+          setSelectedAssignMitraId(list[0].id_mitra);
+        }
+      }
+    } catch (err) {
+      console.warn('Gagal memuat daftar mitra:', err.message);
+    }
+  };
+
+  const handleAssignSubmit = async (e) => {
+    e.preventDefault();
+    if (!selectedAssignPickup || !selectedAssignMitraId) return;
+    try {
+      setAssignLoading(true);
+      const res = await api.assignAdminPickup(selectedAssignPickup.id_transaksi, {
+        id_mitra: Number(selectedAssignMitraId),
+        catatan_admin: assignCatatan.trim()
+      });
+      setSuccessMsg(res.message || 'Tugas penjemputan berhasil didisposisikan.');
+      setTimeout(() => setSuccessMsg(''), 4000);
+      setAssignModalOpen(false);
+      fetchPickupsData();
+    } catch (err) {
+      alert(`Gagal mendisposisikan tugas: ${err.message}`);
+    } finally {
+      setAssignLoading(false);
     }
   };
 
@@ -888,16 +941,36 @@ export default function AdminDashboard() {
 
                               <td className="py-3.5 px-4">
                                 {item.nama_petugas || item.nama_mitra ? (
-                                  <div>
+                                  <div className="space-y-1">
                                     <span className="font-semibold text-slate-800 block text-[11px]">
                                       {item.nama_petugas || item.nama_mitra}
                                     </span>
-                                    <span className="text-[10px] text-slate-400">
+                                    <span className="text-[10px] text-slate-400 block">
                                       {item.nama_mitra ? `Unit: ${item.nama_mitra}` : 'Petugas Armada'}
                                     </span>
+                                    {!isDone && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenAssignModal(item)}
+                                        className="mt-1 px-2 py-0.5 rounded bg-civic-50 hover:bg-civic-100 text-civic-800 border border-civic-200 text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                      >
+                                        <Truck className="w-2.5 h-2.5 text-civic-600" />
+                                        Alihkan Tugas
+                                      </button>
+                                    )}
                                   </div>
                                 ) : (
-                                  <span className="text-[11px] italic text-amber-600">Belum di-klaim armada</span>
+                                  <div>
+                                    <span className="text-[11px] italic text-amber-600 block">Belum di-klaim</span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenAssignModal(item)}
+                                      className="mt-1 px-2.5 py-1 rounded bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold inline-flex items-center gap-1 transition-colors cursor-pointer shadow-2xs"
+                                    >
+                                      <UserCheck className="w-2.5 h-2.5" />
+                                      Tugaskan Mitra
+                                    </button>
+                                  </div>
                                 )}
                               </td>
 
@@ -1449,14 +1522,19 @@ export default function AdminDashboard() {
                           </td>
                           <td className="py-3.5 px-4">
                             {u.role === 'mitra' ? (
-                              <div className="space-y-0.5">
+                              <div className="space-y-1">
                                 <span className="font-semibold text-slate-800 flex items-center gap-1">
                                   <Building2 className="w-3.5 h-3.5 text-civic-600 shrink-0" />
                                   {u.instansi_nama || 'Unit RT/RW'}
                                 </span>
-                                <span className="text-[11px] text-slate-500 block">
-                                  Tugas: {u.wilayah_tugas || 'RW 05'}
-                                </span>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[11px] text-slate-500">
+                                    {u.wilayah_tugas || 'RW 05'}
+                                  </span>
+                                  <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    {u.rt_tugas && u.rt_tugas !== 'ALL' ? `Zona RT ${u.rt_tugas}` : 'Seluruh RW'}
+                                  </span>
+                                </div>
                               </div>
                             ) : u.role === 'warga' ? (
                               <div className="space-y-0.5">
@@ -1894,27 +1972,52 @@ export default function AdminDashboard() {
                   </label>
                   <select
                     value={mitraFormData.jenis_mitra}
-                    onChange={(e) => setMitraFormData({ ...mitraFormData, jenis_mitra: e.target.value })}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setMitraFormData({
+                        ...mitraFormData,
+                        jenis_mitra: val,
+                        rt_tugas: val === 'satgas_lapangan' ? 'ALL' : (mitraFormData.rt_tugas === 'ALL' ? '03' : mitraFormData.rt_tugas)
+                      });
+                    }}
                     className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white min-h-[44px]"
                   >
-                    <option value="satgas_lapangan">Satgas Lapangan / Armada TPS3R</option>
-                    <option value="bank_sampah_unit">Pengurus Bank Sampah Unit RT/RW</option>
+                    <option value="bank_sampah_unit">Pengurus Bank Sampah Unit RT</option>
+                    <option value="satgas_lapangan">Satgas Lapangan / Armada RW</option>
                   </select>
                 </div>
 
                 <div className="space-y-1">
                   <label className="block font-bold text-slate-900">
-                    Wilayah Tugas / Operasional <span className="text-rose-600">*</span>
+                    Zonasi RT Penugasan <span className="text-rose-600">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={mitraFormData.wilayah_tugas}
-                    onChange={(e) => setMitraFormData({ ...mitraFormData, wilayah_tugas: e.target.value })}
-                    placeholder="Contoh: RT 04 / RW 05 atau RW 05 Seluruhnya"
-                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
-                  />
+                  <select
+                    value={mitraFormData.rt_tugas}
+                    onChange={(e) => setMitraFormData({ ...mitraFormData, rt_tugas: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white min-h-[44px]"
+                  >
+                    <option value="ALL">Seluruh RW 05 (Satgas Umum)</option>
+                    <option value="01">Unit RT 01</option>
+                    <option value="02">Unit RT 02</option>
+                    <option value="03">Unit RT 03</option>
+                    <option value="04">Unit RT 04</option>
+                    <option value="05">Unit RT 05</option>
+                  </select>
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-900">
+                  Label Wilayah Tugas <span className="text-rose-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={mitraFormData.wilayah_tugas}
+                  onChange={(e) => setMitraFormData({ ...mitraFormData, wilayah_tugas: e.target.value })}
+                  placeholder="Contoh: RT 03 / RW 05 atau RW 05 Kalirungkut"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1985,6 +2088,112 @@ export default function AdminDashboard() {
                 >
                   {mitraSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   Daftarkan Akun Mitra
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Disposisi Penjemputan Sampah ke Mitra oleh Admin */}
+      {assignModalOpen && selectedAssignPickup && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setAssignModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-4 my-8">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-civic-700" />
+                  Disposisi Tugas Penjemputan
+                </h3>
+                <span className="text-xs font-mono font-bold text-civic-700">
+                  {selectedAssignPickup.kode_transaksi}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssignModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg min-h-[36px] min-w-[36px] flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-3 bg-slate-50 rounded-xl text-xs space-y-1 border border-slate-200">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Warga:</span>
+                <strong className="text-slate-800">{selectedAssignPickup.nama_warga}</strong>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Lokasi:</span>
+                <span className="font-semibold text-slate-800">
+                  RT {selectedAssignPickup.rt || '03'} / RW {selectedAssignPickup.rw || '05'}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-slate-500">Estimasi Sampah:</span>
+                <span className="font-semibold text-slate-800">
+                  {selectedAssignPickup.estimasi_berat_kg} Kg ({selectedAssignPickup.nama_kategori})
+                </span>
+              </div>
+            </div>
+
+            <form onSubmit={handleAssignSubmit} className="space-y-4 text-xs sm:text-sm">
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-900">
+                  Pilih Mitra Petugas Penjemput <span className="text-rose-600">*</span>
+                </label>
+                <select
+                  required
+                  value={selectedAssignMitraId}
+                  onChange={(e) => setSelectedAssignMitraId(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white min-h-[44px]"
+                >
+                  <option value="">-- Pilih Mitra Penanggung Jawab --</option>
+                  {adminMitraList.map((m) => {
+                    const isZoneMatch = String(m.rt_tugas).padStart(2, '0') === String(selectedAssignPickup.rt).padStart(2, '0');
+                    return (
+                      <option key={m.id_mitra} value={m.id_mitra}>
+                        {m.instansi_nama} ({m.rt_tugas === 'ALL' ? 'Satgas RW' : `Zona RT ${m.rt_tugas}`}) {isZoneMatch ? '★ (Sesuai RT Warga)' : ''}
+                      </option>
+                    );
+                  })}
+                </select>
+                <p className="text-[11px] text-slate-500">
+                  Pilihlah Bank Sampah Unit pada RT pelapor untuk menjaga ketertiban wilayah tugas.
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-900">Catatan Disposisi Koordinator (Opsional)</label>
+                <textarea
+                  rows={2}
+                  value={assignCatatan}
+                  onChange={(e) => setAssignCatatan(e.target.value)}
+                  placeholder="Contoh: Dilimpahkan dari RT 02 karena armada sedang pemeliharaan..."
+                  className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setAssignModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg min-h-[40px] cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={assignLoading || !selectedAssignMitraId}
+                  className="px-5 py-2 text-xs font-bold text-white bg-civic-700 hover:bg-civic-800 rounded-lg min-h-[40px] flex items-center gap-1.5 transition-colors cursor-pointer"
+                >
+                  {assignLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  Simpan & Teruskan ke Mitra
                 </button>
               </div>
             </form>

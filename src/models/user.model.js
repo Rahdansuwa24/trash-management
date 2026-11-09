@@ -16,7 +16,7 @@ class UserModel {
       SELECT 
         u.id_user, u.nama, u.email, u.role, u.status, u.created_at,
         pw.rt, pw.rw, pw.alamat as alamat_warga, pw.no_telp as no_telp_warga,
-        pm.id_mitra, pm.jenis_mitra, pm.instansi_nama, pm.wilayah_tugas, pm.no_telp as no_telp_mitra
+        pm.id_mitra, pm.jenis_mitra, pm.instansi_nama, pm.wilayah_tugas, pm.rt_tugas, pm.no_telp as no_telp_mitra
       FROM users u
       LEFT JOIN profiles_warga pw ON u.id_user = pw.id_user
       LEFT JOIN profiles_mitra pm ON u.id_user = pm.id_user

@@ -53,6 +53,7 @@ CREATE TABLE `profiles_mitra` (
   `jenis_mitra` ENUM('satgas_lapangan', 'bank_sampah_unit') NOT NULL DEFAULT 'satgas_lapangan',
   `instansi_nama` VARCHAR(150) NOT NULL,
   `wilayah_tugas` VARCHAR(100) NOT NULL DEFAULT 'RW 05',
+  `rt_tugas` VARCHAR(10) NULL DEFAULT 'ALL',
   `no_telp` VARCHAR(20) NULL,
   `alamat` TEXT NULL,
   `kelurahan` VARCHAR(100) NULL DEFAULT 'Kalirungkut',
@@ -265,9 +266,9 @@ INSERT INTO `profiles_warga` (`id_warga`, `id_user`, `jenis_kelamin`, `no_telp`,
 (2, 5, 'P', '081398765432', 'Jl. Melati No. 8', '02', '05', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur', 0);
 
 -- 4. Profil Mitra / Petugas Lingkungan
-INSERT INTO `profiles_mitra` (`id_mitra`, `id_user`, `jenis_mitra`, `instansi_nama`, `wilayah_tugas`, `no_telp`, `alamat`, `kelurahan`, `kecamatan`, `kota`, `provinsi`) VALUES
-(1, 2, 'satgas_lapangan', 'Tim Satgas Penanganan Kebersihan RW 05', 'RW 05 Kalirungkut', '081233445566', 'Posko Satgas Kebersihan RW 05', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur'),
-(2, 3, 'bank_sampah_unit', 'Bank Sampah Unit Guyub Rukun RT 03', 'RT 03 / RW 05', '085678901234', 'Balai RT 03 Kalirungkut', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur');
+INSERT INTO `profiles_mitra` (`id_mitra`, `id_user`, `jenis_mitra`, `instansi_nama`, `wilayah_tugas`, `rt_tugas`, `no_telp`, `alamat`, `kelurahan`, `kecamatan`, `kota`, `provinsi`) VALUES
+(1, 2, 'satgas_lapangan', 'Tim Satgas Penanganan Kebersihan RW 05', 'RW 05 Kalirungkut', 'ALL', '081233445566', 'Posko Satgas Kebersihan RW 05', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur'),
+(2, 3, 'bank_sampah_unit', 'Bank Sampah Unit Guyub Rukun RT 03', 'RT 03 / RW 05', '03', '085678901234', 'Balai RT 03 Kalirungkut', 'Kalirungkut', 'Rungkut', 'Surabaya', 'Jawa Timur');
 
 -- 5. Contoh Transaksi Bank Sampah (Uji Selesai & Uji Baru)
 INSERT INTO `transaksi_sampah_komersil` (`id_transaksi`, `kode_transaksi`, `id_warga`, `id_mitra`, `id_kategori`, `estimasi_berat_kg`, `berat_aktual_kg`, `total_poin_diperoleh`, `foto_sampah_url`, `alamat_jemput`, `rt`, `rw`, `kecamatan`, `kota`, `status`, `tanggal_transaksi`, `tanggal_selesai`) VALUES

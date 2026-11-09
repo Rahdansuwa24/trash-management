@@ -51,6 +51,7 @@ export const api = {
   getPointsHistory: () => request('/warga/points'),
 
   // Partner (Mitra)
+  getMitraProfile: () => request('/mitra/profile'),
   getMitraReports: (params = '') => request(`/mitra/reports${params}`),
   submitCleanupAction: (id, formData) => request(`/mitra/reports/${id}/action`, { method: 'POST', body: formData }),
   getWastePickups: (params = '') => request(`/mitra/pickups${params}`),
@@ -64,7 +65,9 @@ export const api = {
 
   // Admin
   getUsers: (params = '') => request(`/admin/users${params}`),
+  getAdminMitraList: () => request('/admin/mitra-list'),
   createAdminMitra: (payload) => request('/admin/mitra', { method: 'POST', body: JSON.stringify(payload) }),
+  updateAdminMitraWilayah: (id, payload) => request(`/admin/mitra/${id}/wilayah`, { method: 'PUT', body: JSON.stringify(payload) }),
   updateUserStatus: (id, status) => request(`/admin/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   getStats: () => request('/admin/stats'),
   getAdminKatalog: () => request('/admin/katalog'),
@@ -75,5 +78,6 @@ export const api = {
   getAdminClaims: (params = '') => request(`/admin/claims${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
   verifyAdminClaim: (id, payload) => request(`/admin/claims/${id}/verify`, { method: 'PUT', body: JSON.stringify(payload) }),
   getAdminReports: (params = '') => request(`/admin/reports${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
-  getAdminPickups: (params = '') => request(`/admin/pickups${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`)
+  getAdminPickups: (params = '') => request(`/admin/pickups${params ? (params.startsWith('?') ? params : `?status=${params}`) : ''}`),
+  assignAdminPickup: (id, payload) => request(`/admin/pickups/${id}/assign`, { method: 'PUT', body: JSON.stringify(payload) })
 };

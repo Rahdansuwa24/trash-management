@@ -261,6 +261,7 @@ exports.createMitra = async (req, res, next) => {
       jenis_mitra = 'satgas_lapangan',
       instansi_nama,
       wilayah_tugas = 'RW 05',
+      rt_tugas = 'ALL',
       no_telp,
       alamat = '',
       kelurahan = 'Kalirungkut',
@@ -309,6 +310,7 @@ exports.createMitra = async (req, res, next) => {
       jenis_mitra: jenis_mitra || 'satgas_lapangan',
       instansi_nama: instansi_nama ? instansi_nama.trim() : nama.trim(),
       wilayah_tugas: wilayah_tugas ? wilayah_tugas.trim() : 'RW 05',
+      rt_tugas: rt_tugas ? rt_tugas.trim() : (jenis_mitra === 'bank_sampah_unit' ? '03' : 'ALL'),
       no_telp: no_telp ? no_telp.trim() : null,
       alamat: alamat ? alamat.trim() : '',
       kelurahan: kelurahan || 'Kalirungkut',
@@ -368,6 +370,100 @@ exports.getWasteBankPickups = async (req, res, next) => {
       success: true,
       total: pickups.length,
       data: pickups
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Mengambil daftar seluruh profil mitra untuk dropdown penugasan / supervisi Admin RW
+ */
+exports.getAllMitra = async (req, res, next) => {
+  try {
+    const list = await MitraModel.getAllMitra();
+    res.json({
+      success: true,
+      total: list.length,
+      data: list
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Disposisi Tugas Penjemputan Sampah: Admin RW melimpahkan tugas ke mitra tertentu (mencegah rebutan/mengatasi overload)
+ */
+exports.assignPickup = async (req, res, next) => {
+  try {
+    const idTransaksi = req.params.id;
+    const { id_mitra, catatan_admin } = req.body;
+
+    if (!id_mitra) {
+      return res.status(400).json({
+        success: false,
+        message: 'Pilih mitra petugas yang akan ditugaskan.'
+      });
+    }
+
+    const mitra = await MitraModel.findById(id_mitra);
+    if (!mitra) {
+      return res.status(404).json({
+        success: false,
+        message: 'Data mitra tidak ditemukan.'
+      });
+    }
+
+    const note = catatan_admin || `Didisposisikan oleh Koordinator RW ke ${mitra.instansi_nama}`;
+    const assigned = await TransaksiModel.assignPickupByAdmin(idTransaksi, id_mitra, note);
+
+    if (!assigned) {
+      return res.status(400).json({
+        success: false,
+        message: 'Transaksi tidak dapat didisposisikan (hanya transaksi yang belum selesai yang dapat dialihkan).'
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Tugas penjemputan sampah berhasil didisposisikan ke ${mitra.instansi_nama}.`,
+      data: {
+        id_transaksi: idTransaksi,
+        id_mitra,
+        nama_mitra: mitra.instansi_nama,
+        status: 'DIKONFIRMASI_MITRA'
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Memperbarui wilayah penugasan (RT tugas / Wilayah tugas) mitra oleh Admin RW
+ */
+exports.updateMitraWilayah = async (req, res, next) => {
+  try {
+    const idMitra = req.params.id;
+    const { wilayah_tugas, rt_tugas } = req.body;
+
+    const existing = await MitraModel.findById(idMitra);
+    if (!existing) {
+      return res.status(404).json({
+        success: false,
+        message: 'Profil mitra tidak ditemukan.'
+      });
+    }
+
+    await MitraModel.updateWilayahTugas(idMitra, {
+      wilayah_tugas: wilayah_tugas || existing.wilayah_tugas,
+      rt_tugas: rt_tugas || existing.rt_tugas || 'ALL'
+    });
+
+    res.json({
+      success: true,
+      message: 'Wilayah penugasan mitra berhasil diperbarui.'
     });
   } catch (error) {
     next(error);

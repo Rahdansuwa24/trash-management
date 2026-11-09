@@ -105,7 +105,7 @@ class TransaksiModel {
     return rows;
   }
 
-  static async getWasteBankPickups({ status, limit = 50 } = {}, db = pool) {
+  static async getWasteBankPickups({ status, rt, id_mitra, limit = 50 } = {}, db = pool) {
     let sql = `
       SELECT 
         t.id_transaksi,
@@ -130,6 +130,7 @@ class TransaksiModel {
         t.catatan_mitra,
         t.id_mitra,
         m.instansi_nama AS nama_mitra,
+        m.rt_tugas AS rt_tugas_mitra,
         m.no_telp AS kontak_mitra,
         u_mitra.nama AS nama_petugas
       FROM transaksi_sampah_komersil t
@@ -146,12 +147,35 @@ class TransaksiModel {
       sql += ' AND t.status = ?';
       params.push(status);
     }
+    if (rt) {
+      sql += ' AND t.rt = ?';
+      params.push(rt);
+    }
+    if (id_mitra) {
+      sql += ' AND t.id_mitra = ?';
+      params.push(id_mitra);
+    }
 
     sql += ' ORDER BY t.tanggal_transaksi DESC LIMIT ?';
     params.push(Number(limit));
 
     const [rows] = await db.query(sql, params);
     return rows;
+  }
+
+  static async assignPickupByAdmin(idTransaksi, idMitra, catatanAdmin = 'Didisposisikan oleh Koordinator RW', db = pool) {
+    const [result] = await db.query(
+      `UPDATE transaksi_sampah_komersil 
+       SET id_mitra = ?, 
+           status = 'DIKONFIRMASI_MITRA',
+           catatan_mitra = CASE 
+             WHEN catatan_mitra IS NULL OR catatan_mitra = '' THEN ? 
+             ELSE CONCAT(catatan_mitra, ' | ', ?) 
+           END
+       WHERE id_transaksi = ? AND status IN ('MENUNGGU_PENJEMPUTAN', 'DIKONFIRMASI_MITRA')`,
+      [idMitra, catatanAdmin, catatanAdmin, idTransaksi]
+    );
+    return result.affectedRows > 0;
   }
 
   static async claimPickup(idTransaksi, idMitra, db = pool) {
