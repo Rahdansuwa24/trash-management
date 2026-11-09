@@ -7,7 +7,7 @@ import {
   Shield, Users, CheckCircle, Trash2, Coins, Loader2, AlertTriangle, 
   Gift, Plus, Pencil, Eye, EyeOff, Package, ShoppingBag, Wheat, 
   ShoppingBasket, Receipt, Wallet, X, CheckCircle2, Ticket, Leaf, Droplets, TreePine, Sparkles, ShieldAlert, MapPin, ExternalLink, Calendar, Search, Truck, Image as ImageIcon,
-  Scale, LayoutDashboard, BarChart3, Filter, Clock, ChevronRight, RefreshCw, ArrowUpRight
+  Scale, LayoutDashboard, BarChart3, Filter, Clock, ChevronRight, RefreshCw, ArrowUpRight, UserPlus, Building2, ShieldCheck
 } from 'lucide-react';
 
 const ICON_MAP = {
@@ -57,6 +57,21 @@ export default function AdminDashboard() {
   const [reportSearch, setReportSearch] = useState('');
   const [reportStatusFilter, setReportStatusFilter] = useState('');
   const [reportTimeFilter, setReportTimeFilter] = useState('ALL'); // 'ALL' | 'THIS_MONTH' | 'THIS_WEEK'
+
+  // State Pendaftaran Akun Mitra / Petugas Baru oleh Admin
+  const [mitraModalOpen, setMitraModalOpen] = useState(false);
+  const [mitraSubmitting, setMitraSubmitting] = useState(false);
+  const [mitraError, setMitraError] = useState('');
+  const [mitraFormData, setMitraFormData] = useState({
+    nama: '',
+    email: '',
+    password: '',
+    instansi_nama: '',
+    jenis_mitra: 'satgas_lapangan',
+    wilayah_tugas: 'RW 05',
+    no_telp: '',
+    alamat: ''
+  });
 
   // Form State untuk Tambah / Edit Katalog
   const [formData, setFormData] = useState({
@@ -161,6 +176,39 @@ export default function AdminDashboard() {
       fetchAdminData();
     } catch (err) {
       alert(`Gagal mengubah status: ${err.message}`);
+    }
+  };
+
+  // Mitra Registration Handlers
+  const handleOpenMitraModal = () => {
+    setMitraFormData({
+      nama: '',
+      email: '',
+      password: '',
+      instansi_nama: '',
+      jenis_mitra: 'satgas_lapangan',
+      wilayah_tugas: 'RW 05',
+      no_telp: '',
+      alamat: ''
+    });
+    setMitraError('');
+    setMitraModalOpen(true);
+  };
+
+  const handleMitraFormSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      setMitraSubmitting(true);
+      setMitraError('');
+      const res = await api.createAdminMitra(mitraFormData);
+      setSuccessMsg(res.message || 'Akun mitra / petugas berhasil didaftarkan.');
+      setTimeout(() => setSuccessMsg(''), 4000);
+      setMitraModalOpen(false);
+      fetchAdminData();
+    } catch (err) {
+      setMitraError(err.message || 'Gagal mendaftarkan akun mitra.');
+    } finally {
+      setMitraSubmitting(false);
     }
   };
 
@@ -1344,22 +1392,32 @@ export default function AdminDashboard() {
                     Daftar Pengguna Terdaftar ({users.length})
                   </h2>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    Kelola status aktif atau bekukan akun warga dan mitra pengelola.
+                    Kelola status akun warga serta daftarkan akun resmi Mitra Bank Sampah Unit dan Satgas Lapangan RT/RW.
                   </p>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-slate-500 font-medium">Filter Peran:</span>
-                  <select
-                    value={selectedRole}
-                    onChange={(e) => setSelectedRole(e.target.value)}
-                    className="px-3 py-1.5 rounded-xl border border-slate-300 bg-white font-medium text-slate-700"
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={handleOpenMitraModal}
+                    className="px-3.5 py-2 bg-civic-700 hover:bg-civic-800 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer min-h-[38px]"
                   >
-                    <option value="">Semua Peran</option>
-                    <option value="warga">Warga</option>
-                    <option value="mitra">Mitra / Petugas</option>
-                    <option value="admin">Administrator</option>
-                  </select>
+                    <UserPlus className="w-4 h-4" />
+                    + Daftarkan Mitra / Petugas Baru
+                  </button>
+
+                  <div className="flex items-center gap-2 text-xs">
+                    <select
+                      value={selectedRole}
+                      onChange={(e) => setSelectedRole(e.target.value)}
+                      className="px-3 py-2 rounded-xl border border-slate-300 bg-white font-medium text-slate-700 text-xs min-h-[38px]"
+                    >
+                      <option value="">Semua Peran</option>
+                      <option value="warga">Warga</option>
+                      <option value="mitra">Mitra / Petugas</option>
+                      <option value="admin">Administrator</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
@@ -1373,6 +1431,7 @@ export default function AdminDashboard() {
                     <thead className="bg-slate-50 text-slate-500 uppercase border-b border-slate-200">
                       <tr>
                         <th className="py-3 px-4 font-semibold">Nama & Email</th>
+                        <th className="py-3 px-4 font-semibold">Unit / Wilayah</th>
                         <th className="py-3 px-4 font-semibold">Peran</th>
                         <th className="py-3 px-4 font-semibold">Status</th>
                         <th className="py-3 px-4 font-semibold text-right">Aksi</th>
@@ -1384,11 +1443,56 @@ export default function AdminDashboard() {
                           <td className="py-3.5 px-4">
                             <span className="font-bold text-slate-900 block">{u.nama}</span>
                             <span className="text-slate-400">{u.email}</span>
+                            {u.role === 'warga' && u.no_telp_warga && (
+                              <span className="text-[11px] text-slate-500 block mt-0.5">WA: {u.no_telp_warga}</span>
+                            )}
+                            {u.role === 'mitra' && u.no_telp_mitra && (
+                              <span className="text-[11px] text-slate-500 block mt-0.5">WA: {u.no_telp_mitra}</span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4">
-                            <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-slate-100 text-slate-700">
-                              {u.role}
-                            </span>
+                            {u.role === 'mitra' ? (
+                              <div className="space-y-0.5">
+                                <span className="font-semibold text-slate-800 flex items-center gap-1">
+                                  <Building2 className="w-3.5 h-3.5 text-civic-600 shrink-0" />
+                                  {u.instansi_nama || 'Unit RT/RW'}
+                                </span>
+                                <span className="text-[11px] text-slate-500 block">
+                                  Tugas: {u.wilayah_tugas || 'RW 05'}
+                                </span>
+                              </div>
+                            ) : u.role === 'warga' ? (
+                              <div className="space-y-0.5">
+                                <span className="font-semibold text-slate-800 block">
+                                  RT {u.rt || '-'} / RW {u.rw || '05'}
+                                </span>
+                                <span className="text-[11px] text-slate-500 block truncate max-w-[200px]" title={u.alamat_warga}>
+                                  {u.alamat_warga || '-'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="text-slate-400 font-medium">Pusat RW 05</span>
+                            )}
+                          </td>
+                          <td className="py-3.5 px-4">
+                            {u.role === 'admin' ? (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-purple-50 text-purple-700 border border-purple-200">
+                                Administrator
+                              </span>
+                            ) : u.role === 'mitra' ? (
+                              <div className="space-y-1">
+                                <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-amber-50 text-amber-800 border border-amber-200">
+                                  Mitra Petugas
+                                </span>
+                                <span className="block text-[10px] text-slate-500">
+                                  {u.jenis_mitra === 'bank_sampah_unit' ? 'Bank Sampah Unit' : 'Satgas Lapangan'}
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="inline-block px-2.5 py-0.5 rounded-full font-semibold uppercase text-[10px] bg-slate-100 text-slate-700">
+                                Warga
+                              </span>
+                            )}
                           </td>
                           <td className="py-3.5 px-4">
                             <span
@@ -1712,6 +1816,175 @@ export default function AdminDashboard() {
                 >
                   {formSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingItem ? 'Simpan Perubahan' : 'Tambah ke Katalog'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Form: Pendaftaran Mitra / Petugas Baru oleh Admin */}
+      {mitraModalOpen && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs overflow-y-auto"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMitraModalOpen(false);
+          }}
+        >
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-lg w-full p-6 sm:p-8 space-y-5 my-8">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <UserPlus className="w-5 h-5 text-civic-700" />
+                  Daftarkan Akun Mitra / Petugas Baru
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Buat akun login resmi untuk Satgas Kebersihan Lapangan atau Pengurus Bank Sampah Unit.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setMitraModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-slate-600 rounded-lg min-h-[40px] min-w-[40px] flex items-center justify-center cursor-pointer"
+                aria-label="Tutup modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {mitraError && (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg text-rose-700 text-xs">
+                {mitraError}
+              </div>
+            )}
+
+            <form onSubmit={handleMitraFormSubmit} className="space-y-4 text-xs sm:text-sm">
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-900">
+                  Nama Lengkap Petugas / PIC <span className="text-rose-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={mitraFormData.nama}
+                  onChange={(e) => setMitraFormData({ ...mitraFormData, nama: e.target.value })}
+                  placeholder="Contoh: Rudi Hermawan"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-900">
+                  Nama Instansi / Unit Kerja <span className="text-rose-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={mitraFormData.instansi_nama}
+                  onChange={(e) => setMitraFormData({ ...mitraFormData, instansi_nama: e.target.value })}
+                  placeholder="Contoh: Bank Sampah Melati RT 04 atau Satgas Kebersihan RW 05"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-900">
+                    Klasifikasi Mitra <span className="text-rose-600">*</span>
+                  </label>
+                  <select
+                    value={mitraFormData.jenis_mitra}
+                    onChange={(e) => setMitraFormData({ ...mitraFormData, jenis_mitra: e.target.value })}
+                    className="w-full px-3 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm bg-white min-h-[44px]"
+                  >
+                    <option value="satgas_lapangan">Satgas Lapangan / Armada TPS3R</option>
+                    <option value="bank_sampah_unit">Pengurus Bank Sampah Unit RT/RW</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-900">
+                    Wilayah Tugas / Operasional <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={mitraFormData.wilayah_tugas}
+                    onChange={(e) => setMitraFormData({ ...mitraFormData, wilayah_tugas: e.target.value })}
+                    placeholder="Contoh: RT 04 / RW 05 atau RW 05 Seluruhnya"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-900">
+                    Email Akun Petugas <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={mitraFormData.email}
+                    onChange={(e) => setMitraFormData({ ...mitraFormData, email: e.target.value })}
+                    placeholder="petugas.rt04@trashmanage.id"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="block font-bold text-slate-900">
+                    Password Akun <span className="text-rose-600">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={mitraFormData.password}
+                    onChange={(e) => setMitraFormData({ ...mitraFormData, password: e.target.value })}
+                    placeholder="Minimal 6 karakter"
+                    className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block font-bold text-slate-900">
+                  No. WhatsApp Petugas
+                </label>
+                <input
+                  type="tel"
+                  value={mitraFormData.no_telp}
+                  onChange={(e) => setMitraFormData({ ...mitraFormData, no_telp: e.target.value })}
+                  placeholder="Contoh: 081234567890"
+                  className="w-full px-4 py-2.5 rounded-lg border border-slate-300 text-xs sm:text-sm min-h-[44px]"
+                />
+              </div>
+
+              <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-[11px] text-amber-900 space-y-1">
+                <span className="font-bold flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  Akses Portal Khusus Mitra
+                </span>
+                <p>
+                  Setelah akun dibuat, petugas dapat langsung login di TrashManage untuk mengakses Dashboard Armada & Penjemputan Bank Sampah.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setMitraModalOpen(false)}
+                  className="px-4 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-semibold hover:bg-slate-50 min-h-[44px] cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={mitraSubmitting}
+                  className="px-5 py-2.5 bg-civic-700 hover:bg-civic-800 text-white rounded-xl font-bold min-h-[44px] flex items-center gap-2 transition-colors cursor-pointer"
+                >
+                  {mitraSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Daftarkan Akun Mitra
                 </button>
               </div>
             </form>

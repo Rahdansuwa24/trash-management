@@ -8,6 +8,7 @@ router.use(authenticate, authorize('admin'));
 
 // Users & Stats
 router.get('/users', adminController.getUsers);
+router.post('/mitra', adminController.createMitra);
 router.put('/users/:id/status', adminController.updateUserStatus);
 router.get('/stats', adminController.getStats);
 

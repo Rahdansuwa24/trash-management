@@ -1,7 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth, DEMO_ACCOUNTS } from '../context/AuthContext';
 import { X, Lock, Mail, Loader2, UserCheck, ShieldCheck, User, Phone, Home, CheckCircle2 } from 'lucide-react';
+
+const INITIAL_REG_DATA = {
+  nama: '',
+  email: '',
+  password: '',
+  no_telp: '',
+  alamat: '',
+  rt: '03',
+  rw: '05',
+  kelurahan: 'Kalirungkut',
+  kecamatan: 'Rungkut',
+  kota: 'Surabaya'
+};
 
 export default function LoginModal() {
   const navigate = useNavigate();
@@ -13,23 +26,31 @@ export default function LoginModal() {
   const [password, setPassword] = useState('');
 
   // Register state (Warga Lingkungan)
-  const [regData, setRegData] = useState({
-    nama: '',
-    email: '',
-    password: '',
-    no_telp: '',
-    alamat: '',
-    rt: '03',
-    rw: '05',
-    kelurahan: 'Kalirungkut',
-    kecamatan: 'Rungkut',
-    kota: 'Surabaya'
-  });
+  const [regData, setRegData] = useState(INITIAL_REG_DATA);
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
+  const resetAllForms = () => {
+    setEmail('');
+    setPassword('');
+    setRegData(INITIAL_REG_DATA);
+    setErrorMsg('');
+  };
+
+  // Reset otomatis setiap modal ditutup agar session/data form baru tidak menempel
+  useEffect(() => {
+    if (!loginModalOpen) {
+      resetAllForms();
+    }
+  }, [loginModalOpen]);
+
   if (!loginModalOpen) return null;
+
+  const handleClose = () => {
+    resetAllForms();
+    setLoginModalOpen(false);
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +58,7 @@ export default function LoginModal() {
       setLoading(true);
       setErrorMsg('');
       const loggedUser = await login(email, password);
+      resetAllForms();
       if (loggedUser?.role === 'admin') {
         navigate('/admin');
       } else if (loggedUser?.role === 'mitra') {
@@ -60,6 +82,7 @@ export default function LoginModal() {
         ...regData,
         role: 'warga'
       });
+      resetAllForms();
       navigate('/setor');
     } catch (err) {
       setErrorMsg(err.message || 'Gagal melakukan pendaftaran akun.');
@@ -73,6 +96,7 @@ export default function LoginModal() {
       setLoading(true);
       setErrorMsg('');
       const loggedUser = await quickLogin(acc);
+      resetAllForms();
       if (loggedUser?.role === 'admin') {
         navigate('/admin');
       } else if (loggedUser?.role === 'mitra') {
@@ -88,11 +112,16 @@ export default function LoginModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div 
+      className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+    >
       <div className="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 space-y-5 shadow-2xl relative max-h-[90vh] overflow-y-auto">
         <button
-          onClick={() => setLoginModalOpen(false)}
-          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-lg"
+          onClick={handleClose}
+          className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-2 rounded-lg cursor-pointer"
           aria-label="Tutup modal"
         >
           <X className="w-5 h-5" />
@@ -103,7 +132,7 @@ export default function LoginModal() {
           <button
             type="button"
             onClick={() => { setTab('login'); setErrorMsg(''); }}
-            className={`flex-1 py-2.5 text-xs font-bold border-b-2 -mb-px transition-colors ${
+            className={`flex-1 py-2.5 text-xs font-bold border-b-2 -mb-px transition-colors cursor-pointer ${
               tab === 'login'
                 ? 'border-civic-700 text-civic-800'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
@@ -114,7 +143,7 @@ export default function LoginModal() {
           <button
             type="button"
             onClick={() => { setTab('register'); setErrorMsg(''); }}
-            className={`flex-1 py-2.5 text-xs font-bold border-b-2 -mb-px transition-colors ${
+            className={`flex-1 py-2.5 text-xs font-bold border-b-2 -mb-px transition-colors cursor-pointer ${
               tab === 'register'
                 ? 'border-civic-700 text-civic-800'
                 : 'border-transparent text-slate-500 hover:text-slate-800'

@@ -63,6 +63,7 @@ export const api = {
 
   // Admin
   getUsers: (params = '') => request(`/admin/users${params}`),
+  createAdminMitra: (payload) => request('/admin/mitra', { method: 'POST', body: JSON.stringify(payload) }),
   updateUserStatus: (id, status) => request(`/admin/users/${id}/status`, { method: 'PUT', body: JSON.stringify({ status }) }),
   getStats: () => request('/admin/stats'),
   getAdminKatalog: () => request('/admin/katalog'),

@@ -1,5 +1,6 @@
 const pool = require('../../database/pool');
-const { UserModel, KatalogModel, KlaimModel, WargaModel, LaporanModel, TransaksiModel } = require('../models');
+const bcrypt = require('bcryptjs');
+const { UserModel, MitraModel, KatalogModel, KlaimModel, WargaModel, LaporanModel, TransaksiModel } = require('../models');
 
 exports.getUsers = async (req, res, next) => {
   try {
@@ -238,6 +239,98 @@ exports.verifyClaim = async (req, res, next) => {
       success: true,
       message: `Status klaim penukaran berhasil diperbarui menjadi ${status}.`,
       data: updatedClaim
+    });
+  } catch (error) {
+    await connection.rollback();
+    next(error);
+  } finally {
+    connection.release();
+  }
+};
+
+/**
+ * Pendaftaran Akun Mitra / Petugas Kebersihan Baru oleh Administrator RW
+ */
+exports.createMitra = async (req, res, next) => {
+  const connection = await pool.getConnection();
+  try {
+    const {
+      nama,
+      email,
+      password,
+      jenis_mitra = 'satgas_lapangan',
+      instansi_nama,
+      wilayah_tugas = 'RW 05',
+      no_telp,
+      alamat = '',
+      kelurahan = 'Kalirungkut',
+      kecamatan = 'Rungkut',
+      kota = 'Surabaya'
+    } = req.body;
+
+    if (!nama || !email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nama petugas, email, dan password wajib diisi.'
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password akun mitra minimal 6 karakter.'
+      });
+    }
+
+    const existing = await UserModel.findByEmail(email, connection);
+    if (existing) {
+      return res.status(409).json({
+        success: false,
+        message: 'Email sudah terdaftar dalam sistem. Gunakan email lain.'
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    await connection.beginTransaction();
+
+    const createdUser = await UserModel.create({
+      nama: nama.trim(),
+      email: email.trim().toLowerCase(),
+      password: hashedPassword,
+      role: 'mitra',
+      status: 'active'
+    }, connection);
+
+    const newUserId = createdUser.id_user;
+
+    const createdMitra = await MitraModel.createProfile({
+      id_user: newUserId,
+      jenis_mitra: jenis_mitra || 'satgas_lapangan',
+      instansi_nama: instansi_nama ? instansi_nama.trim() : nama.trim(),
+      wilayah_tugas: wilayah_tugas ? wilayah_tugas.trim() : 'RW 05',
+      no_telp: no_telp ? no_telp.trim() : null,
+      alamat: alamat ? alamat.trim() : '',
+      kelurahan: kelurahan || 'Kalirungkut',
+      kecamatan: kecamatan || 'Rungkut',
+      kota: kota || 'Surabaya'
+    }, connection);
+
+    await connection.commit();
+
+    res.status(201).json({
+      success: true,
+      message: `Akun mitra/petugas "${nama}" berhasil didaftarkan.`,
+      data: {
+        id_user: newUserId,
+        id_mitra: createdMitra.id_mitra,
+        nama: createdUser.nama,
+        email: createdUser.email,
+        role: 'mitra',
+        jenis_mitra,
+        instansi_nama: instansi_nama || nama,
+        wilayah_tugas
+      }
     });
   } catch (error) {
     await connection.rollback();
