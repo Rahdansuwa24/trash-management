@@ -13,6 +13,8 @@ public/images/*
 !public/images/.gitkeep
 public/video/*
 !public/video/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
 
 # Logs & Runtime
 npm-debug.log*
