@@ -320,7 +320,7 @@ export default function LoginModal() {
                   <input
                     type="text"
                     readOnly
-                    value="RW 05 (Kalirungkut)"
+                    value="RW 05"
                     className="w-full px-3 py-2 rounded-lg border border-slate-200 bg-slate-100 text-slate-600 text-xs min-h-[40px]"
                   />
                 </div>
